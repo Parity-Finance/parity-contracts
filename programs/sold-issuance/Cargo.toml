@@ -1,0 +1,27 @@
+[package]
+name = "sold-issuance"
+version = "0.1.0"
+description = "Created with Anchor"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "sold_issuance"
+
+[features]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+cpi = ["no-entrypoint"]
+default = []
+
+[dependencies]
+anchor-lang = "0.29.0"
+anchor-spl = { version = "0.29.0", features = ["metadata"] }
+solana-program = "=1.17.0"
+bytemuck = { version = "1.7", features = ["derive"] }
+jet-proc-macros = { version = "1", package = "jet-proto-proc-macros" }
+static_assertions = "1.1.0"
+uint = "=0.9.1"
+toml_edit = "=0.21.0"
+
