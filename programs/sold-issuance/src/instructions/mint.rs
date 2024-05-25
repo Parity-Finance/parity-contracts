@@ -1,25 +1,45 @@
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
-    token::{mint_to, Mint, MintTo, Token, TokenAccount},
+    token::{
+        mint_to, spl_token::instruction::mint_to_checked, transfer_checked, Mint, MintTo, Token,
+        TokenAccount, TransferChecked,
+    },
 };
+
+use crate::TokenManager;
 
 #[derive(Accounts)]
 pub struct MintTokens<'info> {
+    #[account(mut, seeds = [b"token-manager"], bump)]
+    pub token_manager: Account<'info, TokenManager>,
     #[account(
-        mut,
         seeds = [b"mint"],
         bump,
-        mint::authority = mint,
+        mint::authority = token_manager,
     )]
+    // Stable Mint
     pub mint: Account<'info, Mint>,
     #[account(
-        init,
-        payer = payer,
         associated_token::mint = mint,
         associated_token::authority = payer,
     )]
-    pub destination: Account<'info, TokenAccount>,
+    pub payer_mint_ata: Account<'info, TokenAccount>,
+
+    //  Quote Mint
+    pub quote_mint: Account<'info, Mint>,
+    #[account(
+        associated_token::mint = quote_mint,
+        associated_token::authority = payer,
+    )]
+    pub payer_quote_mint_ata: Account<'info, TokenAccount>,
+    #[account(
+        associated_token::mint = quote_mint,
+        associated_token::authority = token_manager,
+    )]
+    pub vault: Account<'info, TokenAccount>,
+
+    // Other
     #[account(mut)]
     pub payer: Signer<'info>,
     pub rent: Sysvar<'info, Rent>,
@@ -29,21 +49,42 @@ pub struct MintTokens<'info> {
 }
 
 pub fn handler(ctx: Context<MintTokens>, quantity: u64) -> Result<()> {
-    let seeds = &["mint".as_bytes(), &[ctx.bumps.mint]];
-    let signer = [&seeds[..]];
+    let token_manager = &mut ctx.accounts.token_manager;
+
+    let bump = token_manager.bump; // Corrected to be a slice of a slice of a byte slice
+    let signer_seeds: &[&[&[u8]]] = &[&[b"token-manager", &[bump]]];
+
+    let token_manager = &mut ctx.accounts.token_manager;
 
     mint_to(
         CpiContext::new_with_signer(
             ctx.accounts.token_program.to_account_info(),
             MintTo {
-                authority: ctx.accounts.mint.to_account_info(),
-                to: ctx.accounts.destination.to_account_info(),
+                authority: token_manager.to_account_info(),
+                to: ctx.accounts.payer_mint_ata.to_account_info(),
                 mint: ctx.accounts.mint.to_account_info(),
             },
-            &signer,
+            signer_seeds,
         ),
         quantity,
     )?;
+
+    transfer_checked(
+        CpiContext::new(
+            ctx.accounts.token_program.to_account_info(),
+            TransferChecked {
+                from: ctx.accounts.payer_quote_mint_ata.to_account_info(),
+                to: ctx.accounts.vault.to_account_info(),
+                mint: ctx.accounts.quote_mint.to_account_info(),
+                authority: ctx.accounts.payer.to_account_info(),
+            },
+        ),
+        quantity,
+        6,
+    )?;
+
+    // Update token_manager
+    token_manager.total_supply += quantity;
 
     Ok(())
 }
