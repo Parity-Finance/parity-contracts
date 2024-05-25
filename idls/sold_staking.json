@@ -1,0 +1,24 @@
+{
+  "version": "0.1.0",
+  "name": "sold_staking",
+  "constants": [
+    {
+      "name": "SEED",
+      "type": "string",
+      "value": "\"anchor\""
+    }
+  ],
+  "instructions": [
+    {
+      "name": "initializeStakePool",
+      "accounts": [],
+      "args": []
+    }
+  ],
+  "metadata": {
+    "address": "F9pkhuLyu1usfS5p6RCuXxeS2TQsAVqANo1M2iC8ze1t",
+    "origin": "anchor",
+    "binaryVersion": "0.29.0",
+    "libVersion": "0.29.0"
+  }
+}

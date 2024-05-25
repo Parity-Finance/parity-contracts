@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 
 #[derive(Accounts)]
-pub struct Initialize {
+pub struct InitializeStakePool {
     // #[account(mut)]
     // pub payer: Signer<'info>,
 
@@ -32,6 +32,6 @@ pub struct Initialize {
     // pub system_program: Program<'info, System>,
 }
 
-pub fn handler(ctx: Context<Initialize>) -> Result<()> {
+pub fn handler(ctx: Context<InitializeStakePool>) -> Result<()> {
     Ok(())
 }

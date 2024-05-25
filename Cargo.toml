@@ -2,6 +2,7 @@
 members = [
     "programs/*"
 ]
+exclude = ["programs/.bin"]
 
 [profile.release]
 overflow-checks = true
