@@ -21,9 +21,9 @@ kinobi.update(
 // // Update accounts.
 kinobi.update(
   new k.updateAccountsVisitor({
-    assetManager: {
+    tokenManager: {
       seeds: [
-        k.constantPdaSeedNodeFromString("asset_manager")
+        k.constantPdaSeedNodeFromString("token_manager")
       ],
     },
   })

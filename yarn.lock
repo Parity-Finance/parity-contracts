@@ -112,6 +112,11 @@
     nunjucks "^3.2.4"
     prettier "^3.2.5"
 
+"@metaplex-foundation/mpl-toolbox@^0.9.4":
+  version "0.9.4"
+  resolved "https://registry.yarnpkg.com/@metaplex-foundation/mpl-toolbox/-/mpl-toolbox-0.9.4.tgz#2211b2f726b1e5745c03908d26fd8ee580838b6f"
+  integrity sha512-fd6JxfoLbj/MM8FG2x91KYVy1U6AjBQw4qjt7+Da3trzQaWnSaYHDcYRG/53xqfvZ9qofY1T2t53GXPlD87lnQ==
+
 "@metaplex-foundation/rustbin@^0.3.5":
   version "0.3.5"
   resolved "https://registry.yarnpkg.com/@metaplex-foundation/rustbin/-/rustbin-0.3.5.tgz#56d028afd96c2b56ad3bbea22ff454adde900e8c"

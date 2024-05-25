@@ -25,6 +25,7 @@ import {
   bool,
   mapSerializer,
   publicKey as publicKeySerializer,
+  string,
   struct,
   u64,
   u8,
@@ -186,4 +187,30 @@ export function getTokenManagerGpaBuilder(
       deserializeTokenManager(account)
     )
     .whereField('discriminator', [185, 97, 124, 231, 70, 75, 228, 47]);
+}
+
+export function findTokenManagerPda(
+  context: Pick<Context, 'eddsa' | 'programs'>
+): Pda {
+  const programId = context.programs.getPublicKey(
+    'soldIssuance',
+    '3ja6s1Pb55nhzhwYp4GY77n972iEQtWX55xoRwP2asCT'
+  );
+  return context.eddsa.findPda(programId, [
+    string({ size: 'variable' }).serialize('token_manager'),
+  ]);
+}
+
+export async function fetchTokenManagerFromSeeds(
+  context: Pick<Context, 'eddsa' | 'programs' | 'rpc'>,
+  options?: RpcGetAccountOptions
+): Promise<TokenManager> {
+  return fetchTokenManager(context, findTokenManagerPda(context), options);
+}
+
+export async function safeFetchTokenManagerFromSeeds(
+  context: Pick<Context, 'eddsa' | 'programs' | 'rpc'>,
+  options?: RpcGetAccountOptions
+): Promise<TokenManager | null> {
+  return safeFetchTokenManager(context, findTokenManagerPda(context), options);
 }
