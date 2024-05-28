@@ -2023,7 +2023,13 @@ name = "sold-staking"
 version = "0.1.0"
 dependencies = [
  "anchor-lang",
+ "anchor-spl",
+ "bytemuck",
+ "jet-proto-proc-macros",
  "solana-program",
+ "static_assertions",
+ "toml_edit 0.21.0",
+ "uint",
 ]
 
 [[package]]

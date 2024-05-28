@@ -1,10 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
-    token::{
-        burn, mint_to, spl_token::instruction::mint_to_checked, transfer_checked, Burn, Mint,
-        MintTo, Token, TokenAccount, TransferChecked,
-    },
+    token::{burn, transfer_checked, Burn, Mint, Token, TokenAccount, TransferChecked},
 };
 
 use crate::{SoldIssuanceError, TokenManager};
