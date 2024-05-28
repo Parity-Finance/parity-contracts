@@ -9,3 +9,4 @@
 export * from './initialize';
 export * from './initializeStakePool';
 export * from './mint';
+export * from './redeem';

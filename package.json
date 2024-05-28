@@ -14,13 +14,17 @@
         "validator": "CI=1 amman start --config ./configs/validator.cjs",
         "validator:debug": "amman start --config ./configs/validator.cjs",
         "validator:logs": "CI=1 amman logs",
-        "validator:stop": "amman stop"
+        "validator:stop": "amman stop",
+        "test": "yarn validator && yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts && yarn"
     },
     "dependencies": {
         "@coral-xyz/anchor": "^0.29.0",
+        "@metaplex-foundation/mpl-token-metadata": "^3.2.1",
         "@metaplex-foundation/mpl-toolbox": "^0.9.4",
         "@metaplex-foundation/umi": "^0.9.1",
-        "@metaplex-foundation/umi-bundle-defaults": "^0.9.1"
+        "@metaplex-foundation/umi-bundle-defaults": "^0.9.1",
+        "@metaplex-foundation/umi-web3js-adapters": "^0.9.1",
+        "@solana/spl-token": "^0.4.6"
     },
     "devDependencies": {
         "@metaplex-foundation/amman": "^0.12.1",

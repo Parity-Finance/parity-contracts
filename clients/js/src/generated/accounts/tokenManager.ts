@@ -197,7 +197,7 @@ export function findTokenManagerPda(
     '3ja6s1Pb55nhzhwYp4GY77n972iEQtWX55xoRwP2asCT'
   );
   return context.eddsa.findPda(programId, [
-    string({ size: 'variable' }).serialize('token_manager'),
+    string({ size: 'variable' }).serialize('token-manager'),
   ]);
 }
 

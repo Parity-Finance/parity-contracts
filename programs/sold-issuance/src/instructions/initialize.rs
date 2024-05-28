@@ -60,8 +60,10 @@ pub struct Initialize<'info> {
 }
 
 pub fn handler(ctx: Context<Initialize>, metadata: InitializeParams) -> Result<()> {
-    let seeds = &["mint".as_bytes(), &[ctx.bumps.mint]];
-    let signer = [&seeds[..]];
+    let token_manager = &mut ctx.accounts.token_manager;
+
+    let bump = ctx.bumps.token_manager; // Corrected to be a slice of a slice of a byte slice
+    let signer_seeds: &[&[&[u8]]] = &[&[b"token-manager", &[bump]]];
 
     let token_data: DataV2 = DataV2 {
         name: metadata.name,
@@ -77,14 +79,14 @@ pub fn handler(ctx: Context<Initialize>, metadata: InitializeParams) -> Result<(
         ctx.accounts.token_metadata_program.to_account_info(),
         CreateMetadataAccountsV3 {
             payer: ctx.accounts.payer.to_account_info(),
-            update_authority: ctx.accounts.mint.to_account_info(),
+            update_authority: token_manager.to_account_info(),
             mint: ctx.accounts.mint.to_account_info(),
             metadata: ctx.accounts.metadata.to_account_info(),
-            mint_authority: ctx.accounts.mint.to_account_info(),
+            mint_authority: token_manager.to_account_info(),
             system_program: ctx.accounts.system_program.to_account_info(),
             rent: ctx.accounts.rent.to_account_info(),
         },
-        &signer,
+        &signer_seeds,
     );
 
     create_metadata_accounts_v3(metadata_ctx, token_data, false, true, None)?;
@@ -93,6 +95,7 @@ pub fn handler(ctx: Context<Initialize>, metadata: InitializeParams) -> Result<(
 
     let token_manager = &mut ctx.accounts.token_manager;
     token_manager.token_manager = token_manager.key();
+    token_manager.bump = bump;
     token_manager.mint = ctx.accounts.mint.key();
     token_manager.mint_decimals = metadata.decimals;
     token_manager.quote_mint = ctx.accounts.quote_mint.key();

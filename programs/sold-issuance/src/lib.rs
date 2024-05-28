@@ -6,6 +6,7 @@ pub mod state;
 use anchor_lang::prelude::*;
 
 pub use constants::*;
+pub use error::*;
 pub use instructions::*;
 pub use state::*;
 
@@ -21,5 +22,9 @@ pub mod sold_issuance {
 
     pub fn mint(ctx: Context<MintTokens>, quantity: u64) -> Result<()> {
         mint::handler(ctx, quantity)
+    }
+
+    pub fn redeem(ctx: Context<RedeemTokens>, quantity: u64) -> Result<()> {
+        redeem::handler(ctx, quantity)
     }
 }

@@ -23,7 +23,7 @@ kinobi.update(
   new k.updateAccountsVisitor({
     tokenManager: {
       seeds: [
-        k.constantPdaSeedNodeFromString("token_manager")
+        k.constantPdaSeedNodeFromString("token-manager")
       ],
     },
   })

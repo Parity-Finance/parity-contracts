@@ -15,7 +15,7 @@ declare_id!("F9pkhuLyu1usfS5p6RCuXxeS2TQsAVqANo1M2iC8ze1t");
 pub mod sold_staking {
     use super::*;
 
-    pub fn initializeStakePool(ctx: Context<InitializeStakePool>) -> Result<()> {
+    pub fn initialize_stake_pool(ctx: Context<InitializeStakePool>) -> Result<()> {
         initialize::handler(ctx)
     }
 }

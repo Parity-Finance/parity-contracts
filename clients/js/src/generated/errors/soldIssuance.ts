@@ -15,18 +15,18 @@ type ProgramErrorConstructor = new (
 const codeToErrorMap: Map<number, ProgramErrorConstructor> = new Map();
 const nameToErrorMap: Map<string, ProgramErrorConstructor> = new Map();
 
-/** CustomError: Custom error message */
-export class SiCustomErrorError extends ProgramError {
-  override readonly name: string = 'CustomError';
+/** InvalidQuoteMintAddress: Invalid quote mint address */
+export class SiInvalidQuoteMintAddressError extends ProgramError {
+  override readonly name: string = 'InvalidQuoteMintAddress';
 
   readonly code: number = 0x1770; // 6000
 
   constructor(program: Program, cause?: Error) {
-    super('Custom error message', program, cause);
+    super('Invalid quote mint address', program, cause);
   }
 }
-codeToErrorMap.set(0x1770, SiCustomErrorError);
-nameToErrorMap.set('CustomError', SiCustomErrorError);
+codeToErrorMap.set(0x1770, SiInvalidQuoteMintAddressError);
+nameToErrorMap.set('InvalidQuoteMintAddress', SiInvalidQuoteMintAddressError);
 
 /**
  * Attempts to resolve a custom program error from the provided error code.

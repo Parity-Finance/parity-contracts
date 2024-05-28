@@ -32,6 +32,6 @@ pub struct InitializeStakePool {
     // pub system_program: Program<'info, System>,
 }
 
-pub fn handler(ctx: Context<InitializeStakePool>) -> Result<()> {
+pub fn handler(_ctx: Context<InitializeStakePool>) -> Result<()> {
     Ok(())
 }

@@ -1,8 +1,9 @@
 [workspace]
 members = [
-    "programs/*"
+    "programs/sold-issuance",
+    "programs/sold-staking",
 ]
-exclude = ["programs/.bin"]
+resolver = "2"
 
 [profile.release]
 overflow-checks = true

@@ -30,7 +30,7 @@ import {
 } from '../shared';
 
 // Accounts.
-export type MintInstructionAccounts = {
+export type RedeemInstructionAccounts = {
   tokenManager: PublicKey | Pda;
   mint: PublicKey | Pda;
   payerMintAta: PublicKey | Pda;
@@ -45,39 +45,39 @@ export type MintInstructionAccounts = {
 };
 
 // Data.
-export type MintInstructionData = {
+export type RedeemInstructionData = {
   discriminator: Array<number>;
   quantity: bigint;
 };
 
-export type MintInstructionDataArgs = { quantity: number | bigint };
+export type RedeemInstructionDataArgs = { quantity: number | bigint };
 
-export function getMintInstructionDataSerializer(): Serializer<
-  MintInstructionDataArgs,
-  MintInstructionData
+export function getRedeemInstructionDataSerializer(): Serializer<
+  RedeemInstructionDataArgs,
+  RedeemInstructionData
 > {
-  return mapSerializer<MintInstructionDataArgs, any, MintInstructionData>(
-    struct<MintInstructionData>(
+  return mapSerializer<RedeemInstructionDataArgs, any, RedeemInstructionData>(
+    struct<RedeemInstructionData>(
       [
         ['discriminator', array(u8(), { size: 8 })],
         ['quantity', u64()],
       ],
-      { description: 'MintInstructionData' }
+      { description: 'RedeemInstructionData' }
     ),
     (value) => ({
       ...value,
-      discriminator: [51, 57, 225, 47, 182, 146, 137, 166],
+      discriminator: [184, 12, 86, 149, 70, 196, 97, 225],
     })
-  ) as Serializer<MintInstructionDataArgs, MintInstructionData>;
+  ) as Serializer<RedeemInstructionDataArgs, RedeemInstructionData>;
 }
 
 // Args.
-export type MintInstructionArgs = MintInstructionDataArgs;
+export type RedeemInstructionArgs = RedeemInstructionDataArgs;
 
 // Instruction.
-export function mint(
+export function redeem(
   context: Pick<Context, 'payer' | 'programs'>,
-  input: MintInstructionAccounts & MintInstructionArgs
+  input: RedeemInstructionAccounts & RedeemInstructionArgs
 ): TransactionBuilder {
   // Program ID.
   const programId = context.programs.getPublicKey(
@@ -137,7 +137,7 @@ export function mint(
   } satisfies ResolvedAccountsWithIndices;
 
   // Arguments.
-  const resolvedArgs: MintInstructionArgs = { ...input };
+  const resolvedArgs: RedeemInstructionArgs = { ...input };
 
   // Default values.
   if (!resolvedAccounts.payer.value) {
@@ -176,8 +176,8 @@ export function mint(
   );
 
   // Data.
-  const data = getMintInstructionDataSerializer().serialize(
-    resolvedArgs as MintInstructionDataArgs
+  const data = getRedeemInstructionDataSerializer().serialize(
+    resolvedArgs as RedeemInstructionDataArgs
   );
 
   // Bytes Created On Chain.

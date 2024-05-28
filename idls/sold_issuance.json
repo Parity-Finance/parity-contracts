@@ -87,12 +87,12 @@
         },
         {
           "name": "mint",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false
         },
         {
           "name": "payerMintAta",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false
         },
         {
@@ -102,12 +102,78 @@
         },
         {
           "name": "payerQuoteMintAta",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false
         },
         {
           "name": "vault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "rent",
           "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "associatedTokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "quantity",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "redeem",
+      "accounts": [
+        {
+          "name": "tokenManager",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "mint",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "payerMintAta",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "quoteMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "payerQuoteMintAta",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "vault",
+          "isMut": true,
           "isSigner": false
         },
         {
@@ -229,8 +295,8 @@
   "errors": [
     {
       "code": 6000,
-      "name": "CustomError",
-      "msg": "Custom error message"
+      "name": "InvalidQuoteMintAddress",
+      "msg": "Invalid quote mint address"
     }
   ],
   "metadata": {

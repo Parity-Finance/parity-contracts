@@ -7,7 +7,7 @@ use anchor_spl::{
     },
 };
 
-use crate::TokenManager;
+use crate::{SoldIssuanceError, TokenManager};
 
 #[derive(Accounts)]
 pub struct RedeemTokens<'info> {
@@ -17,21 +17,28 @@ pub struct RedeemTokens<'info> {
         mut,
         seeds = [b"mint"],
         bump,
-        mint::authority = mint,
+        mint::authority = token_manager.key(),
+        mint::decimals = token_manager.mint_decimals
     )]
     pub mint: Account<'info, Mint>,
     #[account(
+        mut,
         associated_token::mint = mint,
         associated_token::authority = payer,
     )]
     pub payer_mint_ata: Account<'info, TokenAccount>,
+    #[account(
+        address = token_manager.quote_mint @ SoldIssuanceError::InvalidQuoteMintAddress
+    )]
     pub quote_mint: Account<'info, Mint>,
     #[account(
+        mut,
         associated_token::mint = quote_mint,
         associated_token::authority = payer,
     )]
     pub payer_quote_mint_ata: Account<'info, TokenAccount>,
     #[account(
+        mut,
         associated_token::mint = quote_mint,
         associated_token::authority = token_manager,
     )]
@@ -49,8 +56,6 @@ pub fn handler(ctx: Context<RedeemTokens>, quantity: u64) -> Result<()> {
 
     let bump = token_manager.bump; // Corrected to be a slice of a slice of a byte slice
     let signer_seeds: &[&[&[u8]]] = &[&[b"token-manager", &[bump]]];
-
-    let token_manager = &mut ctx.accounts.token_manager;
 
     burn(
         CpiContext::new(

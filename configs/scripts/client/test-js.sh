@@ -11,4 +11,4 @@ ARGS=$*
 # js client tests folder
 cd ${WORKING_DIR}/clients/js
 
-pnpm install && pnpm build && pnpm test ${ARGS}
+yarn install && yarn build && yarn test ${ARGS}
