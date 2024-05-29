@@ -18,9 +18,12 @@ import {
 import {
   Serializer,
   array,
+  bytes,
   mapSerializer,
   string,
   struct,
+  u16,
+  u64,
   u8,
 } from '@metaplex-foundation/umi/serializers';
 import {
@@ -51,6 +54,9 @@ export type InitializeInstructionData = {
   symbol: string;
   uri: string;
   decimals: number;
+  exchangeRate: bigint;
+  emergencyFundBasisPoints: number;
+  merkleRoot: Uint8Array;
 };
 
 export type InitializeInstructionDataArgs = {
@@ -58,6 +64,9 @@ export type InitializeInstructionDataArgs = {
   symbol: string;
   uri: string;
   decimals: number;
+  exchangeRate: number | bigint;
+  emergencyFundBasisPoints: number;
+  merkleRoot: Uint8Array;
 };
 
 export function getInitializeInstructionDataSerializer(): Serializer<
@@ -76,6 +85,9 @@ export function getInitializeInstructionDataSerializer(): Serializer<
         ['symbol', string()],
         ['uri', string()],
         ['decimals', u8()],
+        ['exchangeRate', u64()],
+        ['emergencyFundBasisPoints', u16()],
+        ['merkleRoot', bytes({ size: 32 })],
       ],
       { description: 'InitializeInstructionData' }
     ),

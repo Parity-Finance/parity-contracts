@@ -18,6 +18,7 @@ import {
 import {
   Serializer,
   array,
+  bytes,
   mapSerializer,
   struct,
   u64,
@@ -48,9 +49,13 @@ export type MintInstructionAccounts = {
 export type MintInstructionData = {
   discriminator: Array<number>;
   quantity: bigint;
+  proof: Array<Uint8Array>;
 };
 
-export type MintInstructionDataArgs = { quantity: number | bigint };
+export type MintInstructionDataArgs = {
+  quantity: number | bigint;
+  proof: Array<Uint8Array>;
+};
 
 export function getMintInstructionDataSerializer(): Serializer<
   MintInstructionDataArgs,
@@ -61,6 +66,7 @@ export function getMintInstructionDataSerializer(): Serializer<
       [
         ['discriminator', array(u8(), { size: 8 })],
         ['quantity', u64()],
+        ['proof', array(bytes({ size: 32 }))],
       ],
       { description: 'MintInstructionData' }
     ),

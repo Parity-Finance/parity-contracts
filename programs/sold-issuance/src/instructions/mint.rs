@@ -4,8 +4,7 @@ use anchor_spl::{
     token::{mint_to, transfer_checked, Mint, MintTo, Token, TokenAccount, TransferChecked},
 };
 
-use crate::SoldIssuanceError;
-use crate::TokenManager;
+use crate::{verify_merkle_proof, SoldIssuanceError, TokenManager};
 
 #[derive(Accounts)]
 pub struct MintTokens<'info> {
@@ -15,8 +14,9 @@ pub struct MintTokens<'info> {
         mut,
         seeds = [b"mint"],
         bump,
-        mint::authority = token_manager.key(),
-        mint::decimals = token_manager.mint_decimals
+        mint::authority = token_manager,
+        mint::decimals = token_manager.mint_decimals,
+        address = token_manager.mint,
     )]
     // Stable Mint
     pub mint: Account<'info, Mint>,
@@ -54,11 +54,33 @@ pub struct MintTokens<'info> {
     pub associated_token_program: Program<'info, AssociatedToken>,
 }
 
-pub fn handler(ctx: Context<MintTokens>, quantity: u64) -> Result<()> {
+pub fn handler(ctx: Context<MintTokens>, quantity: u64, proof: Vec<[u8; 32]>) -> Result<()> {
     let token_manager = &mut ctx.accounts.token_manager;
+    let payer = &ctx.accounts.payer;
+    let mint = &ctx.accounts.mint;
+    let quote_mint = &ctx.accounts.quote_mint;
 
+    // Paused Check
+    if !token_manager.active {
+        return err!(SoldIssuanceError::MintAndRedemptionsPaused);
+    }
+
+    // Allow List Check
+    let leaf = solana_program::keccak::hashv(&[payer.key().to_string().as_bytes()]);
+
+    let merkle_root = &token_manager.merkle_root;
+
+    if !verify_merkle_proof(proof, merkle_root, &leaf.0) {
+        return err!(SoldIssuanceError::AddressNotFoundInAllowedList);
+    }
+
+    // Minting
     let bump = token_manager.bump; // Corrected to be a slice of a slice of a byte slice
     let signer_seeds: &[&[&[u8]]] = &[&[b"token-manager", &[bump]]];
+
+    let mint_amount = quantity
+        .checked_mul(10u64.pow(mint.decimals.into()))
+        .ok_or(SoldIssuanceError::CalculationOverflow)?;
 
     mint_to(
         CpiContext::new_with_signer(
@@ -70,8 +92,14 @@ pub fn handler(ctx: Context<MintTokens>, quantity: u64) -> Result<()> {
             },
             signer_seeds,
         ),
-        quantity,
+        mint_amount,
     )?;
+
+    let quote_amount = quantity
+        .checked_mul(10u64.pow(quote_mint.decimals.into()))
+        .ok_or(SoldIssuanceError::CalculationOverflow)?
+        .checked_mul(token_manager.exchange_rate)
+        .ok_or(SoldIssuanceError::CalculationOverflow)?;
 
     transfer_checked(
         CpiContext::new(
@@ -83,12 +111,13 @@ pub fn handler(ctx: Context<MintTokens>, quantity: u64) -> Result<()> {
                 authority: ctx.accounts.payer.to_account_info(),
             },
         ),
-        quantity,
-        6,
+        quote_amount,
+        ctx.accounts.quote_mint.decimals,
     )?;
 
     // Update token_manager
-    token_manager.total_supply += quantity;
+    token_manager.total_supply += mint_amount;
+    token_manager.total_collateral += quote_amount;
 
     Ok(())
 }

@@ -6,7 +6,11 @@
  * @see https://github.com/metaplex-foundation/kinobi
  */
 
+export * from './depositFunds';
 export * from './initialize';
 export * from './initializeStakePool';
 export * from './mint';
 export * from './redeem';
+export * from './toggleActive';
+export * from './updateMerkleRoot';
+export * from './withdrawFunds';

@@ -18,7 +18,6 @@ import {
 import {
   Serializer,
   array,
-  bytes,
   mapSerializer,
   struct,
   u64,
@@ -31,14 +30,12 @@ import {
 } from '../shared';
 
 // Accounts.
-export type RedeemInstructionAccounts = {
+export type WithdrawFundsInstructionAccounts = {
   tokenManager: PublicKey | Pda;
-  mint: PublicKey | Pda;
-  payerMintAta: PublicKey | Pda;
   quoteMint: PublicKey | Pda;
-  payerQuoteMintAta: PublicKey | Pda;
+  authorityQuoteMintAta: PublicKey | Pda;
   vault: PublicKey | Pda;
-  payer?: Signer;
+  authority?: Signer;
   rent?: PublicKey | Pda;
   systemProgram?: PublicKey | Pda;
   tokenProgram?: PublicKey | Pda;
@@ -46,44 +43,46 @@ export type RedeemInstructionAccounts = {
 };
 
 // Data.
-export type RedeemInstructionData = {
+export type WithdrawFundsInstructionData = {
   discriminator: Array<number>;
   quantity: bigint;
-  proof: Array<Uint8Array>;
 };
 
-export type RedeemInstructionDataArgs = {
-  quantity: number | bigint;
-  proof: Array<Uint8Array>;
-};
+export type WithdrawFundsInstructionDataArgs = { quantity: number | bigint };
 
-export function getRedeemInstructionDataSerializer(): Serializer<
-  RedeemInstructionDataArgs,
-  RedeemInstructionData
+export function getWithdrawFundsInstructionDataSerializer(): Serializer<
+  WithdrawFundsInstructionDataArgs,
+  WithdrawFundsInstructionData
 > {
-  return mapSerializer<RedeemInstructionDataArgs, any, RedeemInstructionData>(
-    struct<RedeemInstructionData>(
+  return mapSerializer<
+    WithdrawFundsInstructionDataArgs,
+    any,
+    WithdrawFundsInstructionData
+  >(
+    struct<WithdrawFundsInstructionData>(
       [
         ['discriminator', array(u8(), { size: 8 })],
         ['quantity', u64()],
-        ['proof', array(bytes({ size: 32 }))],
       ],
-      { description: 'RedeemInstructionData' }
+      { description: 'WithdrawFundsInstructionData' }
     ),
     (value) => ({
       ...value,
-      discriminator: [184, 12, 86, 149, 70, 196, 97, 225],
+      discriminator: [241, 36, 29, 111, 208, 31, 104, 217],
     })
-  ) as Serializer<RedeemInstructionDataArgs, RedeemInstructionData>;
+  ) as Serializer<
+    WithdrawFundsInstructionDataArgs,
+    WithdrawFundsInstructionData
+  >;
 }
 
 // Args.
-export type RedeemInstructionArgs = RedeemInstructionDataArgs;
+export type WithdrawFundsInstructionArgs = WithdrawFundsInstructionDataArgs;
 
 // Instruction.
-export function redeem(
-  context: Pick<Context, 'payer' | 'programs'>,
-  input: RedeemInstructionAccounts & RedeemInstructionArgs
+export function withdrawFunds(
+  context: Pick<Context, 'identity' | 'programs'>,
+  input: WithdrawFundsInstructionAccounts & WithdrawFundsInstructionArgs
 ): TransactionBuilder {
   // Program ID.
   const programId = context.programs.getPublicKey(
@@ -98,56 +97,50 @@ export function redeem(
       isWritable: true as boolean,
       value: input.tokenManager ?? null,
     },
-    mint: { index: 1, isWritable: true as boolean, value: input.mint ?? null },
-    payerMintAta: {
-      index: 2,
-      isWritable: true as boolean,
-      value: input.payerMintAta ?? null,
-    },
     quoteMint: {
-      index: 3,
+      index: 1,
       isWritable: false as boolean,
       value: input.quoteMint ?? null,
     },
-    payerQuoteMintAta: {
-      index: 4,
+    authorityQuoteMintAta: {
+      index: 2,
       isWritable: true as boolean,
-      value: input.payerQuoteMintAta ?? null,
+      value: input.authorityQuoteMintAta ?? null,
     },
     vault: {
-      index: 5,
+      index: 3,
       isWritable: true as boolean,
       value: input.vault ?? null,
     },
-    payer: {
-      index: 6,
+    authority: {
+      index: 4,
       isWritable: true as boolean,
-      value: input.payer ?? null,
+      value: input.authority ?? null,
     },
-    rent: { index: 7, isWritable: false as boolean, value: input.rent ?? null },
+    rent: { index: 5, isWritable: false as boolean, value: input.rent ?? null },
     systemProgram: {
-      index: 8,
+      index: 6,
       isWritable: false as boolean,
       value: input.systemProgram ?? null,
     },
     tokenProgram: {
-      index: 9,
+      index: 7,
       isWritable: false as boolean,
       value: input.tokenProgram ?? null,
     },
     associatedTokenProgram: {
-      index: 10,
+      index: 8,
       isWritable: false as boolean,
       value: input.associatedTokenProgram ?? null,
     },
   } satisfies ResolvedAccountsWithIndices;
 
   // Arguments.
-  const resolvedArgs: RedeemInstructionArgs = { ...input };
+  const resolvedArgs: WithdrawFundsInstructionArgs = { ...input };
 
   // Default values.
-  if (!resolvedAccounts.payer.value) {
-    resolvedAccounts.payer.value = context.payer;
+  if (!resolvedAccounts.authority.value) {
+    resolvedAccounts.authority.value = context.identity;
   }
   if (!resolvedAccounts.rent.value) {
     resolvedAccounts.rent.value = publicKey(
@@ -182,8 +175,8 @@ export function redeem(
   );
 
   // Data.
-  const data = getRedeemInstructionDataSerializer().serialize(
-    resolvedArgs as RedeemInstructionDataArgs
+  const data = getWithdrawFundsInstructionDataSerializer().serialize(
+    resolvedArgs as WithdrawFundsInstructionDataArgs
   );
 
   // Bytes Created On Chain.

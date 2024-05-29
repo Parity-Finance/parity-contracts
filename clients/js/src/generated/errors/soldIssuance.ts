@@ -28,6 +28,111 @@ export class SiInvalidQuoteMintAddressError extends ProgramError {
 codeToErrorMap.set(0x1770, SiInvalidQuoteMintAddressError);
 nameToErrorMap.set('InvalidQuoteMintAddress', SiInvalidQuoteMintAddressError);
 
+/** MintAndRedemptionsPaused: Mint and redemptions paused */
+export class SiMintAndRedemptionsPausedError extends ProgramError {
+  override readonly name: string = 'MintAndRedemptionsPaused';
+
+  readonly code: number = 0x1771; // 6001
+
+  constructor(program: Program, cause?: Error) {
+    super('Mint and redemptions paused', program, cause);
+  }
+}
+codeToErrorMap.set(0x1771, SiMintAndRedemptionsPausedError);
+nameToErrorMap.set('MintAndRedemptionsPaused', SiMintAndRedemptionsPausedError);
+
+/** AddressNotFoundInAllowedList: Address not found in allowed list */
+export class SiAddressNotFoundInAllowedListError extends ProgramError {
+  override readonly name: string = 'AddressNotFoundInAllowedList';
+
+  readonly code: number = 0x1772; // 6002
+
+  constructor(program: Program, cause?: Error) {
+    super('Address not found in allowed list', program, cause);
+  }
+}
+codeToErrorMap.set(0x1772, SiAddressNotFoundInAllowedListError);
+nameToErrorMap.set(
+  'AddressNotFoundInAllowedList',
+  SiAddressNotFoundInAllowedListError
+);
+
+/** MissingAllowedListProof: Missing allowed list proof */
+export class SiMissingAllowedListProofError extends ProgramError {
+  override readonly name: string = 'MissingAllowedListProof';
+
+  readonly code: number = 0x1773; // 6003
+
+  constructor(program: Program, cause?: Error) {
+    super('Missing allowed list proof', program, cause);
+  }
+}
+codeToErrorMap.set(0x1773, SiMissingAllowedListProofError);
+nameToErrorMap.set('MissingAllowedListProof', SiMissingAllowedListProofError);
+
+/** TokenManagerStatusUnchanged: Token manager status unchanged */
+export class SiTokenManagerStatusUnchangedError extends ProgramError {
+  override readonly name: string = 'TokenManagerStatusUnchanged';
+
+  readonly code: number = 0x1774; // 6004
+
+  constructor(program: Program, cause?: Error) {
+    super('Token manager status unchanged', program, cause);
+  }
+}
+codeToErrorMap.set(0x1774, SiTokenManagerStatusUnchangedError);
+nameToErrorMap.set(
+  'TokenManagerStatusUnchanged',
+  SiTokenManagerStatusUnchangedError
+);
+
+/** ExcessiveDeposit: Excessive Deposit, collateral shouldn't exceed 100% */
+export class SiExcessiveDepositError extends ProgramError {
+  override readonly name: string = 'ExcessiveDeposit';
+
+  readonly code: number = 0x1775; // 6005
+
+  constructor(program: Program, cause?: Error) {
+    super(
+      "Excessive Deposit, collateral shouldn't exceed 100%",
+      program,
+      cause
+    );
+  }
+}
+codeToErrorMap.set(0x1775, SiExcessiveDepositError);
+nameToErrorMap.set('ExcessiveDeposit', SiExcessiveDepositError);
+
+/** ExcessiveWithdrawal: Excessive Withdrawal, collateral shouldn't be less than collateral threshold */
+export class SiExcessiveWithdrawalError extends ProgramError {
+  override readonly name: string = 'ExcessiveWithdrawal';
+
+  readonly code: number = 0x1776; // 6006
+
+  constructor(program: Program, cause?: Error) {
+    super(
+      "Excessive Withdrawal, collateral shouldn't be less than collateral threshold",
+      program,
+      cause
+    );
+  }
+}
+codeToErrorMap.set(0x1776, SiExcessiveWithdrawalError);
+nameToErrorMap.set('ExcessiveWithdrawal', SiExcessiveWithdrawalError);
+
+/** CalculationOverflow: Calculation overflow */
+export class SiCalculationOverflowError extends ProgramError {
+  override readonly name: string = 'CalculationOverflow';
+
+  readonly code: number = 0x1777; // 6007
+
+  constructor(program: Program, cause?: Error) {
+    super('Calculation overflow', program, cause);
+  }
+}
+codeToErrorMap.set(0x1777, SiCalculationOverflowError);
+nameToErrorMap.set('CalculationOverflow', SiCalculationOverflowError);
+
 /**
  * Attempts to resolve a custom program error from the provided error code.
  * @category Errors

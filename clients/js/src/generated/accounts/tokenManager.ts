@@ -23,10 +23,12 @@ import {
   Serializer,
   array,
   bool,
+  bytes,
   mapSerializer,
   publicKey as publicKeySerializer,
   string,
   struct,
+  u16,
   u64,
   u8,
 } from '@metaplex-foundation/umi/serializers';
@@ -36,28 +38,38 @@ export type TokenManager = Account<TokenManagerAccountData>;
 export type TokenManagerAccountData = {
   discriminator: Array<number>;
   tokenManager: PublicKey;
+  bump: number;
   mintRedeemAuthorities: Array<PublicKey>;
   depositWithdrawAuthorities: Array<PublicKey>;
   pauseAuthorities: Array<PublicKey>;
   mint: PublicKey;
   mintDecimals: number;
   quoteMint: PublicKey;
+  quoteMintDecimals: number;
+  exchangeRate: bigint;
   totalSupply: bigint;
+  totalCollateral: bigint;
+  emergencyFundBasisPoints: number;
   active: boolean;
-  bump: number;
+  merkleRoot: Uint8Array;
 };
 
 export type TokenManagerAccountDataArgs = {
   tokenManager: PublicKey;
+  bump: number;
   mintRedeemAuthorities: Array<PublicKey>;
   depositWithdrawAuthorities: Array<PublicKey>;
   pauseAuthorities: Array<PublicKey>;
   mint: PublicKey;
   mintDecimals: number;
   quoteMint: PublicKey;
+  quoteMintDecimals: number;
+  exchangeRate: number | bigint;
   totalSupply: number | bigint;
+  totalCollateral: number | bigint;
+  emergencyFundBasisPoints: number;
   active: boolean;
-  bump: number;
+  merkleRoot: Uint8Array;
 };
 
 export function getTokenManagerAccountDataSerializer(): Serializer<
@@ -73,15 +85,20 @@ export function getTokenManagerAccountDataSerializer(): Serializer<
       [
         ['discriminator', array(u8(), { size: 8 })],
         ['tokenManager', publicKeySerializer()],
+        ['bump', u8()],
         ['mintRedeemAuthorities', array(publicKeySerializer())],
         ['depositWithdrawAuthorities', array(publicKeySerializer())],
         ['pauseAuthorities', array(publicKeySerializer())],
         ['mint', publicKeySerializer()],
         ['mintDecimals', u8()],
         ['quoteMint', publicKeySerializer()],
+        ['quoteMintDecimals', u8()],
+        ['exchangeRate', u64()],
         ['totalSupply', u64()],
+        ['totalCollateral', u64()],
+        ['emergencyFundBasisPoints', u16()],
         ['active', bool()],
-        ['bump', u8()],
+        ['merkleRoot', bytes({ size: 32 })],
       ],
       { description: 'TokenManagerAccountData' }
     ),
@@ -161,27 +178,37 @@ export function getTokenManagerGpaBuilder(
     .registerFields<{
       discriminator: Array<number>;
       tokenManager: PublicKey;
+      bump: number;
       mintRedeemAuthorities: Array<PublicKey>;
       depositWithdrawAuthorities: Array<PublicKey>;
       pauseAuthorities: Array<PublicKey>;
       mint: PublicKey;
       mintDecimals: number;
       quoteMint: PublicKey;
+      quoteMintDecimals: number;
+      exchangeRate: number | bigint;
       totalSupply: number | bigint;
+      totalCollateral: number | bigint;
+      emergencyFundBasisPoints: number;
       active: boolean;
-      bump: number;
+      merkleRoot: Uint8Array;
     }>({
       discriminator: [0, array(u8(), { size: 8 })],
       tokenManager: [8, publicKeySerializer()],
-      mintRedeemAuthorities: [40, array(publicKeySerializer())],
+      bump: [40, u8()],
+      mintRedeemAuthorities: [41, array(publicKeySerializer())],
       depositWithdrawAuthorities: [null, array(publicKeySerializer())],
       pauseAuthorities: [null, array(publicKeySerializer())],
       mint: [null, publicKeySerializer()],
       mintDecimals: [null, u8()],
       quoteMint: [null, publicKeySerializer()],
+      quoteMintDecimals: [null, u8()],
+      exchangeRate: [null, u64()],
       totalSupply: [null, u64()],
+      totalCollateral: [null, u64()],
+      emergencyFundBasisPoints: [null, u16()],
       active: [null, bool()],
-      bump: [null, u8()],
+      merkleRoot: [null, bytes({ size: 32 })],
     })
     .deserializeUsing<TokenManager>((account) =>
       deserializeTokenManager(account)

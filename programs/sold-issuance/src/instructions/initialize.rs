@@ -15,6 +15,8 @@ pub struct InitializeParams {
     pub symbol: String,
     pub uri: String,
     pub decimals: u8,
+    pub exchange_rate: u64,
+    pub emergency_fund_basis_points: u16,
 }
 
 #[derive(Accounts)]
@@ -59,16 +61,20 @@ pub struct Initialize<'info> {
     pub associated_token_program: Program<'info, AssociatedToken>,
 }
 
-pub fn handler(ctx: Context<Initialize>, metadata: InitializeParams) -> Result<()> {
+pub fn handler(
+    ctx: Context<Initialize>,
+    params: InitializeParams,
+    merkle_root: [u8; 32],
+) -> Result<()> {
     let token_manager = &mut ctx.accounts.token_manager;
 
     let bump = ctx.bumps.token_manager; // Corrected to be a slice of a slice of a byte slice
     let signer_seeds: &[&[&[u8]]] = &[&[b"token-manager", &[bump]]];
 
     let token_data: DataV2 = DataV2 {
-        name: metadata.name,
-        symbol: metadata.symbol,
-        uri: metadata.uri,
+        name: params.name,
+        symbol: params.symbol,
+        uri: params.uri,
         seller_fee_basis_points: 0,
         creators: None,
         collection: None,
@@ -94,16 +100,25 @@ pub fn handler(ctx: Context<Initialize>, metadata: InitializeParams) -> Result<(
     msg!("Token mint created successfully.");
 
     let token_manager = &mut ctx.accounts.token_manager;
+
     token_manager.token_manager = token_manager.key();
     token_manager.bump = bump;
-    token_manager.mint = ctx.accounts.mint.key();
-    token_manager.mint_decimals = metadata.decimals;
-    token_manager.quote_mint = ctx.accounts.quote_mint.key();
+    // Authorities
     token_manager.mint_redeem_authorities = vec![];
-    token_manager.total_supply = 0;
     token_manager.deposit_withdraw_authorities = vec![];
     token_manager.pause_authorities = vec![];
+    // Token
+    token_manager.mint = ctx.accounts.mint.key();
+    token_manager.mint_decimals = ctx.accounts.mint.decimals;
+    token_manager.quote_mint = ctx.accounts.quote_mint.key();
+    token_manager.quote_mint_decimals = ctx.accounts.quote_mint.decimals;
+    token_manager.exchange_rate = params.exchange_rate;
+    // Other
+    token_manager.total_supply = 0;
+    token_manager.total_collateral = 0;
+    token_manager.emergency_fund_basis_points = params.emergency_fund_basis_points;
     token_manager.active = true;
+    token_manager.merkle_root = merkle_root;
 
     Ok(())
 }
