@@ -1,6 +1,7 @@
 Authorities Model and Check implementation
 ~~Merkle Tree AllowList~~
 ~~Withdraw Deposit Funds from Vault~~
+Refactor to set exchange rate decimals
 
 Tests
 - ~~Pause Test~~
@@ -8,6 +9,6 @@ Tests
 - ~~AllowList update test~~
 - ~~Check withdrawing works or doesn't work~~
 - ~~Withdraw Deposit Controls~~
+- ~~Different exchange_rate tests~~
 
-Authority Tests
-Different exchange_rate tests
+- Authority Tests

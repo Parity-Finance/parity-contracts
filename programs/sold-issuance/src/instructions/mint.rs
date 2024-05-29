@@ -57,8 +57,6 @@ pub struct MintTokens<'info> {
 pub fn handler(ctx: Context<MintTokens>, quantity: u64, proof: Vec<[u8; 32]>) -> Result<()> {
     let token_manager = &mut ctx.accounts.token_manager;
     let payer = &ctx.accounts.payer;
-    let mint = &ctx.accounts.mint;
-    let quote_mint = &ctx.accounts.quote_mint;
 
     // Paused Check
     if !token_manager.active {
@@ -79,7 +77,7 @@ pub fn handler(ctx: Context<MintTokens>, quantity: u64, proof: Vec<[u8; 32]>) ->
     let signer_seeds: &[&[&[u8]]] = &[&[b"token-manager", &[bump]]];
 
     let mint_amount = quantity
-        .checked_mul(10u64.pow(mint.decimals.into()))
+        .checked_mul(10u64.pow(token_manager.mint_decimals.into()))
         .ok_or(SoldIssuanceError::CalculationOverflow)?;
 
     mint_to(
@@ -96,7 +94,7 @@ pub fn handler(ctx: Context<MintTokens>, quantity: u64, proof: Vec<[u8; 32]>) ->
     )?;
 
     let quote_amount = quantity
-        .checked_mul(10u64.pow(quote_mint.decimals.into()))
+        .checked_mul(10u64.pow(token_manager.quote_mint_decimals.into()))
         .ok_or(SoldIssuanceError::CalculationOverflow)?
         .checked_mul(token_manager.exchange_rate)
         .ok_or(SoldIssuanceError::CalculationOverflow)?;
@@ -112,7 +110,7 @@ pub fn handler(ctx: Context<MintTokens>, quantity: u64, proof: Vec<[u8; 32]>) ->
             },
         ),
         quote_amount,
-        ctx.accounts.quote_mint.decimals,
+        token_manager.quote_mint_decimals,
     )?;
 
     // Update token_manager

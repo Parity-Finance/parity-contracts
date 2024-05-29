@@ -10,6 +10,7 @@ import {
   Context,
   Pda,
   PublicKey,
+  Signer,
   TransactionBuilder,
   transactionBuilder,
 } from '@metaplex-foundation/umi';
@@ -30,6 +31,7 @@ import {
 // Accounts.
 export type ToggleActiveInstructionAccounts = {
   tokenManager: PublicKey | Pda;
+  authority?: Signer;
 };
 
 // Data.
@@ -68,7 +70,7 @@ export type ToggleActiveInstructionArgs = ToggleActiveInstructionDataArgs;
 
 // Instruction.
 export function toggleActive(
-  context: Pick<Context, 'programs'>,
+  context: Pick<Context, 'identity' | 'programs'>,
   input: ToggleActiveInstructionAccounts & ToggleActiveInstructionArgs
 ): TransactionBuilder {
   // Program ID.
@@ -84,10 +86,20 @@ export function toggleActive(
       isWritable: true as boolean,
       value: input.tokenManager ?? null,
     },
+    authority: {
+      index: 1,
+      isWritable: false as boolean,
+      value: input.authority ?? null,
+    },
   } satisfies ResolvedAccountsWithIndices;
 
   // Arguments.
   const resolvedArgs: ToggleActiveInstructionArgs = { ...input };
+
+  // Default values.
+  if (!resolvedAccounts.authority.value) {
+    resolvedAccounts.authority.value = context.identity;
+  }
 
   // Accounts in order.
   const orderedAccounts: ResolvedAccount[] = Object.values(

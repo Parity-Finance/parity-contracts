@@ -55,7 +55,11 @@ pub fn handler(ctx: Context<DepositFunds>, quantity: u64) -> Result<()> {
         .ok_or(SoldIssuanceError::CalculationOverflow)?;
     let max_collateral = token_manager
         .total_supply
+        .checked_div(10u64.pow(token_manager.mint_decimals.into()))
+        .ok_or(SoldIssuanceError::CalculationOverflow)?
         .checked_mul(token_manager.exchange_rate)
+        .ok_or(SoldIssuanceError::CalculationOverflow)?
+        .checked_mul(10u64.pow(token_manager.quote_mint_decimals.into()))
         .ok_or(SoldIssuanceError::CalculationOverflow)?;
 
     if new_total_collateral > max_collateral {

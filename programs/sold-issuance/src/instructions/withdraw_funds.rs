@@ -54,9 +54,15 @@ pub fn handler(ctx: Context<WithdrawFunds>, quantity: u64) -> Result<()> {
     // Check if withdrawal amount exceeds threshold of the total collateral
     let min_required_collateral = token_manager
         .total_supply
+        .checked_div(10u64.pow(token_manager.mint_decimals.into()))
+        .ok_or(SoldIssuanceError::CalculationOverflow)?
+        .checked_mul(token_manager.exchange_rate)
+        .ok_or(SoldIssuanceError::CalculationOverflow)?
         .checked_mul(token_manager.emergency_fund_basis_points as u64)
         .ok_or(SoldIssuanceError::CalculationOverflow)?
         .checked_div(10000)
+        .ok_or(SoldIssuanceError::CalculationOverflow)?
+        .checked_mul(10u64.pow(token_manager.quote_mint_decimals.into()))
         .ok_or(SoldIssuanceError::CalculationOverflow)?;
 
     let new_total_collateral = token_manager
