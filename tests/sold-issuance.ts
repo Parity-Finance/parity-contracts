@@ -35,10 +35,10 @@ describe.only("sold-contract", () => {
   let tokenManager: Pda
 
   // Test Controls
-  const mintDecimals = 6;
+  const mintDecimals = 3;
   const quoteMintDecimals = 5;
-  const emergencyFundBasisPoints = 800; // 10% have to stay in the vault
-  const exchangeRate = 1;
+  const emergencyFundBasisPoints = 1100; // 10% have to stay in the vault
+  const exchangeRate = 3;
 
   const allowedWallets = [keypair.publicKey.toBase58()]
 

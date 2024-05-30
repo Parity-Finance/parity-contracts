@@ -101,7 +101,6 @@ pub fn handler(
 
     let token_manager = &mut ctx.accounts.token_manager;
 
-    token_manager.token_manager = token_manager.key();
     token_manager.bump = bump;
     // Authorities
     token_manager.mint_redeem_authorities = vec![];

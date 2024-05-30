@@ -106,7 +106,7 @@ pub fn handler(ctx: Context<RedeemTokens>, quantity: u64, proof: Vec<[u8; 32]>) 
             signer_seeds,
         ),
         quote_amount,
-        ctx.accounts.quote_mint.decimals,
+        token_manager.quote_mint_decimals,
     )?;
 
     // Update token_manager
