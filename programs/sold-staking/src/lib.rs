@@ -22,11 +22,11 @@ pub mod sold_staking {
         initialize_stake_pool::handler(ctx, params)
     }
 
-    pub fn stake(ctx: Context<Stake>, amount: u64) -> Result<()> {
-        stake::handler(ctx, amount)
+    pub fn stake(ctx: Context<Stake>, quantity: u64) -> Result<()> {
+        stake::handler(ctx, quantity)
     }
 
-    pub fn unstake(ctx: Context<Unstake>, amount: u64) -> Result<()> {
-        unstake::handler(ctx, amount)
+    pub fn unstake(ctx: Context<Unstake>, quantity: u64) -> Result<()> {
+        unstake::handler(ctx, quantity)
     }
 }

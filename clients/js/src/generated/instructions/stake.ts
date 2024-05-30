@@ -19,7 +19,6 @@ import {
   Serializer,
   array,
   mapSerializer,
-  string,
   struct,
   u64,
   u8,
@@ -31,75 +30,54 @@ import {
 } from '../shared';
 
 // Accounts.
-export type InitializeStakePoolInstructionAccounts = {
-  /** SPL Token Mint of the underlying token to be deposited for staking */
-  baseMint: PublicKey | Pda;
-  xMint: PublicKey | Pda;
-  metadata: PublicKey | Pda;
+export type StakeInstructionAccounts = {
   stakePool: PublicKey | Pda;
+  baseMint: PublicKey | Pda;
+  payerBaseMintAta: PublicKey | Pda;
+  xMint: PublicKey | Pda;
+  payerXMintAta: PublicKey | Pda;
   vault: PublicKey | Pda;
   payer?: Signer;
   rent?: PublicKey | Pda;
   systemProgram?: PublicKey | Pda;
   tokenProgram?: PublicKey | Pda;
-  tokenMetadataProgram?: PublicKey | Pda;
   associatedTokenProgram: PublicKey | Pda;
 };
 
 // Data.
-export type InitializeStakePoolInstructionData = {
+export type StakeInstructionData = {
   discriminator: Array<number>;
-  name: string;
-  symbol: string;
-  uri: string;
-  decimals: number;
-  initialExchangeRate: bigint;
+  quantity: bigint;
 };
 
-export type InitializeStakePoolInstructionDataArgs = {
-  name: string;
-  symbol: string;
-  uri: string;
-  decimals: number;
-  initialExchangeRate: number | bigint;
-};
+export type StakeInstructionDataArgs = { quantity: number | bigint };
 
-export function getInitializeStakePoolInstructionDataSerializer(): Serializer<
-  InitializeStakePoolInstructionDataArgs,
-  InitializeStakePoolInstructionData
+export function getStakeInstructionDataSerializer(): Serializer<
+  StakeInstructionDataArgs,
+  StakeInstructionData
 > {
-  return mapSerializer<
-    InitializeStakePoolInstructionDataArgs,
-    any,
-    InitializeStakePoolInstructionData
-  >(
-    struct<InitializeStakePoolInstructionData>(
+  return mapSerializer<StakeInstructionDataArgs, any, StakeInstructionData>(
+    struct<StakeInstructionData>(
       [
         ['discriminator', array(u8(), { size: 8 })],
-        ['name', string()],
-        ['symbol', string()],
-        ['uri', string()],
-        ['decimals', u8()],
-        ['initialExchangeRate', u64()],
+        ['quantity', u64()],
       ],
-      { description: 'InitializeStakePoolInstructionData' }
+      { description: 'StakeInstructionData' }
     ),
-    (value) => ({ ...value, discriminator: [48, 189, 243, 73, 19, 67, 36, 83] })
-  ) as Serializer<
-    InitializeStakePoolInstructionDataArgs,
-    InitializeStakePoolInstructionData
-  >;
+    (value) => ({
+      ...value,
+      discriminator: [206, 176, 202, 18, 200, 209, 179, 108],
+    })
+  ) as Serializer<StakeInstructionDataArgs, StakeInstructionData>;
 }
 
 // Args.
-export type InitializeStakePoolInstructionArgs =
-  InitializeStakePoolInstructionDataArgs;
+export type StakeInstructionArgs = StakeInstructionDataArgs;
 
 // Instruction.
-export function initializeStakePool(
+export function stake(
   context: Pick<Context, 'payer' | 'programs'>,
-  input: InitializeStakePoolInstructionAccounts &
-    InitializeStakePoolInstructionArgs
+  input: StakeInstructionAccounts & StakeInstructionArgs
 ): TransactionBuilder {
   // Program ID.
   const programId = context.programs.getPublicKey(
@@ -109,51 +87,51 @@ export function initializeStakePool(
 
   // Accounts.
   const resolvedAccounts = {
-    baseMint: {
-      index: 0,
-      isWritable: false as boolean,
-      value: input.baseMint ?? null,
-    },
-    xMint: {
-      index: 1,
-      isWritable: false as boolean,
-      value: input.xMint ?? null,
-    },
-    metadata: {
-      index: 2,
-      isWritable: true as boolean,
-      value: input.metadata ?? null,
-    },
     stakePool: {
-      index: 3,
+      index: 0,
       isWritable: true as boolean,
       value: input.stakePool ?? null,
     },
-    vault: {
+    baseMint: {
+      index: 1,
+      isWritable: true as boolean,
+      value: input.baseMint ?? null,
+    },
+    payerBaseMintAta: {
+      index: 2,
+      isWritable: true as boolean,
+      value: input.payerBaseMintAta ?? null,
+    },
+    xMint: {
+      index: 3,
+      isWritable: false as boolean,
+      value: input.xMint ?? null,
+    },
+    payerXMintAta: {
       index: 4,
+      isWritable: true as boolean,
+      value: input.payerXMintAta ?? null,
+    },
+    vault: {
+      index: 5,
       isWritable: true as boolean,
       value: input.vault ?? null,
     },
     payer: {
-      index: 5,
+      index: 6,
       isWritable: true as boolean,
       value: input.payer ?? null,
     },
-    rent: { index: 6, isWritable: false as boolean, value: input.rent ?? null },
+    rent: { index: 7, isWritable: false as boolean, value: input.rent ?? null },
     systemProgram: {
-      index: 7,
+      index: 8,
       isWritable: false as boolean,
       value: input.systemProgram ?? null,
     },
     tokenProgram: {
-      index: 8,
-      isWritable: false as boolean,
-      value: input.tokenProgram ?? null,
-    },
-    tokenMetadataProgram: {
       index: 9,
       isWritable: false as boolean,
-      value: input.tokenMetadataProgram ?? null,
+      value: input.tokenProgram ?? null,
     },
     associatedTokenProgram: {
       index: 10,
@@ -163,7 +141,7 @@ export function initializeStakePool(
   } satisfies ResolvedAccountsWithIndices;
 
   // Arguments.
-  const resolvedArgs: InitializeStakePoolInstructionArgs = { ...input };
+  const resolvedArgs: StakeInstructionArgs = { ...input };
 
   // Default values.
   if (!resolvedAccounts.payer.value) {
@@ -188,13 +166,6 @@ export function initializeStakePool(
     );
     resolvedAccounts.tokenProgram.isWritable = false;
   }
-  if (!resolvedAccounts.tokenMetadataProgram.value) {
-    resolvedAccounts.tokenMetadataProgram.value = context.programs.getPublicKey(
-      'mplTokenMetadata',
-      'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s'
-    );
-    resolvedAccounts.tokenMetadataProgram.isWritable = false;
-  }
 
   // Accounts in order.
   const orderedAccounts: ResolvedAccount[] = Object.values(
@@ -209,8 +180,8 @@ export function initializeStakePool(
   );
 
   // Data.
-  const data = getInitializeStakePoolInstructionDataSerializer().serialize(
-    resolvedArgs as InitializeStakePoolInstructionDataArgs
+  const data = getStakeInstructionDataSerializer().serialize(
+    resolvedArgs as StakeInstructionDataArgs
   );
 
   // Bytes Created On Chain.

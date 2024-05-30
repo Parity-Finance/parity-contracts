@@ -407,10 +407,6 @@
         "kind": "struct",
         "fields": [
           {
-            "name": "tokenManager",
-            "type": "publicKey"
-          },
-          {
             "name": "bump",
             "type": "u8"
           },

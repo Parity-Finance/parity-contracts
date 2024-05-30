@@ -26,6 +26,7 @@ pub struct InitializeStakePool<'info> {
     /// SPL Token Mint of the underlying token to be deposited for staking
     pub base_mint: Account<'info, Mint>,
     pub x_mint: Account<'info, Mint>,
+    /// CHECK: New Metaplex Account being created
     #[account(mut)]
     pub metadata: UncheckedAccount<'info>,
     #[account(

@@ -11,6 +11,8 @@ export * from './initialize';
 export * from './initializeStakePool';
 export * from './mint';
 export * from './redeem';
+export * from './stake';
 export * from './toggleActive';
+export * from './unstake';
 export * from './updateMerkleRoot';
 export * from './withdrawFunds';

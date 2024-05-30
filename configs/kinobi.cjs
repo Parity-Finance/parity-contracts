@@ -18,12 +18,17 @@ kinobi.update(
   })
 );
 
-// // Update accounts.
+// Update accounts.
 kinobi.update(
   new k.updateAccountsVisitor({
     tokenManager: {
       seeds: [
         k.constantPdaSeedNodeFromString("token-manager")
+      ],
+    },
+    stakePool: {
+      seeds: [
+        k.constantPdaSeedNodeFromString("stake-pool")
       ],
     },
   })

@@ -15,6 +15,124 @@ type ProgramErrorConstructor = new (
 const codeToErrorMap: Map<number, ProgramErrorConstructor> = new Map();
 const nameToErrorMap: Map<string, ProgramErrorConstructor> = new Map();
 
+/** InvalidXMintAddress: Invalid x mint address */
+export class SsInvalidXMintAddressError extends ProgramError {
+  override readonly name: string = 'InvalidXMintAddress';
+
+  readonly code: number = 0x1770; // 6000
+
+  constructor(program: Program, cause?: Error) {
+    super('Invalid x mint address', program, cause);
+  }
+}
+codeToErrorMap.set(0x1770, SsInvalidXMintAddressError);
+nameToErrorMap.set('InvalidXMintAddress', SsInvalidXMintAddressError);
+
+/** MintAndRedemptionsPaused: Mint and redemptions paused */
+export class SsMintAndRedemptionsPausedError extends ProgramError {
+  override readonly name: string = 'MintAndRedemptionsPaused';
+
+  readonly code: number = 0x1771; // 6001
+
+  constructor(program: Program, cause?: Error) {
+    super('Mint and redemptions paused', program, cause);
+  }
+}
+codeToErrorMap.set(0x1771, SsMintAndRedemptionsPausedError);
+nameToErrorMap.set('MintAndRedemptionsPaused', SsMintAndRedemptionsPausedError);
+
+/** AddressNotFoundInAllowedList: Address not found in allowed list */
+export class SsAddressNotFoundInAllowedListError extends ProgramError {
+  override readonly name: string = 'AddressNotFoundInAllowedList';
+
+  readonly code: number = 0x1772; // 6002
+
+  constructor(program: Program, cause?: Error) {
+    super('Address not found in allowed list', program, cause);
+  }
+}
+codeToErrorMap.set(0x1772, SsAddressNotFoundInAllowedListError);
+nameToErrorMap.set(
+  'AddressNotFoundInAllowedList',
+  SsAddressNotFoundInAllowedListError
+);
+
+/** MissingAllowedListProof: Missing allowed list proof */
+export class SsMissingAllowedListProofError extends ProgramError {
+  override readonly name: string = 'MissingAllowedListProof';
+
+  readonly code: number = 0x1773; // 6003
+
+  constructor(program: Program, cause?: Error) {
+    super('Missing allowed list proof', program, cause);
+  }
+}
+codeToErrorMap.set(0x1773, SsMissingAllowedListProofError);
+nameToErrorMap.set('MissingAllowedListProof', SsMissingAllowedListProofError);
+
+/** TokenManagerStatusUnchanged: Token manager status unchanged */
+export class SsTokenManagerStatusUnchangedError extends ProgramError {
+  override readonly name: string = 'TokenManagerStatusUnchanged';
+
+  readonly code: number = 0x1774; // 6004
+
+  constructor(program: Program, cause?: Error) {
+    super('Token manager status unchanged', program, cause);
+  }
+}
+codeToErrorMap.set(0x1774, SsTokenManagerStatusUnchangedError);
+nameToErrorMap.set(
+  'TokenManagerStatusUnchanged',
+  SsTokenManagerStatusUnchangedError
+);
+
+/** ExcessiveDeposit: Excessive Deposit, collateral shouldn't exceed 100% */
+export class SsExcessiveDepositError extends ProgramError {
+  override readonly name: string = 'ExcessiveDeposit';
+
+  readonly code: number = 0x1775; // 6005
+
+  constructor(program: Program, cause?: Error) {
+    super(
+      "Excessive Deposit, collateral shouldn't exceed 100%",
+      program,
+      cause
+    );
+  }
+}
+codeToErrorMap.set(0x1775, SsExcessiveDepositError);
+nameToErrorMap.set('ExcessiveDeposit', SsExcessiveDepositError);
+
+/** ExcessiveWithdrawal: Excessive Withdrawal, collateral shouldn't be less than collateral threshold */
+export class SsExcessiveWithdrawalError extends ProgramError {
+  override readonly name: string = 'ExcessiveWithdrawal';
+
+  readonly code: number = 0x1776; // 6006
+
+  constructor(program: Program, cause?: Error) {
+    super(
+      "Excessive Withdrawal, collateral shouldn't be less than collateral threshold",
+      program,
+      cause
+    );
+  }
+}
+codeToErrorMap.set(0x1776, SsExcessiveWithdrawalError);
+nameToErrorMap.set('ExcessiveWithdrawal', SsExcessiveWithdrawalError);
+
+/** CalculationOverflow: Calculation overflow */
+export class SsCalculationOverflowError extends ProgramError {
+  override readonly name: string = 'CalculationOverflow';
+
+  readonly code: number = 0x1777; // 6007
+
+  constructor(program: Program, cause?: Error) {
+    super('Calculation overflow', program, cause);
+  }
+}
+codeToErrorMap.set(0x1777, SsCalculationOverflowError);
+nameToErrorMap.set('CalculationOverflow', SsCalculationOverflowError);
+
 /**
  * Attempts to resolve a custom program error from the provided error code.
  * @category Errors

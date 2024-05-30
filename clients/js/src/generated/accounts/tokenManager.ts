@@ -37,7 +37,6 @@ export type TokenManager = Account<TokenManagerAccountData>;
 
 export type TokenManagerAccountData = {
   discriminator: Array<number>;
-  tokenManager: PublicKey;
   bump: number;
   mintRedeemAuthorities: Array<PublicKey>;
   depositWithdrawAuthorities: Array<PublicKey>;
@@ -55,7 +54,6 @@ export type TokenManagerAccountData = {
 };
 
 export type TokenManagerAccountDataArgs = {
-  tokenManager: PublicKey;
   bump: number;
   mintRedeemAuthorities: Array<PublicKey>;
   depositWithdrawAuthorities: Array<PublicKey>;
@@ -84,7 +82,6 @@ export function getTokenManagerAccountDataSerializer(): Serializer<
     struct<TokenManagerAccountData>(
       [
         ['discriminator', array(u8(), { size: 8 })],
-        ['tokenManager', publicKeySerializer()],
         ['bump', u8()],
         ['mintRedeemAuthorities', array(publicKeySerializer())],
         ['depositWithdrawAuthorities', array(publicKeySerializer())],
@@ -177,7 +174,6 @@ export function getTokenManagerGpaBuilder(
   return gpaBuilder(context, programId)
     .registerFields<{
       discriminator: Array<number>;
-      tokenManager: PublicKey;
       bump: number;
       mintRedeemAuthorities: Array<PublicKey>;
       depositWithdrawAuthorities: Array<PublicKey>;
@@ -194,9 +190,8 @@ export function getTokenManagerGpaBuilder(
       merkleRoot: Uint8Array;
     }>({
       discriminator: [0, array(u8(), { size: 8 })],
-      tokenManager: [8, publicKeySerializer()],
-      bump: [40, u8()],
-      mintRedeemAuthorities: [41, array(publicKeySerializer())],
+      bump: [8, u8()],
+      mintRedeemAuthorities: [9, array(publicKeySerializer())],
       depositWithdrawAuthorities: [null, array(publicKeySerializer())],
       pauseAuthorities: [null, array(publicKeySerializer())],
       mint: [null, publicKeySerializer()],

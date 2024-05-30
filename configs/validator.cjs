@@ -15,6 +15,11 @@ module.exports = {
         programId: "3ja6s1Pb55nhzhwYp4GY77n972iEQtWX55xoRwP2asCT",
         deployPath: getProgram("sold_issuance.so"),
       },
+      {
+        label: "Sold Staking",
+        programId: "F9pkhuLyu1usfS5p6RCuXxeS2TQsAVqANo1M2iC8ze1t",
+        deployPath: getProgram("sold_staking.so"),
+      },
       // Below are external programs that should be included in the local validator.
       // You may configure which ones to fetch from the cluster when building
       // programs within the `configs/program-scripts/dump.sh` script.

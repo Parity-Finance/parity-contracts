@@ -11,8 +11,332 @@
   "instructions": [
     {
       "name": "initializeStakePool",
-      "accounts": [],
-      "args": []
+      "accounts": [
+        {
+          "name": "baseMint",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "SPL Token Mint of the underlying token to be deposited for staking"
+          ]
+        },
+        {
+          "name": "xMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "metadata",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "stakePool",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "vault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenMetadataProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "associatedTokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "params",
+          "type": {
+            "defined": "InitializeStakePoolParams"
+          }
+        }
+      ]
+    },
+    {
+      "name": "stake",
+      "accounts": [
+        {
+          "name": "stakePool",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "baseMint",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "payerBaseMintAta",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "xMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "payerXMintAta",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "vault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "associatedTokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "quantity",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "unstake",
+      "accounts": [
+        {
+          "name": "stakePool",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "baseMint",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "payerBaseMintAta",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "xMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "payerXMintAta",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "vault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "associatedTokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "quantity",
+          "type": "u64"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "StakePool",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "baseMint",
+            "type": "publicKey"
+          },
+          {
+            "name": "xMint",
+            "type": "publicKey"
+          },
+          {
+            "name": "inceptionTimestamp",
+            "type": "i64"
+          },
+          {
+            "name": "annualYieldRate",
+            "type": "u64"
+          },
+          {
+            "name": "baseBalance",
+            "type": "u64"
+          },
+          {
+            "name": "xSupply",
+            "type": "u64"
+          },
+          {
+            "name": "authority",
+            "type": "publicKey"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "baseMintDecimals",
+            "type": "u8"
+          },
+          {
+            "name": "xMintDecimals",
+            "type": "u8"
+          },
+          {
+            "name": "initialExchangeRate",
+            "type": "u64"
+          }
+        ]
+      }
+    }
+  ],
+  "types": [
+    {
+      "name": "InitializeStakePoolParams",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "symbol",
+            "type": "string"
+          },
+          {
+            "name": "uri",
+            "type": "string"
+          },
+          {
+            "name": "decimals",
+            "type": "u8"
+          },
+          {
+            "name": "initialExchangeRate",
+            "type": "u64"
+          }
+        ]
+      }
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "InvalidXMintAddress",
+      "msg": "Invalid x mint address"
+    },
+    {
+      "code": 6001,
+      "name": "MintAndRedemptionsPaused",
+      "msg": "Mint and redemptions paused"
+    },
+    {
+      "code": 6002,
+      "name": "AddressNotFoundInAllowedList",
+      "msg": "Address not found in allowed list"
+    },
+    {
+      "code": 6003,
+      "name": "MissingAllowedListProof",
+      "msg": "Missing allowed list proof"
+    },
+    {
+      "code": 6004,
+      "name": "TokenManagerStatusUnchanged",
+      "msg": "Token manager status unchanged"
+    },
+    {
+      "code": 6005,
+      "name": "ExcessiveDeposit",
+      "msg": "Excessive Deposit, collateral shouldn't exceed 100%"
+    },
+    {
+      "code": 6006,
+      "name": "ExcessiveWithdrawal",
+      "msg": "Excessive Withdrawal, collateral shouldn't be less than collateral threshold"
+    },
+    {
+      "code": 6007,
+      "name": "CalculationOverflow",
+      "msg": "Calculation overflow"
     }
   ],
   "metadata": {

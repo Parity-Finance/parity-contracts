@@ -8,7 +8,7 @@ import { fromWeb3JsKeypair, fromWeb3JsPublicKey } from "@metaplex-foundation/umi
 import { findMetadataPda } from "@metaplex-foundation/mpl-token-metadata";
 import assert from 'assert';
 
-describe.only("sold-contract", () => {
+describe.only("sold-issuance", () => {
   let umi = createUmi("http://localhost:8899");
   umi.programs.add(createSplAssociatedTokenProgram());
   umi.programs.add(createSplTokenProgram());
