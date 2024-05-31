@@ -76,9 +76,7 @@ pub fn handler(ctx: Context<MintTokens>, quantity: u64, proof: Vec<[u8; 32]>) ->
     let bump = token_manager.bump; // Corrected to be a slice of a slice of a byte slice
     let signer_seeds: &[&[&[u8]]] = &[&[b"token-manager", &[bump]]];
 
-    let mint_amount = quantity
-        .checked_mul(10u64.pow(token_manager.mint_decimals.into()))
-        .ok_or(SoldIssuanceError::CalculationOverflow)?;
+    let mint_amount = quantity;
 
     mint_to(
         CpiContext::new_with_signer(
@@ -93,8 +91,24 @@ pub fn handler(ctx: Context<MintTokens>, quantity: u64, proof: Vec<[u8; 32]>) ->
         mint_amount,
     )?;
 
-    let quote_amount = quantity
-        .checked_mul(10u64.pow(token_manager.quote_mint_decimals.into()))
+    let mint_decimals = token_manager.mint_decimals as i32;
+    let quote_mint_decimals = token_manager.quote_mint_decimals as i32;
+    let decimal_difference = (mint_decimals - quote_mint_decimals).abs() as u32;
+
+    let normalized_quantity = if mint_decimals > quote_mint_decimals {
+        quantity
+            .checked_div(10u64.pow(decimal_difference))
+            .ok_or(SoldIssuanceError::CalculationOverflow)?
+    } else if mint_decimals < quote_mint_decimals {
+        quantity
+            .checked_mul(10u64.pow(decimal_difference))
+            .ok_or(SoldIssuanceError::CalculationOverflow)?
+    } else {
+        quantity
+    };
+
+    let quote_amount = normalized_quantity
+        .checked_div(10u64.pow(token_manager.mint_decimals.into()))
         .ok_or(SoldIssuanceError::CalculationOverflow)?
         .checked_mul(token_manager.exchange_rate)
         .ok_or(SoldIssuanceError::CalculationOverflow)?;

@@ -65,9 +65,13 @@ pub fn handler(ctx: Context<Stake>, quantity: u64) -> Result<()> {
 
     // TODO: Calculation
     let x_amount = quantity
-        .checked_mul(10u64.pow(stake_pool.x_mint_decimals.into()))
+        .checked_div(10u64.pow(stake_pool.base_mint_decimals.into()))
         .ok_or(SoldStakingError::CalculationOverflow)?
         .checked_mul(stake_pool.initial_exchange_rate)
+        .ok_or(SoldStakingError::CalculationOverflow)?
+        .checked_div(10u64.pow(stake_pool.x_mint_decimals.into()))
+        .ok_or(SoldStakingError::CalculationOverflow)?
+        .checked_mul(10u64.pow(stake_pool.x_mint_decimals.into()))
         .ok_or(SoldStakingError::CalculationOverflow)?;
 
     mint_to(
@@ -83,9 +87,7 @@ pub fn handler(ctx: Context<Stake>, quantity: u64) -> Result<()> {
         x_amount,
     )?;
 
-    let base_amount = quantity
-        .checked_mul(10u64.pow(stake_pool.base_mint_decimals.into()))
-        .ok_or(SoldStakingError::CalculationOverflow)?;
+    let base_amount = quantity;
 
     transfer_checked(
         CpiContext::new(

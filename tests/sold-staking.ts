@@ -7,10 +7,8 @@ import { ASSOCIATED_TOKEN_PROGRAM_ID, createMint, getOrCreateAssociatedTokenAcco
 import { fromWeb3JsKeypair, fromWeb3JsPublicKey, toWeb3JsPublicKey } from "@metaplex-foundation/umi-web3js-adapters";
 import { findMetadataPda } from "@metaplex-foundation/mpl-token-metadata";
 import assert from 'assert';
-import { start } from "solana-bankrun";
-import { bs58 } from "@coral-xyz/anchor/dist/cjs/utils/bytes";
 
-describe.only("sold-staking", () => {
+describe("sold-staking", () => {
   let umi = createUmi("http://localhost:8899");
   umi.programs.add(createSplAssociatedTokenProgram());
   umi.programs.add(createSplTokenProgram());
@@ -37,9 +35,10 @@ describe.only("sold-staking", () => {
   let userX: PublicKey = findAssociatedTokenPda(umi, { owner: umi.identity.publicKey, mint: xMint })[0]
 
   // Test Controls
-  const baseMintDecimals = 3;
-  const xMintDecimals = 5;
-  const initialExchangeRate = 1;
+  const baseMintDecimals = 9;
+  const xMintDecimals = 9;
+  const initialExchangeRate = 5 * 10 ** xMintDecimals;
+  const exchangeRateDecimals = xMintDecimals
 
   before(async () => {
     try {
@@ -122,7 +121,7 @@ describe.only("sold-staking", () => {
   });
 
   it("baseMint can be staked for xMint", async () => {
-    const quantity = 10000;
+    const quantity = 10000 * 10 ** baseMintDecimals;
 
     let txBuilder = new TransactionBuilder();
 
@@ -153,8 +152,9 @@ describe.only("sold-staking", () => {
     const stakePoolAcc = await safeFetchStakePool(umi, stakePool);
     const vaultAcc = await safeFetchToken(umi, vault);
 
-    const expectedBaseMintAmount = BigInt(quantity * 10 ** baseMintDecimals);
-    const expectedxMintAmount = BigInt(quantity * 10 ** xMintDecimals * initialExchangeRate);
+    const expectedBaseMintAmount = BigInt(quantity);
+
+    const expectedxMintAmount = BigInt(quantity / 10 ** baseMintDecimals * initialExchangeRate / 10 ** exchangeRateDecimals * 10 ** xMintDecimals);
 
     assert.equal(stakePoolAcc.baseBalance, _stakePoolAcc.baseBalance + expectedBaseMintAmount, "Base Balance is not correct");
     assert.equal(vaultAcc.amount, _vaultAcc.amount + expectedBaseMintAmount, "Vault amount is not correct");
@@ -162,7 +162,7 @@ describe.only("sold-staking", () => {
   })
 
   it("baseMint can be unstaked by redeeming xMint", async () => {
-    const quantity = 1000;
+    const quantity = 10000 * 10 ** baseMintDecimals;
 
     let txBuilder = new TransactionBuilder();
 
@@ -193,8 +193,8 @@ describe.only("sold-staking", () => {
     const stakePoolAcc = await safeFetchStakePool(umi, stakePool);
     const vaultAcc = await safeFetchToken(umi, vault);
 
-    const expectedBaseMintAmount = BigInt(quantity * 10 ** baseMintDecimals);
-    const expectedxMintAmount = BigInt(quantity * 10 ** xMintDecimals * initialExchangeRate);
+    const expectedBaseMintAmount = BigInt(quantity);
+    const expectedxMintAmount = BigInt((quantity / 10 ** baseMintDecimals) * initialExchangeRate / 10 ** exchangeRateDecimals * 10 ** xMintDecimals);
 
     assert.equal(stakePoolAcc.baseBalance, _stakePoolAcc.baseBalance - expectedBaseMintAmount, "Base Balance is not correct");
     assert.equal(vaultAcc.amount, _vaultAcc.amount - expectedBaseMintAmount, "Vault amount is not correct");

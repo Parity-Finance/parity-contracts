@@ -8,7 +8,7 @@ import { fromWeb3JsKeypair, fromWeb3JsPublicKey } from "@metaplex-foundation/umi
 import { findMetadataPda } from "@metaplex-foundation/mpl-token-metadata";
 import assert from 'assert';
 
-describe.only("sold-issuance", () => {
+describe("sold-issuance", () => {
   let umi = createUmi("http://localhost:8899");
   umi.programs.add(createSplAssociatedTokenProgram());
   umi.programs.add(createSplTokenProgram());
@@ -35,10 +35,11 @@ describe.only("sold-issuance", () => {
   let tokenManager: Pda
 
   // Test Controls
-  const mintDecimals = 3;
-  const quoteMintDecimals = 5;
-  const emergencyFundBasisPoints = 1100; // 10% have to stay in the vault
-  const exchangeRate = 3;
+  const mintDecimals = 9;
+  const quoteMintDecimals = 9;
+  const emergencyFundBasisPoints = 1200; // 12% have to stay in the vault
+  const exchangeRate = 250 * 10 ** mintDecimals;
+  const exchangeRateDecimals = mintDecimals
 
   const allowedWallets = [keypair.publicKey.toBase58()]
 
@@ -112,7 +113,7 @@ describe.only("sold-issuance", () => {
       decimals: mintDecimals,
       exchangeRate,
       emergencyFundBasisPoints,
-      merkleRoot
+      merkleRoot,
     }))
 
     await txBuilder.sendAndConfirm(umi);
@@ -135,7 +136,7 @@ describe.only("sold-issuance", () => {
   });
 
   it("Sold can be minted for USDC", async () => {
-    const quantity = 10000;
+    const quantity = 10000 * 10 ** mintDecimals;
 
     const proof = getMerkleProof(allowedWallets, keypair.publicKey.toBase58());
 
@@ -169,16 +170,29 @@ describe.only("sold-issuance", () => {
     const tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
     const vaultAcc = await safeFetchToken(umi, vault);
 
-    const expectedMintAmount = BigInt(quantity * 10 ** mintDecimals);
-    const expectedQuoteAmount = BigInt(quantity * 10 ** quoteMintDecimals * exchangeRate);
+    const expectedMintAmount = BigInt(quantity);
+    const powerDifference = quoteMintDecimals - mintDecimals;
 
-    assert.equal(tokenManagerAcc.totalSupply, _tokenManagerAcc.totalSupply + expectedMintAmount);
-    assert.equal(tokenManagerAcc.totalCollateral, _tokenManagerAcc.totalCollateral + expectedQuoteAmount);
-    assert.equal(vaultAcc.amount, _vaultAcc.amount + expectedQuoteAmount);
+    // Adjust quantity by the power difference before converting to BigInt
+    let adjustedQuantity;
+    if (powerDifference > 0) {
+      adjustedQuantity = BigInt(quantity) * BigInt(10 ** powerDifference);
+    } else if (powerDifference < 0) {
+      adjustedQuantity = BigInt(quantity) / BigInt(10 ** (-powerDifference));
+    } else {
+      adjustedQuantity = BigInt(quantity);
+    }
+
+    // Calculate the expected quote amount
+    const expectedQuoteAmount = adjustedQuantity * BigInt(exchangeRate) / BigInt(10 ** exchangeRateDecimals);
+
+    assert.equal(tokenManagerAcc.totalSupply, _tokenManagerAcc.totalSupply + expectedMintAmount, "Total supply should be correct");
+    assert.equal(tokenManagerAcc.totalCollateral, _tokenManagerAcc.totalCollateral + expectedQuoteAmount, "Total collateral should be correct");
+    assert.equal(vaultAcc.amount, _vaultAcc.amount + expectedQuoteAmount, "Vault amount should be correct");
   })
 
   it("Sold can be redeemed for Quote", async () => {
-    const quantity = 1000;
+    const quantity = 1000 * 10 ** mintDecimals;
 
     const proof = getMerkleProof(allowedWallets, keypair.publicKey.toBase58());
 
@@ -212,12 +226,12 @@ describe.only("sold-issuance", () => {
     const tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
     const vaultAcc = await safeFetchToken(umi, vault);
 
-    const expectedMintAmount = BigInt(quantity * 10 ** mintDecimals);
-    const expectedQuoteAmount = BigInt(quantity * 10 ** quoteMintDecimals * exchangeRate);
+    const expectedMintAmount = BigInt(quantity);
+    const expectedQuoteAmount = (BigInt(quantity) / BigInt(10 ** mintDecimals) * BigInt(exchangeRate) / BigInt(10 ** exchangeRateDecimals)) * BigInt(10 ** quoteMintDecimals);
 
-    assert.equal(tokenManagerAcc.totalSupply, _tokenManagerAcc.totalSupply - expectedMintAmount);
-    assert.equal(tokenManagerAcc.totalCollateral, _tokenManagerAcc.totalCollateral - expectedQuoteAmount);
-    assert.equal(vaultAcc.amount, _vaultAcc.amount - expectedQuoteAmount);
+    assert.equal(tokenManagerAcc.totalSupply, _tokenManagerAcc.totalSupply - expectedMintAmount, "Total supply should be correct");
+    assert.equal(tokenManagerAcc.totalCollateral, _tokenManagerAcc.totalCollateral - expectedQuoteAmount, "Total collateral should be correct");
+    assert.equal(vaultAcc.amount, _vaultAcc.amount - expectedQuoteAmount, "Vault amount should be correct");
   });
 
   it("should prevent minting when paused", async () => {
@@ -444,7 +458,7 @@ describe.only("sold-issuance", () => {
     let _vaultAcc = await safeFetchToken(umi, vault);
 
     // Higher than total collateral amount
-    let quantity = Number(_tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals)) + 1; // Amount to deposit
+    let quantity = Number(_tokenManagerAcc.totalCollateral) + 1; // Amount to deposit
     // console.log("Quantity to Withdraw higher than collateral: ", quantity);
     // console.log("TotalSupply: ", Number(_tokenManagerAcc.totalSupply / BigInt(10 ** mintDecimals)));
     // console.log("TotalCollateral: ", Number(_tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals)));
@@ -470,7 +484,7 @@ describe.only("sold-issuance", () => {
     );
 
     // Higher than the threshold amount amount
-    quantity = (Number(_tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals)) * (1 - emergencyFundBasisPoints / 10000)) + 1; // Amount to deposit
+    quantity = (Number(_tokenManagerAcc.totalCollateral) * (1 - emergencyFundBasisPoints / 10000)) + 1; // Amount to deposit
     // console.log("Quantity to Withdraw, higher than threshhold: ", quantity);
     // console.log("TotalSupply: ", Number(_tokenManagerAcc.totalSupply / BigInt(10 ** mintDecimals)));
     // console.log("TotalCollateral: ", Number(_tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals)));
@@ -496,7 +510,7 @@ describe.only("sold-issuance", () => {
     );
 
     // Withdraw within allowed
-    quantity = (Number(_tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals)) * (1 - emergencyFundBasisPoints / 10000)); // Amount to withdraw
+    quantity = (Number(_tokenManagerAcc.totalCollateral) * (1 - emergencyFundBasisPoints / 10000)); // Amount to withdraw
     // console.log("Quantity to Withdraw allowed: ", quantity);
     // console.log("TotalSupply: ", Number(_tokenManagerAcc.totalSupply / BigInt(10 ** mintDecimals)));
     // console.log("TotalCollateral: ", Number(_tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals)));
@@ -515,12 +529,12 @@ describe.only("sold-issuance", () => {
     let tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
     let vaultAcc = await safeFetchToken(umi, vault);
 
-    let expectedChange = BigInt(quantity * 10 ** quoteMintDecimals)
+    let expectedChange = BigInt(quantity)
     assert.equal(tokenManagerAcc.totalCollateral, _tokenManagerAcc.totalCollateral - expectedChange, "TokenManager totalCollateral should be equal to the initial totalCollateral minus withdrawed amount");
     assert.equal(vaultAcc.amount, _vaultAcc.amount - expectedChange, "Vault balance should be equal to the initial vault minus withdrawed amount");
 
     // Deposit excessive
-    quantity = Number(((tokenManagerAcc.totalSupply / BigInt(10 ** mintDecimals)) * BigInt(exchangeRate)) - (tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals))) + 1;
+    quantity = Number(((tokenManagerAcc.totalSupply / BigInt(10 ** mintDecimals)) * BigInt(exchangeRate) / BigInt(10 ** exchangeRateDecimals)) - (tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals))) * 10 ** quoteMintDecimals + 1;
     // console.log("Quantity to Deposit not allowed: ", quantity);
     // console.log("TotalSupply: ", Number(tokenManagerAcc.totalSupply / BigInt(10 ** mintDecimals)));
     // console.log("TotalCollateral: ", Number(tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals)));
@@ -549,7 +563,7 @@ describe.only("sold-issuance", () => {
     _tokenManagerAcc = tokenManagerAcc;
     _vaultAcc = vaultAcc;
 
-    quantity = Number(((tokenManagerAcc.totalSupply / BigInt(10 ** mintDecimals)) * BigInt(exchangeRate)) - (tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals)));
+    quantity = Number(((tokenManagerAcc.totalSupply / BigInt(10 ** mintDecimals)) * BigInt(exchangeRate) / BigInt(10 ** exchangeRateDecimals)) - (tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals))) * 10 ** quoteMintDecimals;
     // console.log("Quantity deposit allowed: ", quantity);
     // console.log("TotalSupply: ", Number(tokenManagerAcc.totalSupply / BigInt(10 ** mintDecimals)));
     // console.log("TotalCollateral: ", Number(tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals)));
@@ -569,7 +583,7 @@ describe.only("sold-issuance", () => {
     tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
     vaultAcc = await safeFetchToken(umi, vault);
 
-    expectedChange = BigInt(quantity * 10 ** quoteMintDecimals)
+    expectedChange = BigInt(quantity)
     assert.equal(tokenManagerAcc.totalCollateral, _tokenManagerAcc.totalCollateral + expectedChange, "TokenManager totalCollateral should be equal to the initial totalCollateral plus deposited amount");
     assert.equal(vaultAcc.amount, _vaultAcc.amount + expectedChange, "Vault balance should be equal to the initial vault plus deposited amount");
   });

@@ -44,9 +44,9 @@ pub fn handler(ctx: Context<DepositFunds>, quantity: u64) -> Result<()> {
     // TODO: Authority Check
     let authority = &ctx.accounts.authority;
 
-    let quote_amount = quantity
-        .checked_mul(10u64.pow(quote_mint.decimals.into()))
-        .ok_or(SoldIssuanceError::CalculationOverflow)?;
+    let quote_amount = quantity;
+    // .checked_mul(10u64.pow(quote_mint.decimals.into()))
+    // .ok_or(SoldIssuanceError::CalculationOverflow)?;
 
     // Check if deposit exceeds 100% collateral
     let new_total_collateral = token_manager
@@ -58,6 +58,8 @@ pub fn handler(ctx: Context<DepositFunds>, quantity: u64) -> Result<()> {
         .checked_div(10u64.pow(token_manager.mint_decimals.into()))
         .ok_or(SoldIssuanceError::CalculationOverflow)?
         .checked_mul(token_manager.exchange_rate)
+        .ok_or(SoldIssuanceError::CalculationOverflow)?
+        .checked_div(10u64.pow(token_manager.mint_decimals.into()))
         .ok_or(SoldIssuanceError::CalculationOverflow)?
         .checked_mul(10u64.pow(token_manager.quote_mint_decimals.into()))
         .ok_or(SoldIssuanceError::CalculationOverflow)?;

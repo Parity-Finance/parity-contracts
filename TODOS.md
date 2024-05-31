@@ -1,12 +1,13 @@
 Authorities Model and Check implementation
 ~~Merkle Tree AllowList~~
 ~~Withdraw Deposit Funds from Vault~~
-Refactor to set exchange rate decimals
+~~Refactor to set exchange rate decimals~~
 
 Different Circuit Breaks
 Different Authority Types
 Refactor to token2022
 Make Staking xSold conversion work
+Check for Max amount in Transaction
 
 Tests
 - ~~Pause Test~~
