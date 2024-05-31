@@ -116,7 +116,7 @@ export function initializeStakePool(
     },
     xMint: {
       index: 1,
-      isWritable: false as boolean,
+      isWritable: true as boolean,
       value: input.xMint ?? null,
     },
     metadata: {

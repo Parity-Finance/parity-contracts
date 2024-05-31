@@ -1,20 +1,20 @@
 use anchor_lang::prelude::*;
 
-pub const STAKE_POOL_LENGTH: usize = 8 + 32 + 32 + 8 + 8;
+pub const STAKE_POOL_LENGTH: usize = 8 + 32 + 32 + 8 + 8 + 8 + 8 + 32 + 1 + 1 + 1 + 8;
 
 #[account]
 pub struct StakePool {
-    pub base_mint: Pubkey, // SOLD token mint
-    pub x_mint: Pubkey,    // xSOLD token mint
-    pub inception_timestamp: i64,
-    pub annual_yield_rate: u64, // Stored as basis points, e.g., 2000 for 20%
-    pub base_balance: u64,
-    pub x_supply: u64,
-    pub authority: Pubkey,
-    pub bump: u8,
-    pub base_mint_decimals: u8,
-    pub x_mint_decimals: u8,
-    pub initial_exchange_rate: u64,
+    pub base_mint: Pubkey,          // 32 bytes - SOLD token mint
+    pub x_mint: Pubkey,             // 32 bytes - xSOLD token mint
+    pub inception_timestamp: i64,   // 8 bytes
+    pub annual_yield_rate: u64,     // 8 bytes - Stored as basis points, e.g., 2000 for 20%
+    pub base_balance: u64,          // 8 bytes
+    pub x_supply: u64,              // 8 bytes
+    pub authority: Pubkey,          // 32 bytes
+    pub bump: u8,                   // 1 byte
+    pub base_mint_decimals: u8,     // 1 byte
+    pub x_mint_decimals: u8,        // 1 byte
+    pub initial_exchange_rate: u64, // 8 bytes
 }
 
 impl StakePool {

@@ -52,7 +52,6 @@ pub struct RedeemTokens<'info> {
 pub fn handler(ctx: Context<RedeemTokens>, quantity: u64, proof: Vec<[u8; 32]>) -> Result<()> {
     let token_manager = &mut ctx.accounts.token_manager;
     let payer = &ctx.accounts.payer;
-    let mint = &ctx.accounts.mint;
 
     // Pause Check
     if !token_manager.active {
@@ -73,7 +72,7 @@ pub fn handler(ctx: Context<RedeemTokens>, quantity: u64, proof: Vec<[u8; 32]>) 
     let signer_seeds: &[&[&[u8]]] = &[&[b"token-manager", &[bump]]];
 
     let mint_amount = quantity
-        .checked_mul(10u64.pow(mint.decimals.into()))
+        .checked_mul(10u64.pow(token_manager.mint_decimals.into()))
         .ok_or(SoldIssuanceError::CalculationOverflow)?;
 
     burn(

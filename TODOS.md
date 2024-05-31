@@ -3,6 +3,11 @@ Authorities Model and Check implementation
 ~~Withdraw Deposit Funds from Vault~~
 Refactor to set exchange rate decimals
 
+Different Circuit Breaks
+Different Authority Types
+Refactor to token2022
+Make Staking xSold conversion work
+
 Tests
 - ~~Pause Test~~
 - ~~AllowList Test~~
@@ -12,3 +17,5 @@ Tests
 - ~~Different exchange_rate tests~~
 
 - Authority Tests
+
+- Updated Staking Tests

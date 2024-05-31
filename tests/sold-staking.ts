@@ -2,11 +2,13 @@ import { keypairIdentity, Pda, PublicKey, publicKey, TransactionBuilder, createA
 import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
 import { createAssociatedToken, createSplAssociatedTokenProgram, createSplTokenProgram, findAssociatedTokenPda, safeFetchToken, SPL_ASSOCIATED_TOKEN_PROGRAM_ID } from "@metaplex-foundation/mpl-toolbox"
 import { Connection, Keypair, PublicKey as Web3JsPublicKey } from "@solana/web3.js";
-import { createSoldIssuanceProgram, findTokenManagerPda, initialize, SOLD_ISSUANCE_PROGRAM_ID, mint, redeem, safeFetchTokenManager, getMerkleRoot, getMerkleProof, toggleActive, updateMerkleRoot, depositFunds, withdrawFunds, initializeStakePool, findStakePoolPda, safeFetchStakePool, stake, unstake } from "../clients/js/src"
+import { createSoldIssuanceProgram, initializeStakePool, findStakePoolPda, safeFetchStakePool, stake, unstake, SOLD_STAKING_PROGRAM_ID } from "../clients/js/src"
 import { ASSOCIATED_TOKEN_PROGRAM_ID, createMint, getOrCreateAssociatedTokenAccount, mintTo, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { fromWeb3JsKeypair, fromWeb3JsPublicKey, toWeb3JsPublicKey } from "@metaplex-foundation/umi-web3js-adapters";
 import { findMetadataPda } from "@metaplex-foundation/mpl-token-metadata";
 import assert from 'assert';
+import { start } from "solana-bankrun";
+import { bs58 } from "@coral-xyz/anchor/dist/cjs/utils/bytes";
 
 describe.only("sold-staking", () => {
   let umi = createUmi("http://localhost:8899");
@@ -23,16 +25,16 @@ describe.only("sold-staking", () => {
   umi.use(keypairIdentity(fromWeb3JsKeypair(keypair)))
 
   // Stable Mint and ATAs
-  let baseMint: PublicKey = umi.eddsa.findPda(SOLD_ISSUANCE_PROGRAM_ID, [Buffer.from("mint")])[0]
-  let metadata: Pda = findMetadataPda(umi, { mint: baseMint })
-  let userBase: PublicKey = findAssociatedTokenPda(umi, { owner: umi.identity.publicKey, mint: baseMint })[0]
+  let baseMint: PublicKey;
+  let userBase: PublicKey;
+  let vault: PublicKey;
+
+  let stakePool = findStakePoolPda(umi)[0];
 
   // Quote Mint and ATAs
-  let xMint: PublicKey
-  let userX: PublicKey
-  let vault: Pda
-
-  let stakePool: Pda
+  let xMint: PublicKey = umi.eddsa.findPda(SOLD_STAKING_PROGRAM_ID, [Buffer.from("mint")])[0];
+  let metadata: Pda = findMetadataPda(umi, { mint: xMint })
+  let userX: PublicKey = findAssociatedTokenPda(umi, { owner: umi.identity.publicKey, mint: xMint })[0]
 
   // Test Controls
   const baseMintDecimals = 3;
@@ -53,7 +55,7 @@ describe.only("sold-staking", () => {
 
       console.log("Created Base Mint: ", baseMintWeb3js.toBase58());
 
-      const userUsdcInfo = await getOrCreateAssociatedTokenAccount(
+      const userBaseInfo = await getOrCreateAssociatedTokenAccount(
         connection,
         keypair,
         baseMintWeb3js,
@@ -70,8 +72,8 @@ describe.only("sold-staking", () => {
       await mintTo(
         connection,
         keypair,
-        toWeb3JsPublicKey(userBase),
-        userUsdcInfo.address,
+        baseMintWeb3js,
+        userBaseInfo.address,
         keypair.publicKey,
         100_000_000 * 10 ** baseMintDecimals,
         [],
@@ -81,17 +83,15 @@ describe.only("sold-staking", () => {
         TOKEN_PROGRAM_ID
       );
 
-      userBase = fromWeb3JsPublicKey(userUsdcInfo.address);
-      baseMint = fromWeb3JsPublicKey(baseMintWeb3js)
-
-      stakePool = findStakePoolPda(umi);
-      vault = findAssociatedTokenPda(umi, { owner: stakePool[0], mint: baseMint });
+      userBase = fromWeb3JsPublicKey(userBaseInfo.address);
+      baseMint = fromWeb3JsPublicKey(baseMintWeb3js);
+      vault = findAssociatedTokenPda(umi, { owner: stakePool, mint: baseMint })[0];
     } catch (error) {
       console.log(error);
     }
   })
 
-  it("Token manager is initialized!", async () => {
+  it("Stake Pool is initialized!", async () => {
     let txBuilder = new TransactionBuilder();
 
     txBuilder = txBuilder.add(initializeStakePool(umi, {
@@ -108,7 +108,7 @@ describe.only("sold-staking", () => {
       initialExchangeRate,
     }))
 
-    await txBuilder.sendAndConfirm(umi);
+    await txBuilder.sendAndConfirm(umi, { send: { skipPreflight: false } });
 
     const stakePoolAcc = await safeFetchStakePool(umi, stakePool);
 
@@ -126,11 +126,11 @@ describe.only("sold-staking", () => {
 
     let txBuilder = new TransactionBuilder();
 
-    const userBaseAtaAcc = await safeFetchToken(umi, userBase)
+    const userXAtaAcc = await safeFetchToken(umi, userX)
 
-    if (!userBaseAtaAcc) {
+    if (!userXAtaAcc) {
       txBuilder = txBuilder.add(createAssociatedToken(umi, {
-        mint: baseMint,
+        mint: xMint,
       }))
     }
 
@@ -156,9 +156,9 @@ describe.only("sold-staking", () => {
     const expectedBaseMintAmount = BigInt(quantity * 10 ** baseMintDecimals);
     const expectedxMintAmount = BigInt(quantity * 10 ** xMintDecimals * initialExchangeRate);
 
-    assert.equal(stakePoolAcc.baseBalance, _stakePoolAcc.baseBalance + expectedBaseMintAmount);
-    assert.equal(stakePoolAcc.xSupply, _stakePoolAcc.xSupply + expectedxMintAmount);
-    assert.equal(vaultAcc.amount, _vaultAcc.amount + expectedxMintAmount);
+    assert.equal(stakePoolAcc.baseBalance, _stakePoolAcc.baseBalance + expectedBaseMintAmount, "Base Balance is not correct");
+    assert.equal(vaultAcc.amount, _vaultAcc.amount + expectedBaseMintAmount, "Vault amount is not correct");
+    assert.equal(stakePoolAcc.xSupply, _stakePoolAcc.xSupply + expectedxMintAmount, "xSupply is not correct");
   })
 
   it("baseMint can be unstaked by redeeming xMint", async () => {
@@ -166,9 +166,9 @@ describe.only("sold-staking", () => {
 
     let txBuilder = new TransactionBuilder();
 
-    const useBaseAtaAcc = await safeFetchToken(umi, userBase)
+    const userXAtaAcc = await safeFetchToken(umi, userX)
 
-    if (!useBaseAtaAcc) {
+    if (!userXAtaAcc) {
       txBuilder = txBuilder.add(createAssociatedToken(umi, {
         mint: baseMint,
       }))
@@ -188,7 +188,7 @@ describe.only("sold-staking", () => {
       quantity,
     }))
 
-    await txBuilder.sendAndConfirm(umi, { send: { skipPreflight: false } });
+    await txBuilder.sendAndConfirm(umi, { send: { skipPreflight: true } });
 
     const stakePoolAcc = await safeFetchStakePool(umi, stakePool);
     const vaultAcc = await safeFetchToken(umi, vault);
@@ -196,8 +196,8 @@ describe.only("sold-staking", () => {
     const expectedBaseMintAmount = BigInt(quantity * 10 ** baseMintDecimals);
     const expectedxMintAmount = BigInt(quantity * 10 ** xMintDecimals * initialExchangeRate);
 
-    assert.equal(stakePoolAcc.baseBalance, _stakePoolAcc.baseBalance - expectedBaseMintAmount);
-    assert.equal(stakePoolAcc.xSupply, _stakePoolAcc.xSupply - expectedxMintAmount);
-    assert.equal(vaultAcc.amount, _vaultAcc.amount - expectedxMintAmount);
+    assert.equal(stakePoolAcc.baseBalance, _stakePoolAcc.baseBalance - expectedBaseMintAmount, "Base Balance is not correct");
+    assert.equal(vaultAcc.amount, _vaultAcc.amount - expectedBaseMintAmount, "Vault amount is not correct");
+    assert.equal(stakePoolAcc.xSupply, _stakePoolAcc.xSupply - expectedxMintAmount, "xSupply is not correct");
   })
 })

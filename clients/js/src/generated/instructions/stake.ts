@@ -104,7 +104,7 @@ export function stake(
     },
     xMint: {
       index: 3,
-      isWritable: false as boolean,
+      isWritable: true as boolean,
       value: input.xMint ?? null,
     },
     payerXMintAta: {

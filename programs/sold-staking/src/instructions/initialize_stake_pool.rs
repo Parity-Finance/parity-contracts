@@ -25,9 +25,22 @@ pub struct InitializeStakePoolParams {
 pub struct InitializeStakePool<'info> {
     /// SPL Token Mint of the underlying token to be deposited for staking
     pub base_mint: Account<'info, Mint>,
+    #[account(
+        init,
+        seeds = [b"mint"],
+        bump,
+        payer = payer,
+        mint::decimals = params.decimals,
+        mint::authority = stake_pool,
+    )]
     pub x_mint: Account<'info, Mint>,
-    /// CHECK: New Metaplex Account being created
-    #[account(mut)]
+    /// CHECK: Validate address by deriving pda
+    #[account(
+        mut,
+        seeds = [b"metadata", token_metadata_program.key().as_ref(), x_mint.key().as_ref()],
+        bump,
+        seeds::program = token_metadata_program.key(),
+    )]
     pub metadata: UncheckedAccount<'info>,
     #[account(
       init,
@@ -58,7 +71,7 @@ pub struct InitializeStakePool<'info> {
 pub fn handler(ctx: Context<InitializeStakePool>, params: InitializeStakePoolParams) -> Result<()> {
     let stake_pool = &mut ctx.accounts.stake_pool;
 
-    let bump = ctx.bumps.stake_pool; // Corrected to be a slice of a slice of a byte slice
+    let bump = ctx.bumps.stake_pool;
     let signer_seeds: &[&[&[u8]]] = &[&[b"stake-pool", &[bump]]];
 
     let token_data: DataV2 = DataV2 {
@@ -76,7 +89,7 @@ pub fn handler(ctx: Context<InitializeStakePool>, params: InitializeStakePoolPar
         CreateMetadataAccountsV3 {
             payer: ctx.accounts.payer.to_account_info(),
             update_authority: stake_pool.to_account_info(),
-            mint: ctx.accounts.base_mint.to_account_info(),
+            mint: ctx.accounts.x_mint.to_account_info(),
             metadata: ctx.accounts.metadata.to_account_info(),
             mint_authority: stake_pool.to_account_info(),
             system_program: ctx.accounts.system_program.to_account_info(),
@@ -85,7 +98,7 @@ pub fn handler(ctx: Context<InitializeStakePool>, params: InitializeStakePoolPar
         &signer_seeds,
     );
 
-    create_metadata_accounts_v3(metadata_ctx, token_data, false, true, None)?;
+    create_metadata_accounts_v3(metadata_ctx, token_data, true, true, None)?;
 
     msg!("Token mint created successfully.");
 
@@ -93,6 +106,7 @@ pub fn handler(ctx: Context<InitializeStakePool>, params: InitializeStakePoolPar
 
     // Authorities
     stake_pool.authority = stake_pool.key();
+    stake_pool.bump = bump;
     // Token
     stake_pool.base_mint = ctx.accounts.base_mint.key();
     stake_pool.base_mint_decimals = ctx.accounts.base_mint.decimals;

@@ -22,7 +22,7 @@
         },
         {
           "name": "xMint",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false
         },
         {
@@ -100,7 +100,7 @@
         },
         {
           "name": "xMint",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false
         },
         {
@@ -156,7 +156,7 @@
         },
         {
           "name": "baseMint",
-          "isMut": true,
+          "isMut": false,
           "isSigner": false
         },
         {
@@ -166,7 +166,7 @@
         },
         {
           "name": "xMint",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false
         },
         {

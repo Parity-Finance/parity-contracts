@@ -94,7 +94,7 @@ export function unstake(
     },
     baseMint: {
       index: 1,
-      isWritable: true as boolean,
+      isWritable: false as boolean,
       value: input.baseMint ?? null,
     },
     payerBaseMintAta: {
@@ -104,7 +104,7 @@ export function unstake(
     },
     xMint: {
       index: 3,
-      isWritable: false as boolean,
+      isWritable: true as boolean,
       value: input.xMint ?? null,
     },
     payerXMintAta: {

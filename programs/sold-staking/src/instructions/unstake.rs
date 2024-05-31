@@ -11,9 +11,6 @@ pub struct Unstake<'info> {
     #[account(mut, seeds = [b"stake-pool"], bump)]
     pub stake_pool: Account<'info, StakePool>,
     #[account(
-        mut,
-        seeds = [b"mint"],
-        bump,
         mint::decimals = stake_pool.base_mint_decimals,
         address = stake_pool.base_mint,
     )]
@@ -28,7 +25,12 @@ pub struct Unstake<'info> {
 
     //  Quote Mint
     #[account(
-        address = stake_pool.x_mint @ SoldStakingError::InvalidXMintAddress
+        mut,
+        address = stake_pool.x_mint,
+        seeds = [b"mint"],
+        bump,
+        mint::decimals = stake_pool.x_mint_decimals,
+        mint::authority = stake_pool,
     )]
     pub x_mint: Account<'info, Mint>,
     #[account(
@@ -40,7 +42,7 @@ pub struct Unstake<'info> {
     #[account(
         mut,
         associated_token::mint = base_mint,
-        associated_token::authority = payer,
+        associated_token::authority = stake_pool,
     )]
     pub vault: Account<'info, TokenAccount>,
 
@@ -63,7 +65,9 @@ pub fn handler(ctx: Context<Unstake>, quantity: u64) -> Result<()> {
 
     // Todo calculate
     let x_amount = quantity
-        .checked_mul(10u64.pow(base_mint.decimals.into()))
+        .checked_mul(10u64.pow(stake_pool.x_mint_decimals.into()))
+        .ok_or(SoldStakingError::CalculationOverflow)?
+        .checked_mul(stake_pool.initial_exchange_rate)
         .ok_or(SoldStakingError::CalculationOverflow)?;
 
     burn(
@@ -72,17 +76,15 @@ pub fn handler(ctx: Context<Unstake>, quantity: u64) -> Result<()> {
             Burn {
                 authority: ctx.accounts.payer.to_account_info(),
                 from: ctx.accounts.payer_x_mint_ata.to_account_info(),
-                mint: ctx.accounts.base_mint.to_account_info(),
+                mint: ctx.accounts.x_mint.to_account_info(),
             },
         ),
         x_amount,
     )?;
 
     let base_amount = quantity
-        .checked_mul(10u64.pow(base_mint.decimals.into()))
+        .checked_mul(10u64.pow(stake_pool.base_mint_decimals.into()))
         .ok_or(SoldStakingError::CalculationOverflow)?;
-    // .checked_mul(token_manager.exchange_rate)
-    // .ok_or(SoldIssuanceError::CalculationOverflow)?;
 
     transfer_checked(
         CpiContext::new_with_signer(
