@@ -59,20 +59,25 @@ pub struct Stake<'info> {
 pub fn handler(ctx: Context<Stake>, quantity: u64) -> Result<()> {
     let stake_pool = &mut ctx.accounts.stake_pool;
 
+    let current_timestamp = Clock::get()?.unix_timestamp;
+    let exchange_rate = stake_pool
+        .calculate_exchange_rate(current_timestamp)
+        .ok_or(SoldStakingError::CalculationOverflow)?;
+
+    msg!("Exchange Rate: {}", exchange_rate);
+
+    let base_decimals = 10u64.pow(stake_pool.base_mint_decimals.into());
+    let x_amount = (quantity as u128)
+        .checked_mul(exchange_rate as u128)
+        .ok_or(SoldStakingError::CalculationOverflow)?
+        .checked_div(base_decimals as u128)
+        .ok_or(SoldStakingError::CalculationOverflow)? as u64;
+
+    msg!("X amount: {}", x_amount);
+
     // Minting
     let bump = stake_pool.bump; // Corrected to be a slice of a slice of a byte slice
     let signer_seeds: &[&[&[u8]]] = &[&[b"stake-pool", &[bump]]];
-
-    // TODO: Calculation
-    let x_amount = quantity
-        .checked_div(10u64.pow(stake_pool.base_mint_decimals.into()))
-        .ok_or(SoldStakingError::CalculationOverflow)?
-        .checked_mul(stake_pool.initial_exchange_rate)
-        .ok_or(SoldStakingError::CalculationOverflow)?
-        .checked_div(10u64.pow(stake_pool.x_mint_decimals.into()))
-        .ok_or(SoldStakingError::CalculationOverflow)?
-        .checked_mul(10u64.pow(stake_pool.x_mint_decimals.into()))
-        .ok_or(SoldStakingError::CalculationOverflow)?;
 
     mint_to(
         CpiContext::new_with_signer(

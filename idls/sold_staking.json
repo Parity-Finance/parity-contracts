@@ -232,6 +232,10 @@
             "type": "i64"
           },
           {
+            "name": "lastUpdateTimestamp",
+            "type": "i64"
+          },
+          {
             "name": "annualYieldRate",
             "type": "u64"
           },
@@ -261,6 +265,10 @@
           },
           {
             "name": "initialExchangeRate",
+            "type": "u64"
+          },
+          {
+            "name": "lastComputedExchangeRate",
             "type": "u64"
           }
         ]
@@ -338,11 +346,5 @@
       "name": "CalculationOverflow",
       "msg": "Calculation overflow"
     }
-  ],
-  "metadata": {
-    "address": "F9pkhuLyu1usfS5p6RCuXxeS2TQsAVqANo1M2iC8ze1t",
-    "origin": "anchor",
-    "binaryVersion": "0.29.0",
-    "libVersion": "0.29.0"
-  }
+  ]
 }

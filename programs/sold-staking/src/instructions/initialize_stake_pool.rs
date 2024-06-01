@@ -121,6 +121,8 @@ pub fn handler(ctx: Context<InitializeStakePool>, params: InitializeStakePoolPar
     let clock = Clock::get()?;
     let current_timestamp = clock.unix_timestamp;
     stake_pool.inception_timestamp = current_timestamp;
+    stake_pool.last_update_timestamp = current_timestamp;
+    stake_pool.last_computed_exchange_rate = params.initial_exchange_rate;
 
     Ok(())
 }

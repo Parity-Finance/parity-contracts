@@ -8,6 +8,7 @@ sold_staking = "F9pkhuLyu1usfS5p6RCuXxeS2TQsAVqANo1M2iC8ze1t"
 
 [toolchain]
 anchor_version = "0.29.0"
+solana_version = "1.17.34"
 
 [registry]
 url = "https://api.apr.dev"

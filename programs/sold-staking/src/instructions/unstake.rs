@@ -58,20 +58,18 @@ pub struct Unstake<'info> {
 pub fn handler(ctx: Context<Unstake>, quantity: u64) -> Result<()> {
     let stake_pool = &mut ctx.accounts.stake_pool;
 
+    let current_timestamp = Clock::get()?.unix_timestamp;
+    let exchange_rate = stake_pool
+        .calculate_exchange_rate(current_timestamp)
+        .ok_or(SoldStakingError::CalculationOverflow)?;
+
+    msg!("Exchange Rate: {}", exchange_rate);
+
+    let x_amount = quantity;
+
     // Burning
     let bump = stake_pool.bump; // Corrected to be a slice of a slice of a byte slice
     let signer_seeds: &[&[&[u8]]] = &[&[b"stake-pool", &[bump]]];
-
-    // Todo calculate
-    let x_amount = quantity
-        .checked_div(10u64.pow(stake_pool.base_mint_decimals.into()))
-        .ok_or(SoldStakingError::CalculationOverflow)?
-        .checked_mul(stake_pool.initial_exchange_rate)
-        .ok_or(SoldStakingError::CalculationOverflow)?
-        .checked_div(10u64.pow(stake_pool.x_mint_decimals.into()))
-        .ok_or(SoldStakingError::CalculationOverflow)?
-        .checked_mul(10u64.pow(stake_pool.x_mint_decimals.into()))
-        .ok_or(SoldStakingError::CalculationOverflow)?;
 
     burn(
         CpiContext::new(
@@ -85,7 +83,15 @@ pub fn handler(ctx: Context<Unstake>, quantity: u64) -> Result<()> {
         x_amount,
     )?;
 
-    let base_amount = quantity;
+    let base_decimals = 10u64.pow(stake_pool.base_mint_decimals.into());
+
+    let base_amount = (quantity as u128)
+        .checked_mul(base_decimals as u128)
+        .ok_or(SoldStakingError::CalculationOverflow)?
+        .checked_div(exchange_rate as u128)
+        .ok_or(SoldStakingError::CalculationOverflow)? as u64;
+
+    msg!("Base amount: {}", base_amount);
 
     transfer_checked(
         CpiContext::new_with_signer(
