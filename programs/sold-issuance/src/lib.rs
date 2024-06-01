@@ -16,12 +16,11 @@ declare_id!("3ja6s1Pb55nhzhwYp4GY77n972iEQtWX55xoRwP2asCT");
 pub mod sold_issuance {
     use super::*;
 
-    pub fn initialize(
+    pub fn initialize_token_manager(
         ctx: Context<Initialize>,
-        metadata: InitializeParams,
-        merkle_root: [u8; 32],
+        params: InitializeParams,
     ) -> Result<()> {
-        initialize::handler(ctx, metadata, merkle_root)
+        initialize_token_manager::handler(ctx, params)
     }
 
     pub fn mint(ctx: Context<MintTokens>, quantity: u64, proof: Vec<[u8; 32]>) -> Result<()> {
@@ -36,8 +35,11 @@ pub mod sold_issuance {
         toggle_active::handler(ctx, active)
     }
 
-    pub fn update_merkle_root(ctx: Context<UpdateMerkleRoot>, merkle_root: [u8; 32]) -> Result<()> {
-        update_merkle_root::handler(ctx, merkle_root)
+    pub fn update_token_manager(
+        ctx: Context<UpdateTokenManager>,
+        params: UpdateParams,
+    ) -> Result<()> {
+        update_token_manager::handler(ctx, params)
     }
 
     pub fn withdraw_funds(ctx: Context<WithdrawFunds>, quantity: u64) -> Result<()> {
@@ -46,5 +48,9 @@ pub mod sold_issuance {
 
     pub fn deposit_funds(ctx: Context<DepositFunds>, quantity: u64) -> Result<()> {
         deposit_funds::handler(ctx, quantity)
+    }
+
+    pub fn mint_admin(ctx: Context<MintAdminTokens>, quantity: u64) -> Result<()> {
+        mint_admin::handler(ctx, quantity)
     }
 }

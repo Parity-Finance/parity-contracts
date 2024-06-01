@@ -41,7 +41,7 @@ pub fn handler(ctx: Context<WithdrawFunds>, quantity: u64) -> Result<()> {
     let token_manager = &mut ctx.accounts.token_manager;
 
     // TODO: Authority Check
-    let authority = &ctx.accounts.authority;
+    let _authority = &ctx.accounts.authority;
 
     let quote_amount = quantity;
 

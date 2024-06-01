@@ -12,7 +12,6 @@ import {
   PublicKey,
   Signer,
   TransactionBuilder,
-  publicKey,
   transactionBuilder,
 } from '@metaplex-foundation/umi';
 import {
@@ -39,7 +38,6 @@ export type RedeemInstructionAccounts = {
   payerQuoteMintAta: PublicKey | Pda;
   vault: PublicKey | Pda;
   payer?: Signer;
-  rent?: PublicKey | Pda;
   systemProgram?: PublicKey | Pda;
   tokenProgram?: PublicKey | Pda;
   associatedTokenProgram: PublicKey | Pda;
@@ -124,19 +122,18 @@ export function redeem(
       isWritable: true as boolean,
       value: input.payer ?? null,
     },
-    rent: { index: 7, isWritable: false as boolean, value: input.rent ?? null },
     systemProgram: {
-      index: 8,
+      index: 7,
       isWritable: false as boolean,
       value: input.systemProgram ?? null,
     },
     tokenProgram: {
-      index: 9,
+      index: 8,
       isWritable: false as boolean,
       value: input.tokenProgram ?? null,
     },
     associatedTokenProgram: {
-      index: 10,
+      index: 9,
       isWritable: false as boolean,
       value: input.associatedTokenProgram ?? null,
     },
@@ -148,11 +145,6 @@ export function redeem(
   // Default values.
   if (!resolvedAccounts.payer.value) {
     resolvedAccounts.payer.value = context.payer;
-  }
-  if (!resolvedAccounts.rent.value) {
-    resolvedAccounts.rent.value = publicKey(
-      'SysvarRent111111111111111111111111111111111'
-    );
   }
   if (!resolvedAccounts.systemProgram.value) {
     resolvedAccounts.systemProgram.value = context.programs.getPublicKey(

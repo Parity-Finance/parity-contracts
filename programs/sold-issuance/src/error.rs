@@ -18,4 +18,6 @@ pub enum SoldIssuanceError {
     ExcessiveWithdrawal,
     #[msg("Calculation overflow")]
     CalculationOverflow,
+    #[msg("Invalid admin address")]
+    InvalidAdminAddress,
 }

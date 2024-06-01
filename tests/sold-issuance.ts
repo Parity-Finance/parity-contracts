@@ -2,13 +2,15 @@ import { keypairIdentity, Pda, PublicKey, publicKey, TransactionBuilder, createA
 import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
 import { createAssociatedToken, createSplAssociatedTokenProgram, createSplTokenProgram, findAssociatedTokenPda, safeFetchToken, SPL_ASSOCIATED_TOKEN_PROGRAM_ID } from "@metaplex-foundation/mpl-toolbox"
 import { Connection, Keypair, PublicKey as Web3JsPublicKey } from "@solana/web3.js";
-import { createSoldIssuanceProgram, findTokenManagerPda, initialize, SOLD_ISSUANCE_PROGRAM_ID, mint, redeem, safeFetchTokenManager, getMerkleRoot, getMerkleProof, toggleActive, updateMerkleRoot, depositFunds, withdrawFunds } from "../clients/js/src"
+import { createSoldIssuanceProgram, findTokenManagerPda, initializeTokenManager, SOLD_ISSUANCE_PROGRAM_ID, mint, redeem, safeFetchTokenManager, getMerkleRoot, getMerkleProof, toggleActive, updateTokenManager, depositFunds, withdrawFunds, initializeStakePool, findStakePoolPda, safeFetchStakePool, SOLD_STAKING_PROGRAM_ID, calculateExchangeRate, stake, unstake } from "../clients/js/src"
 import { ASSOCIATED_TOKEN_PROGRAM_ID, createMint, getOrCreateAssociatedTokenAccount, mintTo, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { fromWeb3JsKeypair, fromWeb3JsPublicKey } from "@metaplex-foundation/umi-web3js-adapters";
 import { findMetadataPda } from "@metaplex-foundation/mpl-token-metadata";
 import assert from 'assert';
+import chai, { assert as chaiAssert } from 'chai';
+import { bs58 } from "@coral-xyz/anchor/dist/cjs/utils/bytes";
 
-describe("sold-issuance", () => {
+describe.only("sold-issuance", () => {
   let umi = createUmi("http://localhost:8899");
   umi.programs.add(createSplAssociatedTokenProgram());
   umi.programs.add(createSplTokenProgram());
@@ -22,25 +24,37 @@ describe("sold-issuance", () => {
 
   umi.use(keypairIdentity(fromWeb3JsKeypair(keypair)))
 
-  // Stable Mint and ATAs
-  let stableMint: Pda = umi.eddsa.findPda(SOLD_ISSUANCE_PROGRAM_ID, [Buffer.from("mint")])
-  let metadata: Pda = findMetadataPda(umi, { mint: stableMint[0] })
-  let userStable = findAssociatedTokenPda(umi, { owner: umi.identity.publicKey, mint: stableMint[0] })
+  // Base Mint Universal
+  let baseMint: Pda = umi.eddsa.findPda(SOLD_ISSUANCE_PROGRAM_ID, [Buffer.from("mint")])
+  let baseMetadata: Pda = findMetadataPda(umi, { mint: baseMint[0] })
+  let userBase = findAssociatedTokenPda(umi, { owner: umi.identity.publicKey, mint: baseMint[0] })
 
-  // Quote Mint and ATAs
+  // Quote Mint Issuance
   let quoteMint: PublicKey
-  let userUSDC: PublicKey
-  let vault: Pda
-
-  let tokenManager: Pda
+  let userQuote: PublicKey
+  let vaultIssuance: Pda
 
   // Test Controls
-  const mintDecimals = 9;
+  const baseMintDecimals = 9;
   const quoteMintDecimals = 9;
-  const emergencyFundBasisPoints = 1200; // 12% have to stay in the vault
-  const exchangeRate = 250 * 10 ** mintDecimals;
-  const exchangeRateDecimals = mintDecimals
+  const emergencyFundBasisPoints = 1200; // 12% have to stay in the vaultIssuance
+  const exchangeRate = 250 * 10 ** baseMintDecimals;
+  const exchangeRateDecimals = baseMintDecimals
 
+  // Staking Program
+  let stakePool = findStakePoolPda(umi)[0];
+  let tokenManager = findTokenManagerPda(umi);
+  let vaultStaking = findAssociatedTokenPda(umi, { owner: stakePool, mint: baseMint[0] })
+
+  // xMint Mint and ATAs
+  let xMint: PublicKey = umi.eddsa.findPda(SOLD_STAKING_PROGRAM_ID, [Buffer.from("mint")])[0];
+  let xMetadata: Pda = findMetadataPda(umi, { mint: xMint })
+  let userX: PublicKey = findAssociatedTokenPda(umi, { owner: umi.identity.publicKey, mint: xMint })[0]
+
+  // Stake Pool Controls
+  const xMintDecimals = 6;
+  const stakeExchangeRateDecimals = xMintDecimals
+  const initialExchangeRate = 2 * 10 ** exchangeRateDecimals;
   const allowedWallets = [keypair.publicKey.toBase58()]
 
   before(async () => {
@@ -85,11 +99,10 @@ describe("sold-issuance", () => {
         TOKEN_PROGRAM_ID
       );
 
-      userUSDC = fromWeb3JsPublicKey(userUsdcInfo.address);
+      userQuote = fromWeb3JsPublicKey(userUsdcInfo.address);
       quoteMint = fromWeb3JsPublicKey(quoteMintWeb3js)
 
-      tokenManager = findTokenManagerPda(umi);
-      vault = findAssociatedTokenPda(umi, { owner: tokenManager[0], mint: quoteMint });
+      vaultIssuance = findAssociatedTokenPda(umi, { owner: tokenManager[0], mint: quoteMint });
     } catch (error) {
       console.log(error);
     }
@@ -100,20 +113,21 @@ describe("sold-issuance", () => {
 
     let txBuilder = new TransactionBuilder();
 
-    txBuilder = txBuilder.add(initialize(umi, {
+    txBuilder = txBuilder.add(initializeTokenManager(umi, {
       tokenManager,
-      vault,
-      metadata,
-      mint: stableMint,
+      vault: vaultIssuance,
+      metadata: baseMetadata,
+      mint: baseMint,
       quoteMint: quoteMint,
       associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
       name: "SOLD",
       symbol: "SOLD",
       uri: "https://builderz.dev/_next/image?url=%2Fimages%2Fheader-gif.gif&w=3840&q=75",
-      decimals: mintDecimals,
+      decimals: baseMintDecimals,
       exchangeRate,
       emergencyFundBasisPoints,
       merkleRoot,
+      admin: stakePool
     }))
 
     await txBuilder.sendAndConfirm(umi);
@@ -122,44 +136,75 @@ describe("sold-issuance", () => {
 
     assert.deepStrictEqual(
       new Uint8Array(tokenManagerAcc.merkleRoot),
-      new Uint8Array(merkleRoot)
+      new Uint8Array(merkleRoot),
+      "Merkle root in token manager account should match expected merkle root"
     );
-    assert.equal(tokenManagerAcc.mint.toString(), stableMint[0].toString());
-    assert.equal(tokenManagerAcc.mintDecimals, mintDecimals);
-    assert.equal(tokenManagerAcc.quoteMint.toString(), quoteMint.toString());
-    assert.equal(tokenManagerAcc.quoteMintDecimals, quoteMintDecimals);
-    assert.equal(tokenManagerAcc.exchangeRate, exchangeRate);
-    assert.equal(tokenManagerAcc.emergencyFundBasisPoints, emergencyFundBasisPoints);
-    assert.equal(tokenManagerAcc.active, true);
-    assert.equal(tokenManagerAcc.totalSupply, 0);
-    assert.equal(tokenManagerAcc.totalCollateral, 0);
+    assert.equal(tokenManagerAcc.mint, baseMint[0], "Token manager's mint should match the base mint");
+    assert.equal(tokenManagerAcc.mintDecimals, baseMintDecimals, "Token manager's mint decimals should match base mint decimals");
+    assert.equal(tokenManagerAcc.quoteMint, quoteMint, "Token manager's quote mint should match the provided quote mint");
+    assert.equal(tokenManagerAcc.quoteMintDecimals, quoteMintDecimals, "Token manager's quote mint decimals should match the provided quote mint decimals");
+    assert.equal(tokenManagerAcc.exchangeRate, BigInt(exchangeRate), "Token manager's exchange rate should match the provided exchange rate");
+    assert.equal(tokenManagerAcc.emergencyFundBasisPoints, emergencyFundBasisPoints, "Token manager's emergency fund basis points should match the provided value");
+    assert.equal(tokenManagerAcc.active, true, "Token manager should be active");
+    assert.equal(tokenManagerAcc.totalSupply, 0, "Token manager's total supply should be zero");
+    assert.equal(tokenManagerAcc.totalCollateral, 0, "Token manager's total collateral should be zero");
+  });
+
+  it("Stake Pool is initialized!", async () => {
+    let txBuilder = new TransactionBuilder();
+
+    txBuilder = txBuilder.add(initializeStakePool(umi, {
+      stakePool,
+      vault: vaultStaking,
+      metadata: xMetadata,
+      baseMint: baseMint,
+      xMint,
+      associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
+      name: "xSOLD",
+      symbol: "xSOLD",
+      uri: "https://builderz.dev/_next/image?url=%2Fimages%2Fheader-gif.gif&w=3840&q=75",
+      decimals: xMintDecimals,
+      initialExchangeRate,
+    }))
+
+    await txBuilder.sendAndConfirm(umi, { send: { skipPreflight: true } });
+
+    const stakePoolAcc = await safeFetchStakePool(umi, stakePool);
+
+    assert.equal(stakePoolAcc.baseMint, baseMint[0]);
+    assert.equal(stakePoolAcc.baseMintDecimals, baseMintDecimals);
+    assert.equal(stakePoolAcc.xMint, xMint);
+    assert.equal(stakePoolAcc.xMintDecimals, xMintDecimals);
+    assert.equal(stakePoolAcc.initialExchangeRate, BigInt(initialExchangeRate));
+    assert.equal(stakePoolAcc.baseBalance, 0n);
+    assert.equal(stakePoolAcc.xSupply, 0n);
   });
 
   it("Sold can be minted for USDC", async () => {
-    const quantity = 10000 * 10 ** mintDecimals;
+    const quantity = 10000 * 10 ** baseMintDecimals;
 
     const proof = getMerkleProof(allowedWallets, keypair.publicKey.toBase58());
 
     let txBuilder = new TransactionBuilder();
 
-    const userStableAtaAcc = await safeFetchToken(umi, userStable)
+    const userBaseAtaAcc = await safeFetchToken(umi, userBase)
 
-    if (!userStableAtaAcc) {
+    if (!userBaseAtaAcc) {
       txBuilder = txBuilder.add(createAssociatedToken(umi, {
-        mint: stableMint,
+        mint: baseMint,
       }))
     }
 
     const _tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
-    const _vaultAcc = await safeFetchToken(umi, vault);
+    const _vaultAcc = await safeFetchToken(umi, vaultIssuance);
 
     txBuilder = txBuilder.add(mint(umi, {
       tokenManager,
-      mint: stableMint,
+      mint: baseMint,
       quoteMint: quoteMint,
-      payerMintAta: userStable,
-      payerQuoteMintAta: userUSDC,
-      vault,
+      payerMintAta: userBase,
+      payerQuoteMintAta: userQuote,
+      vault: vaultIssuance,
       associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
       quantity,
       proof
@@ -168,10 +213,10 @@ describe("sold-issuance", () => {
     await txBuilder.sendAndConfirm(umi, { send: { skipPreflight: false } });
 
     const tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
-    const vaultAcc = await safeFetchToken(umi, vault);
+    const vaultAcc = await safeFetchToken(umi, vaultIssuance);
 
     const expectedMintAmount = BigInt(quantity);
-    const powerDifference = quoteMintDecimals - mintDecimals;
+    const powerDifference = quoteMintDecimals - baseMintDecimals;
 
     // Adjust quantity by the power difference before converting to BigInt
     let adjustedQuantity;
@@ -192,30 +237,30 @@ describe("sold-issuance", () => {
   })
 
   it("Sold can be redeemed for Quote", async () => {
-    const quantity = 1000 * 10 ** mintDecimals;
+    const quantity = 1000 * 10 ** baseMintDecimals;
 
     const proof = getMerkleProof(allowedWallets, keypair.publicKey.toBase58());
 
     let txBuilder = new TransactionBuilder();
 
-    const userQuoteAtaAcc = await safeFetchToken(umi, userUSDC)
+    const userQuoteAtaAcc = await safeFetchToken(umi, userQuote)
 
     if (!userQuoteAtaAcc) {
       txBuilder = txBuilder.add(createAssociatedToken(umi, {
-        mint: userUSDC,
+        mint: userQuote,
       }))
     }
 
     const _tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
-    const _vaultAcc = await safeFetchToken(umi, vault);
+    const _vaultAcc = await safeFetchToken(umi, vaultIssuance);
 
     txBuilder = txBuilder.add(redeem(umi, {
       tokenManager,
-      mint: stableMint,
+      mint: baseMint,
       quoteMint: quoteMint,
-      payerMintAta: userStable,
-      payerQuoteMintAta: userUSDC,
-      vault,
+      payerMintAta: userBase,
+      payerQuoteMintAta: userQuote,
+      vault: vaultIssuance,
       associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
       quantity,
       proof
@@ -224,10 +269,10 @@ describe("sold-issuance", () => {
     await txBuilder.sendAndConfirm(umi, { send: { skipPreflight: false } });
 
     const tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
-    const vaultAcc = await safeFetchToken(umi, vault);
+    const vaultAcc = await safeFetchToken(umi, vaultIssuance);
 
     const expectedMintAmount = BigInt(quantity);
-    const expectedQuoteAmount = (BigInt(quantity) / BigInt(10 ** mintDecimals) * BigInt(exchangeRate) / BigInt(10 ** exchangeRateDecimals)) * BigInt(10 ** quoteMintDecimals);
+    const expectedQuoteAmount = (BigInt(quantity) / BigInt(10 ** baseMintDecimals) * BigInt(exchangeRate) / BigInt(10 ** exchangeRateDecimals)) * BigInt(10 ** quoteMintDecimals);
 
     assert.equal(tokenManagerAcc.totalSupply, _tokenManagerAcc.totalSupply - expectedMintAmount, "Total supply should be correct");
     assert.equal(tokenManagerAcc.totalCollateral, _tokenManagerAcc.totalCollateral - expectedQuoteAmount, "Total collateral should be correct");
@@ -245,20 +290,20 @@ describe("sold-issuance", () => {
 
     // Attempt to mint tokens
     txBuilder = new TransactionBuilder();
-    let userStableAtaAcc = await safeFetchToken(umi, userStable)
+    let userBaseAtaAcc = await safeFetchToken(umi, userBase)
 
-    if (!userStableAtaAcc) {
+    if (!userBaseAtaAcc) {
       txBuilder = txBuilder.add(createAssociatedToken(umi, {
-        mint: stableMint,
+        mint: baseMint,
       }))
     }
     txBuilder = txBuilder.add(mint(umi, {
       tokenManager,
-      mint: stableMint,
+      mint: baseMint,
       quoteMint: quoteMint,
-      payerMintAta: userStable,
-      payerQuoteMintAta: userUSDC,
-      vault,
+      payerMintAta: userBase,
+      payerQuoteMintAta: userQuote,
+      vault: vaultIssuance,
       associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
       quantity: 1000,
       proof: getMerkleProof(allowedWallets, keypair.publicKey.toBase58())
@@ -276,20 +321,20 @@ describe("sold-issuance", () => {
 
     // Attempt to redeem tokens
     txBuilder = new TransactionBuilder();
-    userStableAtaAcc = await safeFetchToken(umi, userStable)
+    userBaseAtaAcc = await safeFetchToken(umi, userBase)
 
-    if (!userStableAtaAcc) {
+    if (!userBaseAtaAcc) {
       txBuilder = txBuilder.add(createAssociatedToken(umi, {
-        mint: stableMint,
+        mint: baseMint,
       }))
     }
     txBuilder = txBuilder.add(redeem(umi, {
       tokenManager,
-      mint: stableMint,
+      mint: baseMint,
       quoteMint: quoteMint,
-      payerMintAta: userStable,
-      payerQuoteMintAta: userUSDC,
-      vault,
+      payerMintAta: userBase,
+      payerQuoteMintAta: userQuote,
+      vault: vaultIssuance,
       associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
       quantity: 1000,
       proof: getMerkleProof(allowedWallets, keypair.publicKey.toBase58())
@@ -336,9 +381,10 @@ describe("sold-issuance", () => {
 
     // Update the allowList to a new set of wallets
     let txBuilder = new TransactionBuilder();
-    txBuilder = txBuilder.add(updateMerkleRoot(umi, {
+    txBuilder = txBuilder.add(updateTokenManager(umi, {
       tokenManager,
-      merkleRoot: newMerkleRoot
+      merkleRoot: newMerkleRoot,
+      admin: null
     }));
     await txBuilder.sendAndConfirm(umi);
 
@@ -353,11 +399,11 @@ describe("sold-issuance", () => {
     let proof = getMerkleProof(allowedWallets, keypair.publicKey.toBase58());
     txBuilder = txBuilder.add(mint(umi, {
       tokenManager,
-      mint: stableMint,
+      mint: baseMint,
       quoteMint: quoteMint,
-      payerMintAta: userStable,
-      payerQuoteMintAta: userUSDC,
-      vault,
+      payerMintAta: userBase,
+      payerQuoteMintAta: userQuote,
+      vault: vaultIssuance,
       associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
       quantity: 1000,
       proof
@@ -376,11 +422,11 @@ describe("sold-issuance", () => {
     txBuilder = new TransactionBuilder();
     txBuilder = txBuilder.add(redeem(umi, {
       tokenManager,
-      mint: stableMint,
+      mint: baseMint,
       quoteMint: quoteMint,
-      payerMintAta: userStable,
-      payerQuoteMintAta: userUSDC,
-      vault,
+      payerMintAta: userBase,
+      payerQuoteMintAta: userQuote,
+      vault: vaultIssuance,
       associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
       quantity: 1000,
       proof
@@ -398,9 +444,10 @@ describe("sold-issuance", () => {
 
     // Restore the original allowList
     txBuilder = new TransactionBuilder();
-    txBuilder = txBuilder.add(updateMerkleRoot(umi, {
+    txBuilder = txBuilder.add(updateTokenManager(umi, {
       tokenManager,
-      merkleRoot: originalMerkleRoot
+      merkleRoot: originalMerkleRoot,
+      admin: null
     }));
     await txBuilder.sendAndConfirm(umi);
 
@@ -415,11 +462,11 @@ describe("sold-issuance", () => {
     txBuilder = new TransactionBuilder();
     txBuilder = txBuilder.add(mint(umi, {
       tokenManager,
-      mint: stableMint,
+      mint: baseMint,
       quoteMint: quoteMint,
-      payerMintAta: userStable,
-      payerQuoteMintAta: userUSDC,
-      vault,
+      payerMintAta: userBase,
+      payerQuoteMintAta: userQuote,
+      vault: vaultIssuance,
       associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
       quantity: 1000,
       proof
@@ -435,11 +482,11 @@ describe("sold-issuance", () => {
     txBuilder = new TransactionBuilder();
     txBuilder = txBuilder.add(redeem(umi, {
       tokenManager,
-      mint: stableMint,
+      mint: baseMint,
       quoteMint: quoteMint,
-      payerMintAta: userStable,
-      payerQuoteMintAta: userUSDC,
-      vault,
+      payerMintAta: userBase,
+      payerQuoteMintAta: userQuote,
+      vault: vaultIssuance,
       associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
       quantity: 1000,
       proof
@@ -453,22 +500,22 @@ describe("sold-issuance", () => {
     );
   });
 
-  it("deposit and withdraw funds from the vault", async () => {
+  it("deposit and withdraw funds from the vaultIssuance", async () => {
     let _tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
-    let _vaultAcc = await safeFetchToken(umi, vault);
+    let _vaultAcc = await safeFetchToken(umi, vaultIssuance);
 
     // Higher than total collateral amount
     let quantity = Number(_tokenManagerAcc.totalCollateral) + 1; // Amount to deposit
     // console.log("Quantity to Withdraw higher than collateral: ", quantity);
-    // console.log("TotalSupply: ", Number(_tokenManagerAcc.totalSupply / BigInt(10 ** mintDecimals)));
+    // console.log("TotalSupply: ", Number(_tokenManagerAcc.totalSupply / BigInt(10 ** baseMintDecimals)));
     // console.log("TotalCollateral: ", Number(_tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals)));
 
     let txBuilder = new TransactionBuilder();
     txBuilder = txBuilder.add(withdrawFunds(umi, {
       tokenManager,
       quoteMint: quoteMint,
-      vault,
-      authorityQuoteMintAta: userUSDC,
+      vault: vaultIssuance,
+      authorityQuoteMintAta: userQuote,
       associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
       quantity,
     }));
@@ -486,15 +533,15 @@ describe("sold-issuance", () => {
     // Higher than the threshold amount amount
     quantity = (Number(_tokenManagerAcc.totalCollateral) * (1 - emergencyFundBasisPoints / 10000)) + 1; // Amount to deposit
     // console.log("Quantity to Withdraw, higher than threshhold: ", quantity);
-    // console.log("TotalSupply: ", Number(_tokenManagerAcc.totalSupply / BigInt(10 ** mintDecimals)));
+    // console.log("TotalSupply: ", Number(_tokenManagerAcc.totalSupply / BigInt(10 ** baseMintDecimals)));
     // console.log("TotalCollateral: ", Number(_tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals)));
 
     txBuilder = new TransactionBuilder();
     txBuilder = txBuilder.add(withdrawFunds(umi, {
       tokenManager,
       quoteMint: quoteMint,
-      vault,
-      authorityQuoteMintAta: userUSDC,
+      vault: vaultIssuance,
+      authorityQuoteMintAta: userQuote,
       associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
       quantity,
     }));
@@ -512,39 +559,39 @@ describe("sold-issuance", () => {
     // Withdraw within allowed
     quantity = (Number(_tokenManagerAcc.totalCollateral) * (1 - emergencyFundBasisPoints / 10000)); // Amount to withdraw
     // console.log("Quantity to Withdraw allowed: ", quantity);
-    // console.log("TotalSupply: ", Number(_tokenManagerAcc.totalSupply / BigInt(10 ** mintDecimals)));
+    // console.log("TotalSupply: ", Number(_tokenManagerAcc.totalSupply / BigInt(10 ** baseMintDecimals)));
     // console.log("TotalCollateral: ", Number(_tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals)));
 
     txBuilder = new TransactionBuilder();
     txBuilder = txBuilder.add(withdrawFunds(umi, {
       tokenManager,
       quoteMint: quoteMint,
-      vault,
-      authorityQuoteMintAta: userUSDC,
+      vault: vaultIssuance,
+      authorityQuoteMintAta: userQuote,
       associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
       quantity,
     }));
     await txBuilder.sendAndConfirm(umi);
 
     let tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
-    let vaultAcc = await safeFetchToken(umi, vault);
+    let vaultAcc = await safeFetchToken(umi, vaultIssuance);
 
     let expectedChange = BigInt(quantity)
     assert.equal(tokenManagerAcc.totalCollateral, _tokenManagerAcc.totalCollateral - expectedChange, "TokenManager totalCollateral should be equal to the initial totalCollateral minus withdrawed amount");
-    assert.equal(vaultAcc.amount, _vaultAcc.amount - expectedChange, "Vault balance should be equal to the initial vault minus withdrawed amount");
+    assert.equal(vaultAcc.amount, _vaultAcc.amount - expectedChange, "Vault balance should be equal to the initial vaultIssuance minus withdrawed amount");
 
     // Deposit excessive
-    quantity = Number(((tokenManagerAcc.totalSupply / BigInt(10 ** mintDecimals)) * BigInt(exchangeRate) / BigInt(10 ** exchangeRateDecimals)) - (tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals))) * 10 ** quoteMintDecimals + 1;
+    quantity = Number(((tokenManagerAcc.totalSupply / BigInt(10 ** baseMintDecimals)) * BigInt(exchangeRate) / BigInt(10 ** exchangeRateDecimals)) - (tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals))) * 10 ** quoteMintDecimals + 1;
     // console.log("Quantity to Deposit not allowed: ", quantity);
-    // console.log("TotalSupply: ", Number(tokenManagerAcc.totalSupply / BigInt(10 ** mintDecimals)));
+    // console.log("TotalSupply: ", Number(tokenManagerAcc.totalSupply / BigInt(10 ** baseMintDecimals)));
     // console.log("TotalCollateral: ", Number(tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals)));
 
     txBuilder = new TransactionBuilder();
     txBuilder = txBuilder.add(depositFunds(umi, {
       tokenManager,
       quoteMint: quoteMint,
-      vault,
-      authorityQuoteMintAta: userUSDC,
+      vault: vaultIssuance,
+      authorityQuoteMintAta: userQuote,
       associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
       quantity,
     }));
@@ -563,17 +610,17 @@ describe("sold-issuance", () => {
     _tokenManagerAcc = tokenManagerAcc;
     _vaultAcc = vaultAcc;
 
-    quantity = Number(((tokenManagerAcc.totalSupply / BigInt(10 ** mintDecimals)) * BigInt(exchangeRate) / BigInt(10 ** exchangeRateDecimals)) - (tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals))) * 10 ** quoteMintDecimals;
+    quantity = Number(((tokenManagerAcc.totalSupply / BigInt(10 ** baseMintDecimals)) * BigInt(exchangeRate) / BigInt(10 ** exchangeRateDecimals)) - (tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals))) * 10 ** quoteMintDecimals;
     // console.log("Quantity deposit allowed: ", quantity);
-    // console.log("TotalSupply: ", Number(tokenManagerAcc.totalSupply / BigInt(10 ** mintDecimals)));
+    // console.log("TotalSupply: ", Number(tokenManagerAcc.totalSupply / BigInt(10 ** baseMintDecimals)));
     // console.log("TotalCollateral: ", Number(tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals)));
 
     txBuilder = new TransactionBuilder();
     txBuilder = txBuilder.add(depositFunds(umi, {
       tokenManager,
       quoteMint: quoteMint,
-      vault,
-      authorityQuoteMintAta: userUSDC,
+      vault: vaultIssuance,
+      authorityQuoteMintAta: userQuote,
       associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
       quantity,
     }));
@@ -581,10 +628,140 @@ describe("sold-issuance", () => {
     await txBuilder.sendAndConfirm(umi);
 
     tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
-    vaultAcc = await safeFetchToken(umi, vault);
+    vaultAcc = await safeFetchToken(umi, vaultIssuance);
 
     expectedChange = BigInt(quantity)
     assert.equal(tokenManagerAcc.totalCollateral, _tokenManagerAcc.totalCollateral + expectedChange, "TokenManager totalCollateral should be equal to the initial totalCollateral plus deposited amount");
-    assert.equal(vaultAcc.amount, _vaultAcc.amount + expectedChange, "Vault balance should be equal to the initial vault plus deposited amount");
+    assert.equal(vaultAcc.amount, _vaultAcc.amount + expectedChange, "Vault balance should be equal to the initial vaultIssuance plus deposited amount");
   });
+
+  // Stake Program
+  it("baseMint can be staked for xMint", async () => {
+    const quantity = 1000 * 10 ** baseMintDecimals;
+
+    let txBuilder = new TransactionBuilder();
+
+    const userXAtaAcc = await safeFetchToken(umi, userX)
+
+    if (!userXAtaAcc) {
+      txBuilder = txBuilder.add(createAssociatedToken(umi, {
+        mint: xMint,
+      }))
+    }
+
+    const _stakePoolAcc = await safeFetchStakePool(umi, stakePool);
+    const _vaultAcc = await safeFetchToken(umi, vaultStaking);
+
+    txBuilder = txBuilder.add(stake(umi, {
+      stakePool,
+      baseMint,
+      xMint,
+      payerBaseMintAta: userBase,
+      payerXMintAta: userX,
+      vault: vaultStaking,
+      associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
+      quantity,
+    }))
+
+    // console.log("Inception Timestamp:", Number(_stakePoolAcc.inceptionTimestamp));
+    // console.log("Current Timestamp:", Math.floor(Date.now() / 1000));
+    // console.log("Annual Yield Rate:", Number(_stakePoolAcc.annualYieldRate));
+    // console.log("Initial Exchange Rate:", Number(_stakePoolAcc.initialExchangeRate));
+
+    const exchangeRate = calculateExchangeRate(
+      Number(_stakePoolAcc.inceptionTimestamp),
+      Math.floor(Date.now() / 1000),
+      Number(_stakePoolAcc.annualYieldRate),
+      Number(_stakePoolAcc.initialExchangeRate)
+    );
+
+    await txBuilder.sendAndConfirm(umi, { send: { skipPreflight: true } });
+
+    const stakePoolAcc = await safeFetchStakePool(umi, stakePool);
+
+    const vaultAcc = await safeFetchToken(umi, vaultStaking);
+
+    const expectedBaseMintAmount = BigInt(quantity);
+
+    const expectedxMintAmount = BigInt(Math.floor(quantity * exchangeRate / 10 ** baseMintDecimals));
+    // console.log("Expected xMint Amount: ", Number(expectedxMintAmount));
+
+    assert.equal(stakePoolAcc.baseBalance, _stakePoolAcc.baseBalance + expectedBaseMintAmount, "Base Balance is not correct");
+    assert.equal(vaultAcc.amount, _vaultAcc.amount + expectedBaseMintAmount, "Vault amount is not correct");
+    chaiAssert.closeTo(Number(stakePoolAcc.xSupply), Number(_stakePoolAcc.xSupply) + Number(expectedxMintAmount), 200000, "xSupply is not correct");
+  })
+
+  it("baseMint can be unstaked by redeeming xMint", async () => {
+    // const quantity = 10000 * 10 ** baseMintDecimals;
+    let txBuilder = new TransactionBuilder();
+
+    const userBaseAtaAcc = await safeFetchToken(umi, userBase)
+
+    if (!userBaseAtaAcc) {
+      txBuilder = txBuilder.add(createAssociatedToken(umi, {
+        mint: baseMint,
+      }))
+    }
+
+    const _stakePoolAcc = await safeFetchStakePool(umi, stakePool);
+    const _vaultAcc = await safeFetchToken(umi, vaultStaking);
+
+    const quantity = Number(_stakePoolAcc.xSupply);
+    // console.log("Quantity: ", quantity);
+
+    txBuilder = txBuilder.add(unstake(umi, {
+      stakePool,
+      baseMint,
+      xMint,
+      payerBaseMintAta: userBase,
+      payerXMintAta: userX,
+      vault: vaultStaking,
+      associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
+      quantity,
+      tokenManager,
+      soldIssuanceProgram: SOLD_ISSUANCE_PROGRAM_ID,
+    }))
+
+    // console.log("Inception Timestamp:", Number(_stakePoolAcc.inceptionTimestamp));
+    // console.log("Current Timestamp:", Math.floor(Date.now() / 1000));
+    // console.log("Annual Yield Rate:", Number(_stakePoolAcc.annualYieldRate));
+    // console.log("Initial Exchange Rate:", Number(_stakePoolAcc.initialExchangeRate));
+
+    const exchangeRate = calculateExchangeRate(
+      Number(_stakePoolAcc.inceptionTimestamp),
+      Math.floor(Date.now() / 1000),
+      Number(_stakePoolAcc.annualYieldRate),
+      Number(_stakePoolAcc.initialExchangeRate)
+    );
+    // console.log("Exchange Rate: ", exchangeRate);
+
+    await txBuilder.sendAndConfirm(umi);
+
+    // await assert.rejects(
+    //   async () => {
+    //     const res = await txBuilder.sendAndConfirm(umi);
+    //     console.log(bs58.encode(res.signature));
+
+    //   },
+    //   (err) => {
+    //     console.log((err as Error).message);
+
+    //     return (err as Error).message.includes("insufficient funds");
+    //   },
+    //   "Expected to temporarily fail"
+    // );
+
+    const stakePoolAcc = await safeFetchStakePool(umi, stakePool);
+
+    const vaultAcc = await safeFetchToken(umi, vaultStaking);
+
+    const expectedBaseMintAmount = BigInt(Math.floor((quantity / exchangeRate) * 10 ** baseMintDecimals));
+    // console.log("Expected Base Mint Amount: ", Number(expectedBaseMintAmount));
+
+    const expectedxMintAmount = BigInt(quantity);
+
+    chaiAssert.closeTo(Number(stakePoolAcc.baseBalance), Number(_stakePoolAcc.baseBalance) - Number(expectedBaseMintAmount), 200000, "Base Balance is not correct");
+    chaiAssert.closeTo(Number(vaultAcc.amount), Number(_vaultAcc.amount) - Number(expectedBaseMintAmount), 200000, "Vault amount is not correct");
+    chaiAssert.equal(stakePoolAcc.xSupply, _stakePoolAcc.xSupply - expectedxMintAmount, "xSupply is not correct");
+  })
 });

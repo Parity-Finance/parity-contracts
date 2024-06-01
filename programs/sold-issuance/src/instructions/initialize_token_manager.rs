@@ -17,6 +17,8 @@ pub struct InitializeParams {
     pub decimals: u8,
     pub exchange_rate: u64,
     pub emergency_fund_basis_points: u16,
+    pub merkle_root: [u8; 32],
+    pub admin: Pubkey,
 }
 
 #[derive(Accounts)]
@@ -61,11 +63,7 @@ pub struct Initialize<'info> {
     pub associated_token_program: Program<'info, AssociatedToken>,
 }
 
-pub fn handler(
-    ctx: Context<Initialize>,
-    params: InitializeParams,
-    merkle_root: [u8; 32],
-) -> Result<()> {
+pub fn handler(ctx: Context<Initialize>, params: InitializeParams) -> Result<()> {
     let token_manager = &mut ctx.accounts.token_manager;
 
     let bump = ctx.bumps.token_manager; // Corrected to be a slice of a slice of a byte slice
@@ -103,9 +101,8 @@ pub fn handler(
 
     token_manager.bump = bump;
     // Authorities
-    token_manager.mint_redeem_authorities = vec![];
-    token_manager.deposit_withdraw_authorities = vec![];
-    token_manager.pause_authorities = vec![];
+    token_manager.deposit_withdraw_authorities = vec![ctx.accounts.payer.key()];
+    token_manager.secondary_authorities = vec![ctx.accounts.payer.key()];
     // Token
     token_manager.mint = ctx.accounts.mint.key();
     token_manager.mint_decimals = ctx.accounts.mint.decimals;
@@ -117,7 +114,8 @@ pub fn handler(
     token_manager.total_collateral = 0;
     token_manager.emergency_fund_basis_points = params.emergency_fund_basis_points;
     token_manager.active = true;
-    token_manager.merkle_root = merkle_root;
+    token_manager.merkle_root = params.merkle_root;
+    token_manager.admin = params.admin;
 
     Ok(())
 }

@@ -29,133 +29,100 @@ import {
 } from '../shared';
 
 // Accounts.
-export type UnstakeInstructionAccounts = {
-  stakePool: PublicKey | Pda;
+export type MintAdminInstructionAccounts = {
   tokenManager: PublicKey | Pda;
-  baseMint: PublicKey | Pda;
-  payerBaseMintAta: PublicKey | Pda;
-  xMint: PublicKey | Pda;
-  payerXMintAta: PublicKey | Pda;
-  vault: PublicKey | Pda;
-  payer?: Signer;
+  mint: PublicKey | Pda;
+  adminMintAta: PublicKey | Pda;
+  admin: Signer;
   systemProgram?: PublicKey | Pda;
   tokenProgram?: PublicKey | Pda;
   associatedTokenProgram: PublicKey | Pda;
-  soldIssuanceProgram: PublicKey | Pda;
 };
 
 // Data.
-export type UnstakeInstructionData = {
+export type MintAdminInstructionData = {
   discriminator: Array<number>;
   quantity: bigint;
 };
 
-export type UnstakeInstructionDataArgs = { quantity: number | bigint };
+export type MintAdminInstructionDataArgs = { quantity: number | bigint };
 
-export function getUnstakeInstructionDataSerializer(): Serializer<
-  UnstakeInstructionDataArgs,
-  UnstakeInstructionData
+export function getMintAdminInstructionDataSerializer(): Serializer<
+  MintAdminInstructionDataArgs,
+  MintAdminInstructionData
 > {
-  return mapSerializer<UnstakeInstructionDataArgs, any, UnstakeInstructionData>(
-    struct<UnstakeInstructionData>(
+  return mapSerializer<
+    MintAdminInstructionDataArgs,
+    any,
+    MintAdminInstructionData
+  >(
+    struct<MintAdminInstructionData>(
       [
         ['discriminator', array(u8(), { size: 8 })],
         ['quantity', u64()],
       ],
-      { description: 'UnstakeInstructionData' }
+      { description: 'MintAdminInstructionData' }
     ),
     (value) => ({
       ...value,
-      discriminator: [90, 95, 107, 42, 205, 124, 50, 225],
+      discriminator: [230, 227, 6, 187, 107, 91, 106, 21],
     })
-  ) as Serializer<UnstakeInstructionDataArgs, UnstakeInstructionData>;
+  ) as Serializer<MintAdminInstructionDataArgs, MintAdminInstructionData>;
 }
 
 // Args.
-export type UnstakeInstructionArgs = UnstakeInstructionDataArgs;
+export type MintAdminInstructionArgs = MintAdminInstructionDataArgs;
 
 // Instruction.
-export function unstake(
-  context: Pick<Context, 'payer' | 'programs'>,
-  input: UnstakeInstructionAccounts & UnstakeInstructionArgs
+export function mintAdmin(
+  context: Pick<Context, 'programs'>,
+  input: MintAdminInstructionAccounts & MintAdminInstructionArgs
 ): TransactionBuilder {
   // Program ID.
   const programId = context.programs.getPublicKey(
-    'soldStaking',
-    'F9pkhuLyu1usfS5p6RCuXxeS2TQsAVqANo1M2iC8ze1t'
+    'soldIssuance',
+    '3ja6s1Pb55nhzhwYp4GY77n972iEQtWX55xoRwP2asCT'
   );
 
   // Accounts.
   const resolvedAccounts = {
-    stakePool: {
-      index: 0,
-      isWritable: true as boolean,
-      value: input.stakePool ?? null,
-    },
     tokenManager: {
-      index: 1,
+      index: 0,
       isWritable: true as boolean,
       value: input.tokenManager ?? null,
     },
-    baseMint: {
+    mint: { index: 1, isWritable: true as boolean, value: input.mint ?? null },
+    adminMintAta: {
       index: 2,
       isWritable: true as boolean,
-      value: input.baseMint ?? null,
+      value: input.adminMintAta ?? null,
     },
-    payerBaseMintAta: {
+    admin: {
       index: 3,
-      isWritable: true as boolean,
-      value: input.payerBaseMintAta ?? null,
-    },
-    xMint: {
-      index: 4,
-      isWritable: true as boolean,
-      value: input.xMint ?? null,
-    },
-    payerXMintAta: {
-      index: 5,
-      isWritable: true as boolean,
-      value: input.payerXMintAta ?? null,
-    },
-    vault: {
-      index: 6,
-      isWritable: true as boolean,
-      value: input.vault ?? null,
-    },
-    payer: {
-      index: 7,
-      isWritable: true as boolean,
-      value: input.payer ?? null,
+      isWritable: false as boolean,
+      value: input.admin ?? null,
     },
     systemProgram: {
-      index: 8,
+      index: 4,
       isWritable: false as boolean,
       value: input.systemProgram ?? null,
     },
     tokenProgram: {
-      index: 9,
+      index: 5,
       isWritable: false as boolean,
       value: input.tokenProgram ?? null,
     },
     associatedTokenProgram: {
-      index: 10,
+      index: 6,
       isWritable: false as boolean,
       value: input.associatedTokenProgram ?? null,
-    },
-    soldIssuanceProgram: {
-      index: 11,
-      isWritable: false as boolean,
-      value: input.soldIssuanceProgram ?? null,
     },
   } satisfies ResolvedAccountsWithIndices;
 
   // Arguments.
-  const resolvedArgs: UnstakeInstructionArgs = { ...input };
+  const resolvedArgs: MintAdminInstructionArgs = { ...input };
 
   // Default values.
-  if (!resolvedAccounts.payer.value) {
-    resolvedAccounts.payer.value = context.payer;
-  }
   if (!resolvedAccounts.systemProgram.value) {
     resolvedAccounts.systemProgram.value = context.programs.getPublicKey(
       'splSystem',
@@ -184,8 +151,8 @@ export function unstake(
   );
 
   // Data.
-  const data = getUnstakeInstructionDataSerializer().serialize(
-    resolvedArgs as UnstakeInstructionDataArgs
+  const data = getMintAdminInstructionDataSerializer().serialize(
+    resolvedArgs as MintAdminInstructionDataArgs
   );
 
   // Bytes Created On Chain.

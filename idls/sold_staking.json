@@ -119,11 +119,6 @@
           "isSigner": true
         },
         {
-          "name": "rent",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
@@ -155,8 +150,13 @@
           "isSigner": false
         },
         {
+          "name": "tokenManager",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "baseMint",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false
         },
         {
@@ -185,11 +185,6 @@
           "isSigner": true
         },
         {
-          "name": "rent",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
@@ -201,6 +196,11 @@
         },
         {
           "name": "associatedTokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "soldIssuanceProgram",
           "isMut": false,
           "isSigner": false
         }
@@ -346,5 +346,11 @@
       "name": "CalculationOverflow",
       "msg": "Calculation overflow"
     }
-  ]
+  ],
+  "metadata": {
+    "address": "F9pkhuLyu1usfS5p6RCuXxeS2TQsAVqANo1M2iC8ze1t",
+    "origin": "anchor",
+    "binaryVersion": "0.29.0",
+    "libVersion": "0.29.0"
+  }
 }

@@ -38,9 +38,9 @@ export type TokenManager = Account<TokenManagerAccountData>;
 export type TokenManagerAccountData = {
   discriminator: Array<number>;
   bump: number;
-  mintRedeemAuthorities: Array<PublicKey>;
   depositWithdrawAuthorities: Array<PublicKey>;
   pauseAuthorities: Array<PublicKey>;
+  secondaryAuthorities: Array<PublicKey>;
   mint: PublicKey;
   mintDecimals: number;
   quoteMint: PublicKey;
@@ -51,13 +51,14 @@ export type TokenManagerAccountData = {
   emergencyFundBasisPoints: number;
   active: boolean;
   merkleRoot: Uint8Array;
+  admin: PublicKey;
 };
 
 export type TokenManagerAccountDataArgs = {
   bump: number;
-  mintRedeemAuthorities: Array<PublicKey>;
   depositWithdrawAuthorities: Array<PublicKey>;
   pauseAuthorities: Array<PublicKey>;
+  secondaryAuthorities: Array<PublicKey>;
   mint: PublicKey;
   mintDecimals: number;
   quoteMint: PublicKey;
@@ -68,6 +69,7 @@ export type TokenManagerAccountDataArgs = {
   emergencyFundBasisPoints: number;
   active: boolean;
   merkleRoot: Uint8Array;
+  admin: PublicKey;
 };
 
 export function getTokenManagerAccountDataSerializer(): Serializer<
@@ -83,9 +85,9 @@ export function getTokenManagerAccountDataSerializer(): Serializer<
       [
         ['discriminator', array(u8(), { size: 8 })],
         ['bump', u8()],
-        ['mintRedeemAuthorities', array(publicKeySerializer())],
         ['depositWithdrawAuthorities', array(publicKeySerializer())],
         ['pauseAuthorities', array(publicKeySerializer())],
+        ['secondaryAuthorities', array(publicKeySerializer())],
         ['mint', publicKeySerializer()],
         ['mintDecimals', u8()],
         ['quoteMint', publicKeySerializer()],
@@ -96,6 +98,7 @@ export function getTokenManagerAccountDataSerializer(): Serializer<
         ['emergencyFundBasisPoints', u16()],
         ['active', bool()],
         ['merkleRoot', bytes({ size: 32 })],
+        ['admin', publicKeySerializer()],
       ],
       { description: 'TokenManagerAccountData' }
     ),
@@ -175,9 +178,9 @@ export function getTokenManagerGpaBuilder(
     .registerFields<{
       discriminator: Array<number>;
       bump: number;
-      mintRedeemAuthorities: Array<PublicKey>;
       depositWithdrawAuthorities: Array<PublicKey>;
       pauseAuthorities: Array<PublicKey>;
+      secondaryAuthorities: Array<PublicKey>;
       mint: PublicKey;
       mintDecimals: number;
       quoteMint: PublicKey;
@@ -188,12 +191,13 @@ export function getTokenManagerGpaBuilder(
       emergencyFundBasisPoints: number;
       active: boolean;
       merkleRoot: Uint8Array;
+      admin: PublicKey;
     }>({
       discriminator: [0, array(u8(), { size: 8 })],
       bump: [8, u8()],
-      mintRedeemAuthorities: [9, array(publicKeySerializer())],
-      depositWithdrawAuthorities: [null, array(publicKeySerializer())],
+      depositWithdrawAuthorities: [9, array(publicKeySerializer())],
       pauseAuthorities: [null, array(publicKeySerializer())],
+      secondaryAuthorities: [null, array(publicKeySerializer())],
       mint: [null, publicKeySerializer()],
       mintDecimals: [null, u8()],
       quoteMint: [null, publicKeySerializer()],
@@ -204,6 +208,7 @@ export function getTokenManagerGpaBuilder(
       emergencyFundBasisPoints: [null, u16()],
       active: [null, bool()],
       merkleRoot: [null, bytes({ size: 32 })],
+      admin: [null, publicKeySerializer()],
     })
     .deserializeUsing<TokenManager>((account) =>
       deserializeTokenManager(account)

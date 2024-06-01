@@ -2,16 +2,16 @@ import { keypairIdentity, Pda, PublicKey, publicKey, TransactionBuilder, createA
 import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
 import { createAssociatedToken, createSplAssociatedTokenProgram, createSplTokenProgram, findAssociatedTokenPda, safeFetchToken, SPL_ASSOCIATED_TOKEN_PROGRAM_ID } from "@metaplex-foundation/mpl-toolbox"
 import { Connection, Keypair, PublicKey as Web3JsPublicKey } from "@solana/web3.js";
-import { createSoldIssuanceProgram, initializeStakePool, findStakePoolPda, safeFetchStakePool, stake, unstake, SOLD_STAKING_PROGRAM_ID, calculateExchangeRate } from "../clients/js/src"
+import { createSoldIssuanceProgram, initializeStakePool, findStakePoolPda, safeFetchStakePool, stake, unstake, SOLD_STAKING_PROGRAM_ID, calculateExchangeRate, findTokenManagerPda } from "../clients/js/src"
 import { ASSOCIATED_TOKEN_PROGRAM_ID, createMint, getOrCreateAssociatedTokenAccount, mintTo, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { fromWeb3JsKeypair, fromWeb3JsPublicKey, toWeb3JsPublicKey } from "@metaplex-foundation/umi-web3js-adapters";
 import { findMetadataPda } from "@metaplex-foundation/mpl-token-metadata";
 import chai, { assert as chaiAssert } from 'chai';
 import assert from 'assert';
 import { bs58 } from "@coral-xyz/anchor/dist/cjs/utils/bytes";
+import { SOLD_ISSUANCE_PROGRAM_ID } from "../clients/js/src";
 
-
-describe.only("sold-staking", () => {
+describe("sold-staking", () => {
   let umi = createUmi("http://localhost:8899");
   umi.programs.add(createSplAssociatedTokenProgram());
   umi.programs.add(createSplTokenProgram());
@@ -31,6 +31,7 @@ describe.only("sold-staking", () => {
   let vault: PublicKey;
 
   let stakePool = findStakePoolPda(umi)[0];
+  let tokenManager = findTokenManagerPda(umi)[0];
 
   // Quote Mint and ATAs
   let xMint: PublicKey = umi.eddsa.findPda(SOLD_STAKING_PROGRAM_ID, [Buffer.from("mint")])[0];
@@ -39,9 +40,9 @@ describe.only("sold-staking", () => {
 
   // Test Controls
   const baseMintDecimals = 8;
-  const xMintDecimals = 8;
+  const xMintDecimals = 6;
   const exchangeRateDecimals = xMintDecimals
-  const initialExchangeRate = 1 * 10 ** exchangeRateDecimals;
+  const initialExchangeRate = 2 * 10 ** exchangeRateDecimals;
 
   before(async () => {
     try {
@@ -205,7 +206,9 @@ describe.only("sold-staking", () => {
       payerXMintAta: userX,
       vault,
       associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
-      quantity
+      quantity,
+      tokenManager,
+      soldIssuanceProgram: SOLD_ISSUANCE_PROGRAM_ID,
     }))
 
     // console.log("Inception Timestamp:", Number(_stakePoolAcc.inceptionTimestamp));

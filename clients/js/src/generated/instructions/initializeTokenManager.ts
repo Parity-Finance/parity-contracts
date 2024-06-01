@@ -20,6 +20,7 @@ import {
   array,
   bytes,
   mapSerializer,
+  publicKey as publicKeySerializer,
   string,
   struct,
   u16,
@@ -33,7 +34,7 @@ import {
 } from '../shared';
 
 // Accounts.
-export type InitializeInstructionAccounts = {
+export type InitializeTokenManagerInstructionAccounts = {
   tokenManager: PublicKey | Pda;
   vault: PublicKey | Pda;
   metadata: PublicKey | Pda;
@@ -48,7 +49,7 @@ export type InitializeInstructionAccounts = {
 };
 
 // Data.
-export type InitializeInstructionData = {
+export type InitializeTokenManagerInstructionData = {
   discriminator: Array<number>;
   name: string;
   symbol: string;
@@ -57,9 +58,10 @@ export type InitializeInstructionData = {
   exchangeRate: bigint;
   emergencyFundBasisPoints: number;
   merkleRoot: Uint8Array;
+  admin: PublicKey;
 };
 
-export type InitializeInstructionDataArgs = {
+export type InitializeTokenManagerInstructionDataArgs = {
   name: string;
   symbol: string;
   uri: string;
@@ -67,18 +69,19 @@ export type InitializeInstructionDataArgs = {
   exchangeRate: number | bigint;
   emergencyFundBasisPoints: number;
   merkleRoot: Uint8Array;
+  admin: PublicKey;
 };
 
-export function getInitializeInstructionDataSerializer(): Serializer<
-  InitializeInstructionDataArgs,
-  InitializeInstructionData
+export function getInitializeTokenManagerInstructionDataSerializer(): Serializer<
+  InitializeTokenManagerInstructionDataArgs,
+  InitializeTokenManagerInstructionData
 > {
   return mapSerializer<
-    InitializeInstructionDataArgs,
+    InitializeTokenManagerInstructionDataArgs,
     any,
-    InitializeInstructionData
+    InitializeTokenManagerInstructionData
   >(
-    struct<InitializeInstructionData>(
+    struct<InitializeTokenManagerInstructionData>(
       [
         ['discriminator', array(u8(), { size: 8 })],
         ['name', string()],
@@ -88,23 +91,26 @@ export function getInitializeInstructionDataSerializer(): Serializer<
         ['exchangeRate', u64()],
         ['emergencyFundBasisPoints', u16()],
         ['merkleRoot', bytes({ size: 32 })],
+        ['admin', publicKeySerializer()],
       ],
-      { description: 'InitializeInstructionData' }
+      { description: 'InitializeTokenManagerInstructionData' }
     ),
-    (value) => ({
-      ...value,
-      discriminator: [175, 175, 109, 31, 13, 152, 155, 237],
-    })
-  ) as Serializer<InitializeInstructionDataArgs, InitializeInstructionData>;
+    (value) => ({ ...value, discriminator: [67, 249, 6, 71, 87, 19, 139, 58] })
+  ) as Serializer<
+    InitializeTokenManagerInstructionDataArgs,
+    InitializeTokenManagerInstructionData
+  >;
 }
 
 // Args.
-export type InitializeInstructionArgs = InitializeInstructionDataArgs;
+export type InitializeTokenManagerInstructionArgs =
+  InitializeTokenManagerInstructionDataArgs;
 
 // Instruction.
-export function initialize(
+export function initializeTokenManager(
   context: Pick<Context, 'payer' | 'programs'>,
-  input: InitializeInstructionAccounts & InitializeInstructionArgs
+  input: InitializeTokenManagerInstructionAccounts &
+    InitializeTokenManagerInstructionArgs
 ): TransactionBuilder {
   // Program ID.
   const programId = context.programs.getPublicKey(
@@ -164,7 +170,7 @@ export function initialize(
   } satisfies ResolvedAccountsWithIndices;
 
   // Arguments.
-  const resolvedArgs: InitializeInstructionArgs = { ...input };
+  const resolvedArgs: InitializeTokenManagerInstructionArgs = { ...input };
 
   // Default values.
   if (!resolvedAccounts.payer.value) {
@@ -210,8 +216,8 @@ export function initialize(
   );
 
   // Data.
-  const data = getInitializeInstructionDataSerializer().serialize(
-    resolvedArgs as InitializeInstructionDataArgs
+  const data = getInitializeTokenManagerInstructionDataSerializer().serialize(
+    resolvedArgs as InitializeTokenManagerInstructionDataArgs
   );
 
   // Bytes Created On Chain.

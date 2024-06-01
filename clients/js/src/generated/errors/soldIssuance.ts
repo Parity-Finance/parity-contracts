@@ -133,6 +133,19 @@ export class SiCalculationOverflowError extends ProgramError {
 codeToErrorMap.set(0x1777, SiCalculationOverflowError);
 nameToErrorMap.set('CalculationOverflow', SiCalculationOverflowError);
 
+/** InvalidAdminAddress: Invalid admin address */
+export class SiInvalidAdminAddressError extends ProgramError {
+  override readonly name: string = 'InvalidAdminAddress';
+
+  readonly code: number = 0x1778; // 6008
+
+  constructor(program: Program, cause?: Error) {
+    super('Invalid admin address', program, cause);
+  }
+}
+codeToErrorMap.set(0x1778, SiInvalidAdminAddressError);
+nameToErrorMap.set('InvalidAdminAddress', SiInvalidAdminAddressError);
+
 /**
  * Attempts to resolve a custom program error from the provided error code.
  * @category Errors

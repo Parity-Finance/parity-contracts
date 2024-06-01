@@ -43,7 +43,6 @@ pub struct RedeemTokens<'info> {
     pub vault: Account<'info, TokenAccount>,
     #[account(mut)]
     pub payer: Signer<'info>,
-    pub rent: Sysvar<'info, Rent>,
     pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,
     pub associated_token_program: Program<'info, AssociatedToken>,

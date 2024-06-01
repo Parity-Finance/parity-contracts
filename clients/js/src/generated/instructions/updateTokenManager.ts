@@ -8,6 +8,8 @@
 
 import {
   Context,
+  Option,
+  OptionOrNullable,
   Pda,
   PublicKey,
   Signer,
@@ -19,6 +21,8 @@ import {
   array,
   bytes,
   mapSerializer,
+  option,
+  publicKey as publicKeySerializer,
   struct,
   u8,
 } from '@metaplex-foundation/umi/serializers';
@@ -29,53 +33,59 @@ import {
 } from '../shared';
 
 // Accounts.
-export type UpdateMerkleRootInstructionAccounts = {
+export type UpdateTokenManagerInstructionAccounts = {
   tokenManager: PublicKey | Pda;
   authority?: Signer;
 };
 
 // Data.
-export type UpdateMerkleRootInstructionData = {
+export type UpdateTokenManagerInstructionData = {
   discriminator: Array<number>;
-  merkleRoot: Uint8Array;
+  merkleRoot: Option<Uint8Array>;
+  admin: Option<PublicKey>;
 };
 
-export type UpdateMerkleRootInstructionDataArgs = { merkleRoot: Uint8Array };
+export type UpdateTokenManagerInstructionDataArgs = {
+  merkleRoot: OptionOrNullable<Uint8Array>;
+  admin: OptionOrNullable<PublicKey>;
+};
 
-export function getUpdateMerkleRootInstructionDataSerializer(): Serializer<
-  UpdateMerkleRootInstructionDataArgs,
-  UpdateMerkleRootInstructionData
+export function getUpdateTokenManagerInstructionDataSerializer(): Serializer<
+  UpdateTokenManagerInstructionDataArgs,
+  UpdateTokenManagerInstructionData
 > {
   return mapSerializer<
-    UpdateMerkleRootInstructionDataArgs,
+    UpdateTokenManagerInstructionDataArgs,
     any,
-    UpdateMerkleRootInstructionData
+    UpdateTokenManagerInstructionData
   >(
-    struct<UpdateMerkleRootInstructionData>(
+    struct<UpdateTokenManagerInstructionData>(
       [
         ['discriminator', array(u8(), { size: 8 })],
-        ['merkleRoot', bytes({ size: 32 })],
+        ['merkleRoot', option(bytes({ size: 32 }))],
+        ['admin', option(publicKeySerializer())],
       ],
-      { description: 'UpdateMerkleRootInstructionData' }
+      { description: 'UpdateTokenManagerInstructionData' }
     ),
     (value) => ({
       ...value,
-      discriminator: [195, 173, 38, 60, 242, 203, 158, 93],
+      discriminator: [231, 114, 7, 94, 146, 65, 122, 108],
     })
   ) as Serializer<
-    UpdateMerkleRootInstructionDataArgs,
-    UpdateMerkleRootInstructionData
+    UpdateTokenManagerInstructionDataArgs,
+    UpdateTokenManagerInstructionData
   >;
 }
 
 // Args.
-export type UpdateMerkleRootInstructionArgs =
-  UpdateMerkleRootInstructionDataArgs;
+export type UpdateTokenManagerInstructionArgs =
+  UpdateTokenManagerInstructionDataArgs;
 
 // Instruction.
-export function updateMerkleRoot(
+export function updateTokenManager(
   context: Pick<Context, 'identity' | 'programs'>,
-  input: UpdateMerkleRootInstructionAccounts & UpdateMerkleRootInstructionArgs
+  input: UpdateTokenManagerInstructionAccounts &
+    UpdateTokenManagerInstructionArgs
 ): TransactionBuilder {
   // Program ID.
   const programId = context.programs.getPublicKey(
@@ -98,7 +108,7 @@ export function updateMerkleRoot(
   } satisfies ResolvedAccountsWithIndices;
 
   // Arguments.
-  const resolvedArgs: UpdateMerkleRootInstructionArgs = { ...input };
+  const resolvedArgs: UpdateTokenManagerInstructionArgs = { ...input };
 
   // Default values.
   if (!resolvedAccounts.authority.value) {
@@ -118,8 +128,8 @@ export function updateMerkleRoot(
   );
 
   // Data.
-  const data = getUpdateMerkleRootInstructionDataSerializer().serialize(
-    resolvedArgs as UpdateMerkleRootInstructionDataArgs
+  const data = getUpdateTokenManagerInstructionDataSerializer().serialize(
+    resolvedArgs as UpdateTokenManagerInstructionDataArgs
   );
 
   // Bytes Created On Chain.
