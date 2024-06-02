@@ -211,6 +211,64 @@
           "type": "u64"
         }
       ]
+    },
+    {
+      "name": "updateAnnualYield",
+      "accounts": [
+        {
+          "name": "stakePool",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenManager",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "baseMint",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "vault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "authority",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "associatedTokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "soldIssuanceProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "params",
+          "type": {
+            "defined": "UpdateYieldParams"
+          }
+        }
+      ]
     }
   ],
   "accounts": [
@@ -232,7 +290,7 @@
             "type": "i64"
           },
           {
-            "name": "lastUpdateTimestamp",
+            "name": "lastYieldChangeTimestamp",
             "type": "i64"
           },
           {
@@ -268,7 +326,7 @@
             "type": "u64"
           },
           {
-            "name": "lastComputedExchangeRate",
+            "name": "lastYieldChangeExchangeRate",
             "type": "u64"
           }
         ]
@@ -299,6 +357,18 @@
           },
           {
             "name": "initialExchangeRate",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UpdateYieldParams",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "annualYieldRate",
             "type": "u64"
           }
         ]

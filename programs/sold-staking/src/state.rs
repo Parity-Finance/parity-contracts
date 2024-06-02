@@ -4,19 +4,19 @@ pub const STAKE_POOL_LENGTH: usize = 8 + 32 + 32 + 8 + 8 + 8 + 8 + 8 + 8 + 32 + 
 
 #[account]
 pub struct StakePool {
-    pub base_mint: Pubkey,                // 32 bytes - SOLD token mint
-    pub x_mint: Pubkey,                   // 32 bytes - xSOLD token mint
-    pub inception_timestamp: i64,         // 8 bytes
-    pub last_update_timestamp: i64,       // 8 bytes
-    pub annual_yield_rate: u64,           // 8 bytes - Stored as basis points, e.g., 2000 for 20%
-    pub base_balance: u64,                // 8 bytes
-    pub x_supply: u64,                    // 8 bytes
-    pub authority: Pubkey,                // 32 bytes
-    pub bump: u8,                         // 1 byte
-    pub base_mint_decimals: u8,           // 1 byte
-    pub x_mint_decimals: u8,              // 1 byte
-    pub initial_exchange_rate: u64,       // 8 bytes
-    pub last_computed_exchange_rate: u64, // 8 bytes
+    pub base_mint: Pubkey,                    // 32 bytes - SOLD token mint
+    pub x_mint: Pubkey,                       // 32 bytes - xSOLD token mint
+    pub inception_timestamp: i64,             // 8 bytes // A bit useless
+    pub last_yield_change_timestamp: i64,     // 8 bytes
+    pub annual_yield_rate: u64, // 8 bytes - Stored as basis points, e.g., 2000 for 20%
+    pub base_balance: u64,      // 8 bytes
+    pub x_supply: u64,          // 8 bytes
+    pub authority: Pubkey,      // 32 bytes
+    pub bump: u8,               // 1 byte
+    pub base_mint_decimals: u8, // 1 byte
+    pub x_mint_decimals: u8,    // 1 byte
+    pub initial_exchange_rate: u64, // 8 bytes
+    pub last_yield_change_exchange_rate: u64, // 8 bytes
 }
 
 impl StakePool {
@@ -25,11 +25,11 @@ impl StakePool {
     const SECONDS_PER_YEAR: u64 = 31_536_000; // 60 * 60 * 24 * 365
 
     pub fn calculate_exchange_rate(&mut self, current_timestamp: i64) -> Option<u64> {
-        if current_timestamp == self.inception_timestamp {
-            return Some(self.initial_exchange_rate);
+        if current_timestamp == self.last_yield_change_timestamp {
+            return Some(self.last_yield_change_exchange_rate);
         }
 
-        let elapsed_time = current_timestamp.checked_sub(self.inception_timestamp)?;
+        let elapsed_time = current_timestamp.checked_sub(self.last_yield_change_timestamp)?;
         msg!("Elapsed time: {}", elapsed_time);
 
         let years_elapsed = (elapsed_time as u128)
@@ -47,20 +47,14 @@ impl StakePool {
             .checked_div(Self::SCALE_FACTOR as u128)?;
         msg!("Effective rate for the elapsed time: {}", effective_rate);
 
-        // Apply the effective rate to the initial exchange rate
-        let compounded_rate = (self.initial_exchange_rate as u128)
+        // Apply the effective rate to the latest exchange rate
+        let compounded_rate = (self.last_yield_change_exchange_rate as u128)
             .checked_mul(Self::SCALE_FACTOR as u128)?
             .checked_div(Self::SCALE_FACTOR as u128 + effective_rate)?;
         msg!("Compounded rate: {}", compounded_rate);
 
-        self.last_computed_exchange_rate = compounded_rate as u64;
-        msg!(
-            "Last computed exchange rate: {}",
-            self.last_computed_exchange_rate
-        );
+        msg!("Last computed exchange rate: {}", compounded_rate);
 
-        self.last_update_timestamp = current_timestamp;
-
-        Some(self.last_computed_exchange_rate)
+        Some(compounded_rate as u64)
     }
 }

@@ -253,7 +253,7 @@
         {
           "name": "params",
           "type": {
-            "defined": "UpdateParams"
+            "defined": "UpdateTokenManagerParams"
           }
         }
       ]
@@ -545,7 +545,7 @@
       }
     },
     {
-      "name": "UpdateParams",
+      "name": "UpdateTokenManagerParams",
       "type": {
         "kind": "struct",
         "fields": [

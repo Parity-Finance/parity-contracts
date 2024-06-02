@@ -29,4 +29,11 @@ pub mod sold_staking {
     pub fn unstake(ctx: Context<Unstake>, quantity: u64) -> Result<()> {
         unstake::handler(ctx, quantity)
     }
+
+    pub fn update_annual_yield(
+        ctx: Context<UpdateAnnualYield>,
+        params: UpdateYieldParams,
+    ) -> Result<()> {
+        update_annual_yield::handler(ctx, params)
+    }
 }

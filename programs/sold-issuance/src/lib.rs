@@ -37,7 +37,7 @@ pub mod sold_issuance {
 
     pub fn update_token_manager(
         ctx: Context<UpdateTokenManager>,
-        params: UpdateParams,
+        params: UpdateTokenManagerParams,
     ) -> Result<()> {
         update_token_manager::handler(ctx, params)
     }

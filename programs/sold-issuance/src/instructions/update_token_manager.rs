@@ -3,7 +3,7 @@ use anchor_lang::prelude::*;
 use crate::TokenManager;
 
 #[derive(AnchorSerialize, AnchorDeserialize, Debug, Clone)]
-pub struct UpdateParams {
+pub struct UpdateTokenManagerParams {
     pub merkle_root: Option<[u8; 32]>,
     pub admin: Option<Pubkey>,
 }
@@ -19,7 +19,7 @@ pub struct UpdateTokenManager<'info> {
     pub authority: Signer<'info>,
 }
 
-pub fn handler(ctx: Context<UpdateTokenManager>, params: UpdateParams) -> Result<()> {
+pub fn handler(ctx: Context<UpdateTokenManager>, params: UpdateTokenManagerParams) -> Result<()> {
     let token_manager = &mut ctx.accounts.token_manager;
 
     // TODO: Authority Check
