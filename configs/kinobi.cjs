@@ -42,11 +42,11 @@ kinobi.accept(new k.renderJavaScriptVisitor(jsDir, {
 }));
 
 // Render Rust.
-// const crateDir = path.join(clientDir, "rust");
-// const rustDir = path.join(clientDir, "rust", "src", "generated");
-// kinobi.accept(
-//   new k.RenderRustVisitor(rustDir, {
-//     formatCode: true,
-//     crateFolder: crateDir,
-//   })
-// );
+const crateDir = path.join(clientDir, "rust");
+const rustDir = path.join(clientDir, "rust", "src", "generated");
+kinobi.accept(
+  new k.renderRustVisitor(rustDir, {
+    formatCode: true,
+    crateFolder: crateDir,
+  })
+);
