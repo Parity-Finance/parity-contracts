@@ -11,15 +11,14 @@ program_common: &program_common
   - ".github/file-filters.yml"
   - ".github/.env"
 
-token_metadata_program: &token_metadata_program
+sold_contract: &sold_contract
   - *program_common
   - "programs/sold-issuance/**"
   - "programs/sold-staking/**"
   - "submodules/**"
 
 programs: &programs
-  - *sold_issuance
-  - *sold_staking
+  - *sold_contract
 
 # Clients.
 
