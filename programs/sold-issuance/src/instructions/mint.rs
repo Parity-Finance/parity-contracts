@@ -127,8 +127,14 @@ pub fn handler(ctx: Context<MintTokens>, quantity: u64, proof: Vec<[u8; 32]>) ->
     )?;
 
     // Update token_manager
-    token_manager.total_supply += mint_amount;
-    token_manager.total_collateral += quote_amount;
+    token_manager.total_supply = token_manager
+        .total_supply
+        .checked_add(mint_amount)
+        .ok_or(SoldIssuanceError::CalculationOverflow)?;
+    token_manager.total_collateral = token_manager
+        .total_collateral
+        .checked_add(quote_amount)
+        .ok_or(SoldIssuanceError::CalculationOverflow)?;
 
     Ok(())
 }

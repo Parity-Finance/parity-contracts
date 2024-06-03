@@ -58,7 +58,10 @@ pub fn handler(ctx: Context<MintAdminTokens>, quantity: u64) -> Result<()> {
     )?;
 
     // Update token_manager
-    token_manager.total_supply += mint_amount;
+    token_manager.total_supply = token_manager
+        .total_supply
+        .checked_add(mint_amount)
+        .ok_or(SoldIssuanceError::CalculationOverflow)?;
 
     Ok(())
 }

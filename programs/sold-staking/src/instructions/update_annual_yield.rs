@@ -107,7 +107,10 @@ pub fn handler(ctx: Context<UpdateAnnualYield>, params: UpdateYieldParams) -> Re
         mint_admin(mint_context, amount_to_mint)?;
     }
 
-    stake_pool.base_balance += amount_to_mint;
+    stake_pool.base_balance = stake_pool
+        .base_balance
+        .checked_add(amount_to_mint)
+        .ok_or(SoldStakingError::CalculationOverflow)?;
     stake_pool.last_yield_change_timestamp = current_timestamp;
     stake_pool.last_yield_change_exchange_rate = exchange_rate;
     stake_pool.annual_yield_rate = params.annual_yield_rate;

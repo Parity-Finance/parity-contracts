@@ -1,3 +1,4 @@
+use crate::{error::SoldStakingError, StakePool};
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
@@ -8,8 +9,6 @@ use sold_issuance::{
     program::SoldIssuance,
     TokenManager,
 };
-
-use crate::{error::SoldStakingError, StakePool};
 
 #[derive(Accounts)]
 pub struct Unstake<'info> {
@@ -132,7 +131,11 @@ pub fn handler(ctx: Context<Unstake>, quantity: u64) -> Result<()> {
         mint_admin(mint_context, amount_to_mint)?;
     }
 
-    stake_pool.base_balance += amount_to_mint;
+    // Update newly minted balance
+    stake_pool.base_balance = stake_pool
+        .base_balance
+        .checked_add(amount_to_mint)
+        .ok_or(SoldStakingError::CalculationOverflow)?;
 
     msg!("Base Balance2: {}", stake_pool.base_balance);
 
@@ -160,8 +163,14 @@ pub fn handler(ctx: Context<Unstake>, quantity: u64) -> Result<()> {
     )?;
 
     // Update token_manager
-    stake_pool.x_supply -= x_amount;
-    stake_pool.base_balance -= base_amount;
+    stake_pool.x_supply = stake_pool
+        .x_supply
+        .checked_sub(x_amount)
+        .ok_or(SoldStakingError::CalculationOverflow)?;
+    stake_pool.base_balance = stake_pool
+        .base_balance
+        .checked_sub(base_amount)
+        .ok_or(SoldStakingError::CalculationOverflow)?;
 
     Ok(())
 }

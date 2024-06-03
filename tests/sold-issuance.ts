@@ -735,21 +735,7 @@ describe.only("sold-issuance", () => {
     );
     // console.log("Exchange Rate: ", exchangeRate);
 
-    await txBuilder.sendAndConfirm(umi);
-
-    // await assert.rejects(
-    //   async () => {
-    //     const res = await txBuilder.sendAndConfirm(umi);
-    //     console.log(bs58.encode(res.signature));
-
-    //   },
-    //   (err) => {
-    //     console.log((err as Error).message);
-
-    //     return (err as Error).message.includes("insufficient funds");
-    //   },
-    //   "Expected to temporarily fail"
-    // );
+    await txBuilder.sendAndConfirm(umi, { send: { skipPreflight: true } });
 
     const stakePoolAcc = await safeFetchStakePool(umi, stakePool);
 

@@ -108,8 +108,14 @@ pub fn handler(ctx: Context<Stake>, quantity: u64) -> Result<()> {
     )?;
 
     // Update token_manager
-    stake_pool.base_balance += base_amount;
-    stake_pool.x_supply += x_amount;
+    stake_pool.base_balance = stake_pool
+        .base_balance
+        .checked_add(base_amount)
+        .ok_or(SoldStakingError::CalculationOverflow)?;
+    stake_pool.x_supply = stake_pool
+        .x_supply
+        .checked_add(x_amount)
+        .ok_or(SoldStakingError::CalculationOverflow)?;
 
     Ok(())
 }

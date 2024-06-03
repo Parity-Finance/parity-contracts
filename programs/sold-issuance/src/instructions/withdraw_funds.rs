@@ -94,7 +94,10 @@ pub fn handler(ctx: Context<WithdrawFunds>, quantity: u64) -> Result<()> {
     )?;
 
     // Update token_manager
-    token_manager.total_collateral -= quote_amount;
+    token_manager.total_collateral = token_manager
+        .total_collateral
+        .checked_sub(quote_amount)
+        .ok_or(SoldIssuanceError::CalculationOverflow)?;
 
     Ok(())
 }
