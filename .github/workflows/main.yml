@@ -30,12 +30,14 @@ jobs:
         uses: dorny/paths-filter@v2
         id: changes
         with:
+          base: ${{ github.base_ref || 'main' }}  # Fallback to 'main' if github.base_ref is not available
           filters: .github/file-filters.yml
 
       - name: Filter program matrix
         id: program_matrix
         uses: metaplex-foundation/actions/filter-matrix@v1
         with:
+          base: ${{ github.base_ref || 'main' }}  # Fallback to 'main' if github.base_ref is not available
           matrix: ${{ env.PROGRAMS }}
           changes: ${{ steps.changes.outputs.changes }}
           suffix: _program

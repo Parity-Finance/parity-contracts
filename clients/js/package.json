@@ -50,5 +50,6 @@
   },
   "resolutions": {
     "@metaplex-foundation/umi": "0.8.2"
-  }
+  },
+  "packageManager": "pnpm@7.1.0"
 }
