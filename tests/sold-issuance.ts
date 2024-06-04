@@ -40,6 +40,9 @@ describe.only("sold-issuance", () => {
   const exchangeRate = 250 * 10 ** baseMintDecimals;
   const exchangeRateDecimals = baseMintDecimals
 
+  const mintLimitPerSlot = 5000 * 10 ** baseMintDecimals;
+  const redemptionLimitPerSlot = 5000 * 10 ** baseMintDecimals;
+
   // Staking Program
   let stakePool = findStakePoolPda(umi)[0];
   let tokenManager = findTokenManagerPda(umi);
@@ -126,7 +129,9 @@ describe.only("sold-issuance", () => {
       exchangeRate,
       emergencyFundBasisPoints,
       merkleRoot,
-      admin: stakePool
+      admin: stakePool,
+      mintLimitPerSlot,
+      redemptionLimitPerSlot,
     }))
 
     await txBuilder.sendAndConfirm(umi);

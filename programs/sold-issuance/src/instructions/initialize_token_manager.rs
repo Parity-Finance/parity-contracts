@@ -19,6 +19,8 @@ pub struct InitializeParams {
     pub emergency_fund_basis_points: u16,
     pub merkle_root: [u8; 32],
     pub admin: Pubkey,
+    pub mint_limit_per_slot: u64,
+    pub redemption_limit_per_slot: u64,
 }
 
 #[derive(Accounts)]
@@ -116,6 +118,15 @@ pub fn handler(ctx: Context<Initialize>, params: InitializeParams) -> Result<()>
     token_manager.active = true;
     token_manager.merkle_root = params.merkle_root;
     token_manager.admin = params.admin;
+
+    // Per Block limit
+    let clock = Clock::get()?;
+    let current_slot = clock.slot;
+    token_manager.current_slot = current_slot;
+    token_manager.current_slot_mint_volume = 0;
+    token_manager.current_slot_redemption_volume = 0;
+    token_manager.mint_limit_per_slot = params.mint_limit_per_slot;
+    token_manager.redemption_limit_per_slot = params.redemption_limit_per_slot;
 
     Ok(())
 }

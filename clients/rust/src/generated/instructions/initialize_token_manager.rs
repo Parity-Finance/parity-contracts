@@ -132,6 +132,8 @@ pub struct InitializeTokenManagerInstructionArgs {
     pub emergency_fund_basis_points: u16,
     pub merkle_root: [u8; 32],
     pub admin: Pubkey,
+    pub mint_limit_per_slot: u64,
+    pub redemption_limit_per_slot: u64,
 }
 
 /// Instruction builder for `InitializeTokenManager`.
@@ -170,6 +172,8 @@ pub struct InitializeTokenManagerBuilder {
     emergency_fund_basis_points: Option<u16>,
     merkle_root: Option<[u8; 32]>,
     admin: Option<Pubkey>,
+    mint_limit_per_slot: Option<u64>,
+    redemption_limit_per_slot: Option<u64>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
@@ -282,6 +286,16 @@ impl InitializeTokenManagerBuilder {
         self.admin = Some(admin);
         self
     }
+    #[inline(always)]
+    pub fn mint_limit_per_slot(&mut self, mint_limit_per_slot: u64) -> &mut Self {
+        self.mint_limit_per_slot = Some(mint_limit_per_slot);
+        self
+    }
+    #[inline(always)]
+    pub fn redemption_limit_per_slot(&mut self, redemption_limit_per_slot: u64) -> &mut Self {
+        self.redemption_limit_per_slot = Some(redemption_limit_per_slot);
+        self
+    }
     /// Add an aditional account to the instruction.
     #[inline(always)]
     pub fn add_remaining_account(
@@ -341,6 +355,14 @@ impl InitializeTokenManagerBuilder {
                 .expect("emergency_fund_basis_points is not set"),
             merkle_root: self.merkle_root.clone().expect("merkle_root is not set"),
             admin: self.admin.clone().expect("admin is not set"),
+            mint_limit_per_slot: self
+                .mint_limit_per_slot
+                .clone()
+                .expect("mint_limit_per_slot is not set"),
+            redemption_limit_per_slot: self
+                .redemption_limit_per_slot
+                .clone()
+                .expect("redemption_limit_per_slot is not set"),
         };
 
         accounts.instruction_with_remaining_accounts(args, &self.__remaining_accounts)
@@ -587,6 +609,8 @@ impl<'a, 'b> InitializeTokenManagerCpiBuilder<'a, 'b> {
             emergency_fund_basis_points: None,
             merkle_root: None,
             admin: None,
+            mint_limit_per_slot: None,
+            redemption_limit_per_slot: None,
             __remaining_accounts: Vec::new(),
         });
         Self { instruction }
@@ -707,6 +731,16 @@ impl<'a, 'b> InitializeTokenManagerCpiBuilder<'a, 'b> {
         self.instruction.admin = Some(admin);
         self
     }
+    #[inline(always)]
+    pub fn mint_limit_per_slot(&mut self, mint_limit_per_slot: u64) -> &mut Self {
+        self.instruction.mint_limit_per_slot = Some(mint_limit_per_slot);
+        self
+    }
+    #[inline(always)]
+    pub fn redemption_limit_per_slot(&mut self, redemption_limit_per_slot: u64) -> &mut Self {
+        self.instruction.redemption_limit_per_slot = Some(redemption_limit_per_slot);
+        self
+    }
     /// Add an additional account to the instruction.
     #[inline(always)]
     pub fn add_remaining_account(
@@ -773,6 +807,16 @@ impl<'a, 'b> InitializeTokenManagerCpiBuilder<'a, 'b> {
                 .clone()
                 .expect("merkle_root is not set"),
             admin: self.instruction.admin.clone().expect("admin is not set"),
+            mint_limit_per_slot: self
+                .instruction
+                .mint_limit_per_slot
+                .clone()
+                .expect("mint_limit_per_slot is not set"),
+            redemption_limit_per_slot: self
+                .instruction
+                .redemption_limit_per_slot
+                .clone()
+                .expect("redemption_limit_per_slot is not set"),
         };
         let instruction = InitializeTokenManagerCpi {
             __program: self.instruction.__program,
@@ -843,6 +887,8 @@ struct InitializeTokenManagerCpiBuilderInstruction<'a, 'b> {
     emergency_fund_basis_points: Option<u16>,
     merkle_root: Option<[u8; 32]>,
     admin: Option<Pubkey>,
+    mint_limit_per_slot: Option<u64>,
+    redemption_limit_per_slot: Option<u64>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(
         &'b solana_program::account_info::AccountInfo<'a>,

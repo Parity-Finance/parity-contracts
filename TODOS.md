@@ -4,6 +4,7 @@ Authorities Model and Check implementation
 ~~Refactor to set exchange rate decimals~~
 ~~Yield Rate can be updated~~
 ~~Make Staking xSold conversion work~~
+~~Check for Max amount in Block~~
 
 Create more helper function for package
 Setup CI/CD Pipeline for testing and deployment
@@ -11,7 +12,6 @@ Setup CI/CD Pipeline for testing and deployment
 Different Circuit Breaks
 Different Authority Types
 Refactor to token2022
-Check for Max amount in Block
 
 
 Tests
@@ -24,4 +24,5 @@ Tests
 - ~~Updated Staking Tests~~
 - Authority Tests
 - Extensive yield rate tests
+- Test for Max amount per block
 

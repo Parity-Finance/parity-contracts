@@ -71,6 +71,17 @@ pub fn handler(ctx: Context<MintTokens>, quantity: u64, proof: Vec<[u8; 32]>) ->
         return err!(SoldIssuanceError::AddressNotFoundInAllowedList);
     }
 
+    // Block Limit check
+    let current_slot = Clock::get()?.slot;
+    if token_manager.current_slot == current_slot {
+        if token_manager.current_slot_mint_volume + quantity > token_manager.mint_limit_per_slot {
+            return err!(SoldIssuanceError::SlotLimitExceeded);
+        }
+    } else {
+        token_manager.current_slot = current_slot;
+        token_manager.current_slot_mint_volume = 0;
+    }
+
     // Minting
     let bump = token_manager.bump; // Corrected to be a slice of a slice of a byte slice
     let signer_seeds: &[&[&[u8]]] = &[&[b"token-manager", &[bump]]];
@@ -134,6 +145,10 @@ pub fn handler(ctx: Context<MintTokens>, quantity: u64, proof: Vec<[u8; 32]>) ->
     token_manager.total_collateral = token_manager
         .total_collateral
         .checked_add(quote_amount)
+        .ok_or(SoldIssuanceError::CalculationOverflow)?;
+    token_manager.current_slot_mint_volume = token_manager
+        .current_slot_mint_volume
+        .checked_add(mint_amount)
         .ok_or(SoldIssuanceError::CalculationOverflow)?;
 
     Ok(())

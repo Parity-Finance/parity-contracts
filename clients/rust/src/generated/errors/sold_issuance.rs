@@ -37,6 +37,9 @@ pub enum SoldIssuanceError {
     /// 6008 (0x1778) - Invalid admin address
     #[error("Invalid admin address")]
     InvalidAdminAddress,
+    /// 6009 (0x1779) - Slot limit exceeded
+    #[error("Slot limit exceeded")]
+    SlotLimitExceeded,
 }
 
 impl solana_program::program_error::PrintProgramError for SoldIssuanceError {

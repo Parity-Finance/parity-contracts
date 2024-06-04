@@ -59,6 +59,8 @@ export type InitializeTokenManagerInstructionData = {
   emergencyFundBasisPoints: number;
   merkleRoot: Uint8Array;
   admin: PublicKey;
+  mintLimitPerSlot: bigint;
+  redemptionLimitPerSlot: bigint;
 };
 
 export type InitializeTokenManagerInstructionDataArgs = {
@@ -70,6 +72,8 @@ export type InitializeTokenManagerInstructionDataArgs = {
   emergencyFundBasisPoints: number;
   merkleRoot: Uint8Array;
   admin: PublicKey;
+  mintLimitPerSlot: number | bigint;
+  redemptionLimitPerSlot: number | bigint;
 };
 
 export function getInitializeTokenManagerInstructionDataSerializer(): Serializer<
@@ -92,6 +96,8 @@ export function getInitializeTokenManagerInstructionDataSerializer(): Serializer
         ['emergencyFundBasisPoints', u16()],
         ['merkleRoot', bytes({ size: 32 })],
         ['admin', publicKeySerializer()],
+        ['mintLimitPerSlot', u64()],
+        ['redemptionLimitPerSlot', u64()],
       ],
       { description: 'InitializeTokenManagerInstructionData' }
     ),

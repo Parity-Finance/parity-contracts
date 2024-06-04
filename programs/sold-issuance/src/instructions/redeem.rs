@@ -66,6 +66,19 @@ pub fn handler(ctx: Context<RedeemTokens>, quantity: u64, proof: Vec<[u8; 32]>) 
         return err!(SoldIssuanceError::AddressNotFoundInAllowedList);
     }
 
+    // Block Limit check
+    let current_slot = Clock::get()?.slot;
+    if token_manager.current_slot == current_slot {
+        if token_manager.current_slot_redemption_volume + quantity
+            > token_manager.redemption_limit_per_slot
+        {
+            return err!(SoldIssuanceError::SlotLimitExceeded);
+        }
+    } else {
+        token_manager.current_slot = current_slot;
+        token_manager.current_slot_redemption_volume = 0;
+    }
+
     // Burning
     let bump = token_manager.bump; // Corrected to be a slice of a slice of a byte slice
     let signer_seeds: &[&[&[u8]]] = &[&[b"token-manager", &[bump]]];
@@ -83,12 +96,6 @@ pub fn handler(ctx: Context<RedeemTokens>, quantity: u64, proof: Vec<[u8; 32]>) 
         ),
         mint_amount,
     )?;
-
-    // let quote_amount = quantity
-    //     .checked_mul(10u64.pow(token_manager.quote_mint_decimals.into()))
-    //     .ok_or(SoldIssuanceError::CalculationOverflow)?
-    //     .checked_mul(token_manager.exchange_rate)
-    //     .ok_or(SoldIssuanceError::CalculationOverflow)?;
 
     let mint_decimals = token_manager.mint_decimals as i32;
     let quote_mint_decimals = token_manager.quote_mint_decimals as i32;
@@ -135,6 +142,10 @@ pub fn handler(ctx: Context<RedeemTokens>, quantity: u64, proof: Vec<[u8; 32]>) 
     token_manager.total_collateral = token_manager
         .total_collateral
         .checked_sub(quote_amount)
+        .ok_or(SoldIssuanceError::CalculationOverflow)?;
+    token_manager.current_slot_redemption_volume = token_manager
+        .current_slot_redemption_volume
+        .checked_add(mint_amount)
         .ok_or(SoldIssuanceError::CalculationOverflow)?;
 
     Ok(())

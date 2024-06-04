@@ -15,7 +15,7 @@
         "validator:debug": "amman start --config ./configs/validator.cjs",
         "validator:logs": "CI=1 amman logs",
         "validator:stop": "amman stop",
-        "test": "yarn validator && yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/* && yarn"
+        "test": "yarn validator && yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/* && pnpm install"
     },
     "dependencies": {
         "@coral-xyz/anchor": "^0.29.0",

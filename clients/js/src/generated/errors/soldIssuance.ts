@@ -146,6 +146,19 @@ export class SiInvalidAdminAddressError extends ProgramError {
 codeToErrorMap.set(0x1778, SiInvalidAdminAddressError);
 nameToErrorMap.set('InvalidAdminAddress', SiInvalidAdminAddressError);
 
+/** SlotLimitExceeded: Slot limit exceeded */
+export class SiSlotLimitExceededError extends ProgramError {
+  override readonly name: string = 'SlotLimitExceeded';
+
+  readonly code: number = 0x1779; // 6009
+
+  constructor(program: Program, cause?: Error) {
+    super('Slot limit exceeded', program, cause);
+  }
+}
+codeToErrorMap.set(0x1779, SiSlotLimitExceededError);
+nameToErrorMap.set('SlotLimitExceeded', SiSlotLimitExceededError);
+
 /**
  * Attempts to resolve a custom program error from the provided error code.
  * @category Errors

@@ -466,6 +466,26 @@
             "type": "u64"
           },
           {
+            "name": "mintLimitPerSlot",
+            "type": "u64"
+          },
+          {
+            "name": "redemptionLimitPerSlot",
+            "type": "u64"
+          },
+          {
+            "name": "currentSlot",
+            "type": "u64"
+          },
+          {
+            "name": "currentSlotMintVolume",
+            "type": "u64"
+          },
+          {
+            "name": "currentSlotRedemptionVolume",
+            "type": "u64"
+          },
+          {
             "name": "totalSupply",
             "type": "u64"
           },
@@ -540,6 +560,14 @@
           {
             "name": "admin",
             "type": "publicKey"
+          },
+          {
+            "name": "mintLimitPerSlot",
+            "type": "u64"
+          },
+          {
+            "name": "redemptionLimitPerSlot",
+            "type": "u64"
           }
         ]
       }
@@ -615,6 +643,11 @@
       "code": 6008,
       "name": "InvalidAdminAddress",
       "msg": "Invalid admin address"
+    },
+    {
+      "code": 6009,
+      "name": "SlotLimitExceeded",
+      "msg": "Slot limit exceeded"
     }
   ],
   "metadata": {

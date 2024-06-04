@@ -20,4 +20,6 @@ pub enum SoldIssuanceError {
     CalculationOverflow,
     #[msg("Invalid admin address")]
     InvalidAdminAddress,
+    #[msg("Slot limit exceeded")]
+    SlotLimitExceeded,
 }

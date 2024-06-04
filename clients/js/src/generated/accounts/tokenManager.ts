@@ -46,6 +46,11 @@ export type TokenManagerAccountData = {
   quoteMint: PublicKey;
   quoteMintDecimals: number;
   exchangeRate: bigint;
+  mintLimitPerSlot: bigint;
+  redemptionLimitPerSlot: bigint;
+  currentSlot: bigint;
+  currentSlotMintVolume: bigint;
+  currentSlotRedemptionVolume: bigint;
   totalSupply: bigint;
   totalCollateral: bigint;
   emergencyFundBasisPoints: number;
@@ -64,6 +69,11 @@ export type TokenManagerAccountDataArgs = {
   quoteMint: PublicKey;
   quoteMintDecimals: number;
   exchangeRate: number | bigint;
+  mintLimitPerSlot: number | bigint;
+  redemptionLimitPerSlot: number | bigint;
+  currentSlot: number | bigint;
+  currentSlotMintVolume: number | bigint;
+  currentSlotRedemptionVolume: number | bigint;
   totalSupply: number | bigint;
   totalCollateral: number | bigint;
   emergencyFundBasisPoints: number;
@@ -93,6 +103,11 @@ export function getTokenManagerAccountDataSerializer(): Serializer<
         ['quoteMint', publicKeySerializer()],
         ['quoteMintDecimals', u8()],
         ['exchangeRate', u64()],
+        ['mintLimitPerSlot', u64()],
+        ['redemptionLimitPerSlot', u64()],
+        ['currentSlot', u64()],
+        ['currentSlotMintVolume', u64()],
+        ['currentSlotRedemptionVolume', u64()],
         ['totalSupply', u64()],
         ['totalCollateral', u64()],
         ['emergencyFundBasisPoints', u16()],
@@ -186,6 +201,11 @@ export function getTokenManagerGpaBuilder(
       quoteMint: PublicKey;
       quoteMintDecimals: number;
       exchangeRate: number | bigint;
+      mintLimitPerSlot: number | bigint;
+      redemptionLimitPerSlot: number | bigint;
+      currentSlot: number | bigint;
+      currentSlotMintVolume: number | bigint;
+      currentSlotRedemptionVolume: number | bigint;
       totalSupply: number | bigint;
       totalCollateral: number | bigint;
       emergencyFundBasisPoints: number;
@@ -203,6 +223,11 @@ export function getTokenManagerGpaBuilder(
       quoteMint: [null, publicKeySerializer()],
       quoteMintDecimals: [null, u8()],
       exchangeRate: [null, u64()],
+      mintLimitPerSlot: [null, u64()],
+      redemptionLimitPerSlot: [null, u64()],
+      currentSlot: [null, u64()],
+      currentSlotMintVolume: [null, u64()],
+      currentSlotRedemptionVolume: [null, u64()],
       totalSupply: [null, u64()],
       totalCollateral: [null, u64()],
       emergencyFundBasisPoints: [null, u16()],
