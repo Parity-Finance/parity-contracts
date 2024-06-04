@@ -11,7 +11,8 @@ Setup CI/CD Pipeline for testing and deployment
 Different Circuit Breaks
 Different Authority Types
 Refactor to token2022
-Check for Max amount in Transaction
+Check for Max amount in Block
+
 
 Tests
 - ~~Pause Test~~

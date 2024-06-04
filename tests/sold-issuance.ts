@@ -8,7 +8,6 @@ import { fromWeb3JsKeypair, fromWeb3JsPublicKey } from "@metaplex-foundation/umi
 import { findMetadataPda } from "@metaplex-foundation/mpl-token-metadata";
 import assert from 'assert';
 import chai, { assert as chaiAssert } from 'chai';
-import { bs58 } from "@coral-xyz/anchor/dist/cjs/utils/bytes";
 
 describe.only("sold-issuance", () => {
   let umi = createUmi("http://localhost:8899");
