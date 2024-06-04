@@ -8,14 +8,14 @@
         "programs:clean": "./configs/scripts/program/clean.sh",
         "clients:rust:test": "./configs/scripts/client/test-rust.sh",
         "clients:js:test": "./configs/scripts/client/test-js.sh",
-        "generate": "yarn generate:idls && yarn generate:clients",
+        "generate": "pnpm generate:idls && pnpm generate:clients",
         "generate:idls": "node ./configs/shank.cjs",
         "generate:clients": "node ./configs/kinobi.cjs",
         "validator": "CI=1 amman start --config ./configs/validator.cjs",
         "validator:debug": "amman start --config ./configs/validator.cjs",
         "validator:logs": "CI=1 amman logs",
         "validator:stop": "amman stop",
-        "test": "yarn validator && yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/* && pnpm install"
+        "test": "pnpm validator && pnpm run ts-mocha -p ./tsconfig.json -t 1000000 tests/* && pnpm install"
     },
     "dependencies": {
         "@coral-xyz/anchor": "^0.29.0",

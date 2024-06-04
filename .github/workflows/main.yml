@@ -81,6 +81,9 @@ jobs:
         if: env.CACHE == 'true'
         uses: metaplex-foundation/actions/cache-idl-generators@v1
 
+      - name: Enable Corepack
+        run: corepack enable
+
       - name: Generate IDLs and clients
         run: pnpm generate
 
