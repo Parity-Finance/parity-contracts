@@ -12,24 +12,25 @@ use anchor_spl::{
 use crate::{StakePool, STAKE_POOL_LENGTH};
 
 #[derive(AnchorSerialize, AnchorDeserialize, Debug, Clone)]
-pub struct InitializeStakePoolParams {
+pub struct InitializePoolManagerParams {
     pub name: String,
     pub symbol: String,
     pub uri: String,
     pub decimals: u8,
     pub initial_exchange_rate: u64,
+    pub admin: Pubkey,
 }
 
 #[derive(Accounts)]
-#[instruction(params: InitializeStakePoolParams)]
-pub struct InitializeStakePool<'info> {
+#[instruction(params: InitializePoolManagerParams)]
+pub struct InitializePoolManager<'info> {
     /// SPL Token Mint of the underlying token to be deposited for staking
     pub base_mint: Account<'info, Mint>,
     #[account(
         init,
         seeds = [b"mint"],
         bump,
-        payer = payer,
+        payer = owner,
         mint::decimals = params.decimals,
         mint::authority = stake_pool,
     )]
@@ -48,19 +49,19 @@ pub struct InitializeStakePool<'info> {
         b"stake-pool",
       ],
       bump,
-      payer = payer,
+      payer = owner,
       space = STAKE_POOL_LENGTH,
     )]
     pub stake_pool: Account<'info, StakePool>,
     #[account(
         init,
-        payer = payer,
+        payer = owner,
         associated_token::mint = base_mint,
         associated_token::authority = stake_pool,
     )]
     pub vault: Account<'info, TokenAccount>,
     #[account(mut)]
-    pub payer: Signer<'info>,
+    pub owner: Signer<'info>,
     pub rent: Sysvar<'info, Rent>,
     pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,
@@ -68,7 +69,10 @@ pub struct InitializeStakePool<'info> {
     pub associated_token_program: Program<'info, AssociatedToken>,
 }
 
-pub fn handler(ctx: Context<InitializeStakePool>, params: InitializeStakePoolParams) -> Result<()> {
+pub fn handler(
+    ctx: Context<InitializePoolManager>,
+    params: InitializePoolManagerParams,
+) -> Result<()> {
     let stake_pool = &mut ctx.accounts.stake_pool;
 
     let bump = ctx.bumps.stake_pool;
@@ -87,7 +91,7 @@ pub fn handler(ctx: Context<InitializeStakePool>, params: InitializeStakePoolPar
     let metadata_ctx = CpiContext::new_with_signer(
         ctx.accounts.token_metadata_program.to_account_info(),
         CreateMetadataAccountsV3 {
-            payer: ctx.accounts.payer.to_account_info(),
+            payer: ctx.accounts.owner.to_account_info(),
             update_authority: stake_pool.to_account_info(),
             mint: ctx.accounts.x_mint.to_account_info(),
             metadata: ctx.accounts.metadata.to_account_info(),
@@ -105,7 +109,8 @@ pub fn handler(ctx: Context<InitializeStakePool>, params: InitializeStakePoolPar
     let stake_pool = &mut ctx.accounts.stake_pool;
 
     // Authorities
-    stake_pool.authority = stake_pool.key();
+    stake_pool.owner = ctx.accounts.owner.key();
+    stake_pool.admin = params.admin;
     stake_pool.bump = bump;
     // Token
     stake_pool.base_mint = ctx.accounts.base_mint.key();

@@ -35,35 +35,37 @@ export type StakePool = Account<StakePoolAccountData>;
 
 export type StakePoolAccountData = {
   discriminator: Array<number>;
+  bump: number;
+  owner: PublicKey;
+  admin: PublicKey;
   baseMint: PublicKey;
   xMint: PublicKey;
-  inceptionTimestamp: bigint;
-  lastYieldChangeTimestamp: bigint;
-  annualYieldRate: bigint;
-  baseBalance: bigint;
-  xSupply: bigint;
-  authority: PublicKey;
-  bump: number;
   baseMintDecimals: number;
   xMintDecimals: number;
+  annualYieldRate: bigint;
   initialExchangeRate: bigint;
   lastYieldChangeExchangeRate: bigint;
+  inceptionTimestamp: bigint;
+  lastYieldChangeTimestamp: bigint;
+  baseBalance: bigint;
+  xSupply: bigint;
 };
 
 export type StakePoolAccountDataArgs = {
+  bump: number;
+  owner: PublicKey;
+  admin: PublicKey;
   baseMint: PublicKey;
   xMint: PublicKey;
-  inceptionTimestamp: number | bigint;
-  lastYieldChangeTimestamp: number | bigint;
-  annualYieldRate: number | bigint;
-  baseBalance: number | bigint;
-  xSupply: number | bigint;
-  authority: PublicKey;
-  bump: number;
   baseMintDecimals: number;
   xMintDecimals: number;
+  annualYieldRate: number | bigint;
   initialExchangeRate: number | bigint;
   lastYieldChangeExchangeRate: number | bigint;
+  inceptionTimestamp: number | bigint;
+  lastYieldChangeTimestamp: number | bigint;
+  baseBalance: number | bigint;
+  xSupply: number | bigint;
 };
 
 export function getStakePoolAccountDataSerializer(): Serializer<
@@ -74,19 +76,20 @@ export function getStakePoolAccountDataSerializer(): Serializer<
     struct<StakePoolAccountData>(
       [
         ['discriminator', array(u8(), { size: 8 })],
+        ['bump', u8()],
+        ['owner', publicKeySerializer()],
+        ['admin', publicKeySerializer()],
         ['baseMint', publicKeySerializer()],
         ['xMint', publicKeySerializer()],
-        ['inceptionTimestamp', i64()],
-        ['lastYieldChangeTimestamp', i64()],
-        ['annualYieldRate', u64()],
-        ['baseBalance', u64()],
-        ['xSupply', u64()],
-        ['authority', publicKeySerializer()],
-        ['bump', u8()],
         ['baseMintDecimals', u8()],
         ['xMintDecimals', u8()],
+        ['annualYieldRate', u64()],
         ['initialExchangeRate', u64()],
         ['lastYieldChangeExchangeRate', u64()],
+        ['inceptionTimestamp', i64()],
+        ['lastYieldChangeTimestamp', i64()],
+        ['baseBalance', u64()],
+        ['xSupply', u64()],
       ],
       { description: 'StakePoolAccountData' }
     ),
@@ -165,41 +168,43 @@ export function getStakePoolGpaBuilder(
   return gpaBuilder(context, programId)
     .registerFields<{
       discriminator: Array<number>;
+      bump: number;
+      owner: PublicKey;
+      admin: PublicKey;
       baseMint: PublicKey;
       xMint: PublicKey;
-      inceptionTimestamp: number | bigint;
-      lastYieldChangeTimestamp: number | bigint;
-      annualYieldRate: number | bigint;
-      baseBalance: number | bigint;
-      xSupply: number | bigint;
-      authority: PublicKey;
-      bump: number;
       baseMintDecimals: number;
       xMintDecimals: number;
+      annualYieldRate: number | bigint;
       initialExchangeRate: number | bigint;
       lastYieldChangeExchangeRate: number | bigint;
+      inceptionTimestamp: number | bigint;
+      lastYieldChangeTimestamp: number | bigint;
+      baseBalance: number | bigint;
+      xSupply: number | bigint;
     }>({
       discriminator: [0, array(u8(), { size: 8 })],
-      baseMint: [8, publicKeySerializer()],
-      xMint: [40, publicKeySerializer()],
-      inceptionTimestamp: [72, i64()],
-      lastYieldChangeTimestamp: [80, i64()],
-      annualYieldRate: [88, u64()],
-      baseBalance: [96, u64()],
-      xSupply: [104, u64()],
-      authority: [112, publicKeySerializer()],
-      bump: [144, u8()],
-      baseMintDecimals: [145, u8()],
-      xMintDecimals: [146, u8()],
+      bump: [8, u8()],
+      owner: [9, publicKeySerializer()],
+      admin: [41, publicKeySerializer()],
+      baseMint: [73, publicKeySerializer()],
+      xMint: [105, publicKeySerializer()],
+      baseMintDecimals: [137, u8()],
+      xMintDecimals: [138, u8()],
+      annualYieldRate: [139, u64()],
       initialExchangeRate: [147, u64()],
       lastYieldChangeExchangeRate: [155, u64()],
+      inceptionTimestamp: [163, i64()],
+      lastYieldChangeTimestamp: [171, i64()],
+      baseBalance: [179, u64()],
+      xSupply: [187, u64()],
     })
     .deserializeUsing<StakePool>((account) => deserializeStakePool(account))
     .whereField('discriminator', [121, 34, 206, 21, 79, 127, 255, 28]);
 }
 
 export function getStakePoolSize(): number {
-  return 163;
+  return 195;
 }
 
 export function findStakePoolPda(

@@ -17,6 +17,17 @@ use solana_program::pubkey::Pubkey;
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct StakePool {
     pub discriminator: [u8; 8],
+    pub bump: u8,
+    #[cfg_attr(
+        feature = "serde",
+        serde(with = "serde_with::As::<serde_with::DisplayFromStr>")
+    )]
+    pub owner: Pubkey,
+    #[cfg_attr(
+        feature = "serde",
+        serde(with = "serde_with::As::<serde_with::DisplayFromStr>")
+    )]
+    pub admin: Pubkey,
     #[cfg_attr(
         feature = "serde",
         serde(with = "serde_with::As::<serde_with::DisplayFromStr>")
@@ -27,25 +38,19 @@ pub struct StakePool {
         serde(with = "serde_with::As::<serde_with::DisplayFromStr>")
     )]
     pub x_mint: Pubkey,
-    pub inception_timestamp: i64,
-    pub last_yield_change_timestamp: i64,
-    pub annual_yield_rate: u64,
-    pub base_balance: u64,
-    pub x_supply: u64,
-    #[cfg_attr(
-        feature = "serde",
-        serde(with = "serde_with::As::<serde_with::DisplayFromStr>")
-    )]
-    pub authority: Pubkey,
-    pub bump: u8,
     pub base_mint_decimals: u8,
     pub x_mint_decimals: u8,
+    pub annual_yield_rate: u64,
     pub initial_exchange_rate: u64,
     pub last_yield_change_exchange_rate: u64,
+    pub inception_timestamp: i64,
+    pub last_yield_change_timestamp: i64,
+    pub base_balance: u64,
+    pub x_supply: u64,
 }
 
 impl StakePool {
-    pub const LEN: usize = 163;
+    pub const LEN: usize = 195;
 
     /// Prefix values used to generate a PDA for this account.
     ///

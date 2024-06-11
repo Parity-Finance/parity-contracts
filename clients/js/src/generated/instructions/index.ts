@@ -7,7 +7,7 @@
  */
 
 export * from './depositFunds';
-export * from './initializeStakePool';
+export * from './initializePoolManager';
 export * from './initializeTokenManager';
 export * from './mint';
 export * from './mintAdmin';

@@ -10,7 +10,7 @@ use anchor_spl::{
 };
 
 #[derive(AnchorSerialize, AnchorDeserialize, Debug, Clone)]
-pub struct InitializeParams {
+pub struct InitializeTokenManagerParams {
     pub name: String,
     pub symbol: String,
     pub uri: String,
@@ -19,18 +19,20 @@ pub struct InitializeParams {
     pub emergency_fund_basis_points: u16,
     pub merkle_root: [u8; 32],
     pub admin: Pubkey,
+    pub minter: Pubkey,
+    pub gate_keepers: Vec<Pubkey>,
     pub mint_limit_per_slot: u64,
     pub redemption_limit_per_slot: u64,
 }
 
 #[derive(Accounts)]
 #[instruction(
-    params: InitializeParams
+    params: InitializeTokenManagerParams
 )]
-pub struct Initialize<'info> {
+pub struct InitializeTokenManager<'info> {
     #[account(
         init,
-        payer = payer,
+        payer = owner,
         space = TOKEN_MANAGER_SIZE,
         seeds = [b"token-manager"],
         bump,
@@ -38,7 +40,7 @@ pub struct Initialize<'info> {
     pub token_manager: Account<'info, TokenManager>,
     #[account(
         init,
-        payer = payer,
+        payer = owner,
         associated_token::mint = quote_mint,
         associated_token::authority = token_manager,
     )]
@@ -50,14 +52,14 @@ pub struct Initialize<'info> {
         init,
         seeds = [b"mint"],
         bump,
-        payer = payer,
+        payer = owner,
         mint::decimals = params.decimals,
         mint::authority = token_manager,
     )]
     pub mint: Account<'info, Mint>,
     pub quote_mint: Account<'info, Mint>,
     #[account(mut)]
-    pub payer: Signer<'info>,
+    pub owner: Signer<'info>,
     pub rent: Sysvar<'info, Rent>,
     pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,
@@ -65,7 +67,10 @@ pub struct Initialize<'info> {
     pub associated_token_program: Program<'info, AssociatedToken>,
 }
 
-pub fn handler(ctx: Context<Initialize>, params: InitializeParams) -> Result<()> {
+pub fn handler(
+    ctx: Context<InitializeTokenManager>,
+    params: InitializeTokenManagerParams,
+) -> Result<()> {
     let token_manager = &mut ctx.accounts.token_manager;
 
     let bump = ctx.bumps.token_manager; // Corrected to be a slice of a slice of a byte slice
@@ -84,7 +89,7 @@ pub fn handler(ctx: Context<Initialize>, params: InitializeParams) -> Result<()>
     let metadata_ctx = CpiContext::new_with_signer(
         ctx.accounts.token_metadata_program.to_account_info(),
         CreateMetadataAccountsV3 {
-            payer: ctx.accounts.payer.to_account_info(),
+            payer: ctx.accounts.owner.to_account_info(),
             update_authority: token_manager.to_account_info(),
             mint: ctx.accounts.mint.to_account_info(),
             metadata: ctx.accounts.metadata.to_account_info(),
@@ -102,9 +107,14 @@ pub fn handler(ctx: Context<Initialize>, params: InitializeParams) -> Result<()>
     let token_manager = &mut ctx.accounts.token_manager;
 
     token_manager.bump = bump;
+
     // Authorities
-    token_manager.deposit_withdraw_authorities = vec![ctx.accounts.payer.key()];
-    token_manager.secondary_authorities = vec![ctx.accounts.payer.key()];
+    token_manager.owner = ctx.accounts.owner.key();
+    token_manager.admin = params.admin;
+    token_manager.minter = params.minter;
+    token_manager.gate_keepers = params.gate_keepers;
+    token_manager.merkle_root = params.merkle_root;
+
     // Token
     token_manager.mint = ctx.accounts.mint.key();
     token_manager.mint_decimals = ctx.accounts.mint.decimals;
@@ -116,8 +126,6 @@ pub fn handler(ctx: Context<Initialize>, params: InitializeParams) -> Result<()>
     token_manager.total_collateral = 0;
     token_manager.emergency_fund_basis_points = params.emergency_fund_basis_points;
     token_manager.active = true;
-    token_manager.merkle_root = params.merkle_root;
-    token_manager.admin = params.admin;
 
     // Per Block limit
     let clock = Clock::get()?;

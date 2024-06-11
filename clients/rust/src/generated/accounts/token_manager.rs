@@ -20,19 +20,25 @@ pub struct TokenManager {
     pub bump: u8,
     #[cfg_attr(
         feature = "serde",
-        serde(with = "serde_with::As::<Vec<serde_with::DisplayFromStr>>")
+        serde(with = "serde_with::As::<serde_with::DisplayFromStr>")
     )]
-    pub deposit_withdraw_authorities: Vec<Pubkey>,
+    pub owner: Pubkey,
+    #[cfg_attr(
+        feature = "serde",
+        serde(with = "serde_with::As::<serde_with::DisplayFromStr>")
+    )]
+    pub admin: Pubkey,
+    #[cfg_attr(
+        feature = "serde",
+        serde(with = "serde_with::As::<serde_with::DisplayFromStr>")
+    )]
+    pub minter: Pubkey,
     #[cfg_attr(
         feature = "serde",
         serde(with = "serde_with::As::<Vec<serde_with::DisplayFromStr>>")
     )]
-    pub pause_authorities: Vec<Pubkey>,
-    #[cfg_attr(
-        feature = "serde",
-        serde(with = "serde_with::As::<Vec<serde_with::DisplayFromStr>>")
-    )]
-    pub secondary_authorities: Vec<Pubkey>,
+    pub gate_keepers: Vec<Pubkey>,
+    pub merkle_root: [u8; 32],
     #[cfg_attr(
         feature = "serde",
         serde(with = "serde_with::As::<serde_with::DisplayFromStr>")
@@ -51,16 +57,10 @@ pub struct TokenManager {
     pub current_slot: u64,
     pub current_slot_mint_volume: u64,
     pub current_slot_redemption_volume: u64,
+    pub active: bool,
+    pub emergency_fund_basis_points: u16,
     pub total_supply: u64,
     pub total_collateral: u64,
-    pub emergency_fund_basis_points: u16,
-    pub active: bool,
-    pub merkle_root: [u8; 32],
-    #[cfg_attr(
-        feature = "serde",
-        serde(with = "serde_with::As::<serde_with::DisplayFromStr>")
-    )]
-    pub admin: Pubkey,
 }
 
 impl TokenManager {

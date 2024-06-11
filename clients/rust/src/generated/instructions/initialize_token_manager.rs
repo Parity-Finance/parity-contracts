@@ -23,7 +23,7 @@ pub struct InitializeTokenManager {
 
     pub quote_mint: solana_program::pubkey::Pubkey,
 
-    pub payer: solana_program::pubkey::Pubkey,
+    pub owner: solana_program::pubkey::Pubkey,
 
     pub rent: solana_program::pubkey::Pubkey,
 
@@ -69,7 +69,7 @@ impl InitializeTokenManager {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.payer, true,
+            self.owner, true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.rent, false,
@@ -132,6 +132,8 @@ pub struct InitializeTokenManagerInstructionArgs {
     pub emergency_fund_basis_points: u16,
     pub merkle_root: [u8; 32],
     pub admin: Pubkey,
+    pub minter: Pubkey,
+    pub gate_keepers: Vec<Pubkey>,
     pub mint_limit_per_slot: u64,
     pub redemption_limit_per_slot: u64,
 }
@@ -145,7 +147,7 @@ pub struct InitializeTokenManagerInstructionArgs {
 ///   2. `[writable]` metadata
 ///   3. `[writable]` mint
 ///   4. `[]` quote_mint
-///   5. `[writable, signer]` payer
+///   5. `[writable, signer]` owner
 ///   6. `[optional]` rent (default to `SysvarRent111111111111111111111111111111111`)
 ///   7. `[optional]` system_program (default to `11111111111111111111111111111111`)
 ///   8. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
@@ -158,7 +160,7 @@ pub struct InitializeTokenManagerBuilder {
     metadata: Option<solana_program::pubkey::Pubkey>,
     mint: Option<solana_program::pubkey::Pubkey>,
     quote_mint: Option<solana_program::pubkey::Pubkey>,
-    payer: Option<solana_program::pubkey::Pubkey>,
+    owner: Option<solana_program::pubkey::Pubkey>,
     rent: Option<solana_program::pubkey::Pubkey>,
     system_program: Option<solana_program::pubkey::Pubkey>,
     token_program: Option<solana_program::pubkey::Pubkey>,
@@ -172,6 +174,8 @@ pub struct InitializeTokenManagerBuilder {
     emergency_fund_basis_points: Option<u16>,
     merkle_root: Option<[u8; 32]>,
     admin: Option<Pubkey>,
+    minter: Option<Pubkey>,
+    gate_keepers: Option<Vec<Pubkey>>,
     mint_limit_per_slot: Option<u64>,
     redemption_limit_per_slot: Option<u64>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
@@ -207,8 +211,8 @@ impl InitializeTokenManagerBuilder {
         self
     }
     #[inline(always)]
-    pub fn payer(&mut self, payer: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.payer = Some(payer);
+    pub fn owner(&mut self, owner: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.owner = Some(owner);
         self
     }
     /// `[optional account, default to 'SysvarRent111111111111111111111111111111111']`
@@ -287,6 +291,16 @@ impl InitializeTokenManagerBuilder {
         self
     }
     #[inline(always)]
+    pub fn minter(&mut self, minter: Pubkey) -> &mut Self {
+        self.minter = Some(minter);
+        self
+    }
+    #[inline(always)]
+    pub fn gate_keepers(&mut self, gate_keepers: Vec<Pubkey>) -> &mut Self {
+        self.gate_keepers = Some(gate_keepers);
+        self
+    }
+    #[inline(always)]
     pub fn mint_limit_per_slot(&mut self, mint_limit_per_slot: u64) -> &mut Self {
         self.mint_limit_per_slot = Some(mint_limit_per_slot);
         self
@@ -323,7 +337,7 @@ impl InitializeTokenManagerBuilder {
                 metadata: self.metadata.expect("metadata is not set"),
                 mint: self.mint.expect("mint is not set"),
                 quote_mint: self.quote_mint.expect("quote_mint is not set"),
-                payer: self.payer.expect("payer is not set"),
+                owner: self.owner.expect("owner is not set"),
                 rent: self.rent.unwrap_or(solana_program::pubkey!(
                     "SysvarRent111111111111111111111111111111111"
                 )),
@@ -355,6 +369,8 @@ impl InitializeTokenManagerBuilder {
                 .expect("emergency_fund_basis_points is not set"),
             merkle_root: self.merkle_root.clone().expect("merkle_root is not set"),
             admin: self.admin.clone().expect("admin is not set"),
+            minter: self.minter.clone().expect("minter is not set"),
+            gate_keepers: self.gate_keepers.clone().expect("gate_keepers is not set"),
             mint_limit_per_slot: self
                 .mint_limit_per_slot
                 .clone()
@@ -381,7 +397,7 @@ pub struct InitializeTokenManagerCpiAccounts<'a, 'b> {
 
     pub quote_mint: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub payer: &'b solana_program::account_info::AccountInfo<'a>,
+    pub owner: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub rent: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -409,7 +425,7 @@ pub struct InitializeTokenManagerCpi<'a, 'b> {
 
     pub quote_mint: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub payer: &'b solana_program::account_info::AccountInfo<'a>,
+    pub owner: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub rent: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -437,7 +453,7 @@ impl<'a, 'b> InitializeTokenManagerCpi<'a, 'b> {
             metadata: accounts.metadata,
             mint: accounts.mint,
             quote_mint: accounts.quote_mint,
-            payer: accounts.payer,
+            owner: accounts.owner,
             rent: accounts.rent,
             system_program: accounts.system_program,
             token_program: accounts.token_program,
@@ -501,7 +517,7 @@ impl<'a, 'b> InitializeTokenManagerCpi<'a, 'b> {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.payer.key,
+            *self.owner.key,
             true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -549,7 +565,7 @@ impl<'a, 'b> InitializeTokenManagerCpi<'a, 'b> {
         account_infos.push(self.metadata.clone());
         account_infos.push(self.mint.clone());
         account_infos.push(self.quote_mint.clone());
-        account_infos.push(self.payer.clone());
+        account_infos.push(self.owner.clone());
         account_infos.push(self.rent.clone());
         account_infos.push(self.system_program.clone());
         account_infos.push(self.token_program.clone());
@@ -576,7 +592,7 @@ impl<'a, 'b> InitializeTokenManagerCpi<'a, 'b> {
 ///   2. `[writable]` metadata
 ///   3. `[writable]` mint
 ///   4. `[]` quote_mint
-///   5. `[writable, signer]` payer
+///   5. `[writable, signer]` owner
 ///   6. `[]` rent
 ///   7. `[]` system_program
 ///   8. `[]` token_program
@@ -595,7 +611,7 @@ impl<'a, 'b> InitializeTokenManagerCpiBuilder<'a, 'b> {
             metadata: None,
             mint: None,
             quote_mint: None,
-            payer: None,
+            owner: None,
             rent: None,
             system_program: None,
             token_program: None,
@@ -609,6 +625,8 @@ impl<'a, 'b> InitializeTokenManagerCpiBuilder<'a, 'b> {
             emergency_fund_basis_points: None,
             merkle_root: None,
             admin: None,
+            minter: None,
+            gate_keepers: None,
             mint_limit_per_slot: None,
             redemption_limit_per_slot: None,
             __remaining_accounts: Vec::new(),
@@ -650,8 +668,8 @@ impl<'a, 'b> InitializeTokenManagerCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn payer(&mut self, payer: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
-        self.instruction.payer = Some(payer);
+    pub fn owner(&mut self, owner: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
+        self.instruction.owner = Some(owner);
         self
     }
     #[inline(always)]
@@ -732,6 +750,16 @@ impl<'a, 'b> InitializeTokenManagerCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
+    pub fn minter(&mut self, minter: Pubkey) -> &mut Self {
+        self.instruction.minter = Some(minter);
+        self
+    }
+    #[inline(always)]
+    pub fn gate_keepers(&mut self, gate_keepers: Vec<Pubkey>) -> &mut Self {
+        self.instruction.gate_keepers = Some(gate_keepers);
+        self
+    }
+    #[inline(always)]
     pub fn mint_limit_per_slot(&mut self, mint_limit_per_slot: u64) -> &mut Self {
         self.instruction.mint_limit_per_slot = Some(mint_limit_per_slot);
         self
@@ -807,6 +835,12 @@ impl<'a, 'b> InitializeTokenManagerCpiBuilder<'a, 'b> {
                 .clone()
                 .expect("merkle_root is not set"),
             admin: self.instruction.admin.clone().expect("admin is not set"),
+            minter: self.instruction.minter.clone().expect("minter is not set"),
+            gate_keepers: self
+                .instruction
+                .gate_keepers
+                .clone()
+                .expect("gate_keepers is not set"),
             mint_limit_per_slot: self
                 .instruction
                 .mint_limit_per_slot
@@ -834,7 +868,7 @@ impl<'a, 'b> InitializeTokenManagerCpiBuilder<'a, 'b> {
 
             quote_mint: self.instruction.quote_mint.expect("quote_mint is not set"),
 
-            payer: self.instruction.payer.expect("payer is not set"),
+            owner: self.instruction.owner.expect("owner is not set"),
 
             rent: self.instruction.rent.expect("rent is not set"),
 
@@ -873,7 +907,7 @@ struct InitializeTokenManagerCpiBuilderInstruction<'a, 'b> {
     metadata: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     quote_mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    payer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    owner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     rent: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
@@ -887,6 +921,8 @@ struct InitializeTokenManagerCpiBuilderInstruction<'a, 'b> {
     emergency_fund_basis_points: Option<u16>,
     merkle_root: Option<[u8; 32]>,
     admin: Option<Pubkey>,
+    minter: Option<Pubkey>,
+    gate_keepers: Option<Vec<Pubkey>>,
     mint_limit_per_slot: Option<u64>,
     redemption_limit_per_slot: Option<u64>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.

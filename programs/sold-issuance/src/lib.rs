@@ -17,8 +17,8 @@ pub mod sold_issuance {
     use super::*;
 
     pub fn initialize_token_manager(
-        ctx: Context<Initialize>,
-        params: InitializeParams,
+        ctx: Context<InitializeTokenManager>,
+        params: InitializeTokenManagerParams,
     ) -> Result<()> {
         initialize_token_manager::handler(ctx, params)
     }

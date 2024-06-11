@@ -19,6 +19,7 @@ import {
   Serializer,
   array,
   mapSerializer,
+  publicKey as publicKeySerializer,
   string,
   struct,
   u64,
@@ -31,14 +32,14 @@ import {
 } from '../shared';
 
 // Accounts.
-export type InitializeStakePoolInstructionAccounts = {
+export type InitializePoolManagerInstructionAccounts = {
   /** SPL Token Mint of the underlying token to be deposited for staking */
   baseMint: PublicKey | Pda;
   xMint: PublicKey | Pda;
   metadata: PublicKey | Pda;
   stakePool: PublicKey | Pda;
   vault: PublicKey | Pda;
-  payer?: Signer;
+  owner: Signer;
   rent?: PublicKey | Pda;
   systemProgram?: PublicKey | Pda;
   tokenProgram?: PublicKey | Pda;
@@ -47,33 +48,35 @@ export type InitializeStakePoolInstructionAccounts = {
 };
 
 // Data.
-export type InitializeStakePoolInstructionData = {
+export type InitializePoolManagerInstructionData = {
   discriminator: Array<number>;
   name: string;
   symbol: string;
   uri: string;
   decimals: number;
   initialExchangeRate: bigint;
+  admin: PublicKey;
 };
 
-export type InitializeStakePoolInstructionDataArgs = {
+export type InitializePoolManagerInstructionDataArgs = {
   name: string;
   symbol: string;
   uri: string;
   decimals: number;
   initialExchangeRate: number | bigint;
+  admin: PublicKey;
 };
 
-export function getInitializeStakePoolInstructionDataSerializer(): Serializer<
-  InitializeStakePoolInstructionDataArgs,
-  InitializeStakePoolInstructionData
+export function getInitializePoolManagerInstructionDataSerializer(): Serializer<
+  InitializePoolManagerInstructionDataArgs,
+  InitializePoolManagerInstructionData
 > {
   return mapSerializer<
-    InitializeStakePoolInstructionDataArgs,
+    InitializePoolManagerInstructionDataArgs,
     any,
-    InitializeStakePoolInstructionData
+    InitializePoolManagerInstructionData
   >(
-    struct<InitializeStakePoolInstructionData>(
+    struct<InitializePoolManagerInstructionData>(
       [
         ['discriminator', array(u8(), { size: 8 })],
         ['name', string()],
@@ -81,25 +84,29 @@ export function getInitializeStakePoolInstructionDataSerializer(): Serializer<
         ['uri', string()],
         ['decimals', u8()],
         ['initialExchangeRate', u64()],
+        ['admin', publicKeySerializer()],
       ],
-      { description: 'InitializeStakePoolInstructionData' }
+      { description: 'InitializePoolManagerInstructionData' }
     ),
-    (value) => ({ ...value, discriminator: [48, 189, 243, 73, 19, 67, 36, 83] })
+    (value) => ({
+      ...value,
+      discriminator: [33, 34, 202, 132, 200, 11, 214, 124],
+    })
   ) as Serializer<
-    InitializeStakePoolInstructionDataArgs,
-    InitializeStakePoolInstructionData
+    InitializePoolManagerInstructionDataArgs,
+    InitializePoolManagerInstructionData
   >;
 }
 
 // Args.
-export type InitializeStakePoolInstructionArgs =
-  InitializeStakePoolInstructionDataArgs;
+export type InitializePoolManagerInstructionArgs =
+  InitializePoolManagerInstructionDataArgs;
 
 // Instruction.
-export function initializeStakePool(
-  context: Pick<Context, 'payer' | 'programs'>,
-  input: InitializeStakePoolInstructionAccounts &
-    InitializeStakePoolInstructionArgs
+export function initializePoolManager(
+  context: Pick<Context, 'programs'>,
+  input: InitializePoolManagerInstructionAccounts &
+    InitializePoolManagerInstructionArgs
 ): TransactionBuilder {
   // Program ID.
   const programId = context.programs.getPublicKey(
@@ -134,10 +141,10 @@ export function initializeStakePool(
       isWritable: true as boolean,
       value: input.vault ?? null,
     },
-    payer: {
+    owner: {
       index: 5,
       isWritable: true as boolean,
-      value: input.payer ?? null,
+      value: input.owner ?? null,
     },
     rent: { index: 6, isWritable: false as boolean, value: input.rent ?? null },
     systemProgram: {
@@ -163,12 +170,9 @@ export function initializeStakePool(
   } satisfies ResolvedAccountsWithIndices;
 
   // Arguments.
-  const resolvedArgs: InitializeStakePoolInstructionArgs = { ...input };
+  const resolvedArgs: InitializePoolManagerInstructionArgs = { ...input };
 
   // Default values.
-  if (!resolvedAccounts.payer.value) {
-    resolvedAccounts.payer.value = context.payer;
-  }
   if (!resolvedAccounts.rent.value) {
     resolvedAccounts.rent.value = publicKey(
       'SysvarRent111111111111111111111111111111111'
@@ -209,8 +213,8 @@ export function initializeStakePool(
   );
 
   // Data.
-  const data = getInitializeStakePoolInstructionDataSerializer().serialize(
-    resolvedArgs as InitializeStakePoolInstructionDataArgs
+  const data = getInitializePoolManagerInstructionDataSerializer().serialize(
+    resolvedArgs as InitializePoolManagerInstructionDataArgs
   );
 
   // Bytes Created On Chain.

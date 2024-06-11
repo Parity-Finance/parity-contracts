@@ -10,7 +10,7 @@
   ],
   "instructions": [
     {
-      "name": "initializeStakePool",
+      "name": "initializePoolManager",
       "accounts": [
         {
           "name": "baseMint",
@@ -41,7 +41,7 @@
           "isSigner": false
         },
         {
-          "name": "payer",
+          "name": "owner",
           "isMut": true,
           "isSigner": true
         },
@@ -75,7 +75,7 @@
         {
           "name": "params",
           "type": {
-            "defined": "InitializeStakePoolParams"
+            "defined": "InitializePoolManagerParams"
           }
         }
       ]
@@ -278,40 +278,24 @@
         "kind": "struct",
         "fields": [
           {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "owner",
+            "type": "publicKey"
+          },
+          {
+            "name": "admin",
+            "type": "publicKey"
+          },
+          {
             "name": "baseMint",
             "type": "publicKey"
           },
           {
             "name": "xMint",
             "type": "publicKey"
-          },
-          {
-            "name": "inceptionTimestamp",
-            "type": "i64"
-          },
-          {
-            "name": "lastYieldChangeTimestamp",
-            "type": "i64"
-          },
-          {
-            "name": "annualYieldRate",
-            "type": "u64"
-          },
-          {
-            "name": "baseBalance",
-            "type": "u64"
-          },
-          {
-            "name": "xSupply",
-            "type": "u64"
-          },
-          {
-            "name": "authority",
-            "type": "publicKey"
-          },
-          {
-            "name": "bump",
-            "type": "u8"
           },
           {
             "name": "baseMintDecimals",
@@ -322,11 +306,31 @@
             "type": "u8"
           },
           {
+            "name": "annualYieldRate",
+            "type": "u64"
+          },
+          {
             "name": "initialExchangeRate",
             "type": "u64"
           },
           {
             "name": "lastYieldChangeExchangeRate",
+            "type": "u64"
+          },
+          {
+            "name": "inceptionTimestamp",
+            "type": "i64"
+          },
+          {
+            "name": "lastYieldChangeTimestamp",
+            "type": "i64"
+          },
+          {
+            "name": "baseBalance",
+            "type": "u64"
+          },
+          {
+            "name": "xSupply",
             "type": "u64"
           }
         ]
@@ -335,7 +339,7 @@
   ],
   "types": [
     {
-      "name": "InitializeStakePoolParams",
+      "name": "InitializePoolManagerParams",
       "type": {
         "kind": "struct",
         "fields": [
@@ -358,6 +362,10 @@
           {
             "name": "initialExchangeRate",
             "type": "u64"
+          },
+          {
+            "name": "admin",
+            "type": "publicKey"
           }
         ]
       }

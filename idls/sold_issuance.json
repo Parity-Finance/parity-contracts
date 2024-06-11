@@ -31,7 +31,7 @@
           "isSigner": false
         },
         {
-          "name": "payer",
+          "name": "owner",
           "isMut": true,
           "isSigner": true
         },
@@ -65,7 +65,7 @@
         {
           "name": "params",
           "type": {
-            "defined": "InitializeParams"
+            "defined": "InitializeTokenManagerParams"
           }
         }
       ]
@@ -428,21 +428,30 @@
             "type": "u8"
           },
           {
-            "name": "depositWithdrawAuthorities",
+            "name": "owner",
+            "type": "publicKey"
+          },
+          {
+            "name": "admin",
+            "type": "publicKey"
+          },
+          {
+            "name": "minter",
+            "type": "publicKey"
+          },
+          {
+            "name": "gateKeepers",
             "type": {
               "vec": "publicKey"
             }
           },
           {
-            "name": "pauseAuthorities",
+            "name": "merkleRoot",
             "type": {
-              "vec": "publicKey"
-            }
-          },
-          {
-            "name": "secondaryAuthorities",
-            "type": {
-              "vec": "publicKey"
+              "array": [
+                "u8",
+                32
+              ]
             }
           },
           {
@@ -486,33 +495,20 @@
             "type": "u64"
           },
           {
-            "name": "totalSupply",
-            "type": "u64"
-          },
-          {
-            "name": "totalCollateral",
-            "type": "u64"
+            "name": "active",
+            "type": "bool"
           },
           {
             "name": "emergencyFundBasisPoints",
             "type": "u16"
           },
           {
-            "name": "active",
-            "type": "bool"
+            "name": "totalSupply",
+            "type": "u64"
           },
           {
-            "name": "merkleRoot",
-            "type": {
-              "array": [
-                "u8",
-                32
-              ]
-            }
-          },
-          {
-            "name": "admin",
-            "type": "publicKey"
+            "name": "totalCollateral",
+            "type": "u64"
           }
         ]
       }
@@ -520,7 +516,7 @@
   ],
   "types": [
     {
-      "name": "InitializeParams",
+      "name": "InitializeTokenManagerParams",
       "type": {
         "kind": "struct",
         "fields": [
@@ -560,6 +556,16 @@
           {
             "name": "admin",
             "type": "publicKey"
+          },
+          {
+            "name": "minter",
+            "type": "publicKey"
+          },
+          {
+            "name": "gateKeepers",
+            "type": {
+              "vec": "publicKey"
+            }
           },
           {
             "name": "mintLimitPerSlot",

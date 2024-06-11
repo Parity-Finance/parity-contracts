@@ -40,7 +40,7 @@ export type InitializeTokenManagerInstructionAccounts = {
   metadata: PublicKey | Pda;
   mint: PublicKey | Pda;
   quoteMint: PublicKey | Pda;
-  payer?: Signer;
+  owner: Signer;
   rent?: PublicKey | Pda;
   systemProgram?: PublicKey | Pda;
   tokenProgram?: PublicKey | Pda;
@@ -59,6 +59,8 @@ export type InitializeTokenManagerInstructionData = {
   emergencyFundBasisPoints: number;
   merkleRoot: Uint8Array;
   admin: PublicKey;
+  minter: PublicKey;
+  gateKeepers: Array<PublicKey>;
   mintLimitPerSlot: bigint;
   redemptionLimitPerSlot: bigint;
 };
@@ -72,6 +74,8 @@ export type InitializeTokenManagerInstructionDataArgs = {
   emergencyFundBasisPoints: number;
   merkleRoot: Uint8Array;
   admin: PublicKey;
+  minter: PublicKey;
+  gateKeepers: Array<PublicKey>;
   mintLimitPerSlot: number | bigint;
   redemptionLimitPerSlot: number | bigint;
 };
@@ -96,6 +100,8 @@ export function getInitializeTokenManagerInstructionDataSerializer(): Serializer
         ['emergencyFundBasisPoints', u16()],
         ['merkleRoot', bytes({ size: 32 })],
         ['admin', publicKeySerializer()],
+        ['minter', publicKeySerializer()],
+        ['gateKeepers', array(publicKeySerializer())],
         ['mintLimitPerSlot', u64()],
         ['redemptionLimitPerSlot', u64()],
       ],
@@ -114,7 +120,7 @@ export type InitializeTokenManagerInstructionArgs =
 
 // Instruction.
 export function initializeTokenManager(
-  context: Pick<Context, 'payer' | 'programs'>,
+  context: Pick<Context, 'programs'>,
   input: InitializeTokenManagerInstructionAccounts &
     InitializeTokenManagerInstructionArgs
 ): TransactionBuilder {
@@ -147,10 +153,10 @@ export function initializeTokenManager(
       isWritable: false as boolean,
       value: input.quoteMint ?? null,
     },
-    payer: {
+    owner: {
       index: 5,
       isWritable: true as boolean,
-      value: input.payer ?? null,
+      value: input.owner ?? null,
     },
     rent: { index: 6, isWritable: false as boolean, value: input.rent ?? null },
     systemProgram: {
@@ -179,9 +185,6 @@ export function initializeTokenManager(
   const resolvedArgs: InitializeTokenManagerInstructionArgs = { ...input };
 
   // Default values.
-  if (!resolvedAccounts.payer.value) {
-    resolvedAccounts.payer.value = context.payer;
-  }
   if (!resolvedAccounts.rent.value) {
     resolvedAccounts.rent.value = publicKey(
       'SysvarRent111111111111111111111111111111111'

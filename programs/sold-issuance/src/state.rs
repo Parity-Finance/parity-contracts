@@ -1,15 +1,17 @@
 use anchor_lang::prelude::*;
 
-pub const TOKEN_MANAGER_SIZE: usize =
-    8 + (32 * 4) + ((4 + 32 * 3) * 3) + 8 + 8 + 8 + 8 + 8 + 8 + 8 + 2 + 1 + 1 + 1 + 1 + 1;
+pub const TOKEN_MANAGER_SIZE: usize = 8 + 4 + (32 * 11) + (8 * 8) + 2 + (1 * 4);
 
 #[account]
 pub struct TokenManager {
     pub bump: u8, // 1
     // Authorities
-    pub deposit_withdraw_authorities: Vec<Pubkey>, // 4 +  32 * 3
-    pub pause_authorities: Vec<Pubkey>,            // 4 +  32 * 3
-    pub secondary_authorities: Vec<Pubkey>,        // 4 +  32 * 3
+    pub owner: Pubkey,             // 32
+    pub admin: Pubkey,             // 32
+    pub minter: Pubkey,            // 32
+    pub gate_keepers: Vec<Pubkey>, // 4 +  32 * 5
+    pub merkle_root: [u8; 32],     // 32
+
     // Tokens
     pub mint: Pubkey,            // 32
     pub mint_decimals: u8,       // 1
@@ -23,13 +25,12 @@ pub struct TokenManager {
     pub current_slot: u64,                   // 8
     pub current_slot_mint_volume: u64,       // 8
     pub current_slot_redemption_volume: u64, // 8
+    pub active: bool,                        // 1
+    pub emergency_fund_basis_points: u16,    // 2
+
     // Other
-    pub total_supply: u64,                // 8
-    pub total_collateral: u64,            // 8
-    pub emergency_fund_basis_points: u16, // 2
-    pub active: bool,                     // 1
-    pub merkle_root: [u8; 32],            // 32
-    pub admin: Pubkey,                    // 32
+    pub total_supply: u64,     // 8
+    pub total_collateral: u64, // 8
 }
 
 pub fn verify_merkle_proof(proof: Vec<[u8; 32]>, root: &[u8; 32], leaf: &[u8; 32]) -> bool {

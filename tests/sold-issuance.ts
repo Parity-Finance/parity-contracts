@@ -2,7 +2,7 @@ import { keypairIdentity, Pda, PublicKey, publicKey, TransactionBuilder, createA
 import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
 import { createAssociatedToken, createSplAssociatedTokenProgram, createSplTokenProgram, findAssociatedTokenPda, safeFetchToken, SPL_ASSOCIATED_TOKEN_PROGRAM_ID } from "@metaplex-foundation/mpl-toolbox"
 import { Connection, Keypair, PublicKey as Web3JsPublicKey } from "@solana/web3.js";
-import { createSoldIssuanceProgram, findTokenManagerPda, initializeTokenManager, SOLD_ISSUANCE_PROGRAM_ID, mint, redeem, safeFetchTokenManager, getMerkleRoot, getMerkleProof, toggleActive, updateTokenManager, depositFunds, withdrawFunds, initializeStakePool, findStakePoolPda, safeFetchStakePool, SOLD_STAKING_PROGRAM_ID, calculateExchangeRate, stake, unstake, updateAnnualYield } from "../clients/js/src"
+import { createSoldIssuanceProgram, findTokenManagerPda, initializeTokenManager, SOLD_ISSUANCE_PROGRAM_ID, mint, redeem, safeFetchTokenManager, getMerkleRoot, getMerkleProof, toggleActive, updateTokenManager, depositFunds, withdrawFunds, initializePoolManager, findStakePoolPda, safeFetchStakePool, SOLD_STAKING_PROGRAM_ID, calculateExchangeRate, stake, unstake, updateAnnualYield } from "../clients/js/src"
 import { ASSOCIATED_TOKEN_PROGRAM_ID, createMint, getOrCreateAssociatedTokenAccount, mintTo, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { fromWeb3JsKeypair, fromWeb3JsPublicKey } from "@metaplex-foundation/umi-web3js-adapters";
 import { findMetadataPda } from "@metaplex-foundation/mpl-token-metadata";
@@ -117,6 +117,7 @@ describe.only("sold-issuance", () => {
 
     txBuilder = txBuilder.add(initializeTokenManager(umi, {
       tokenManager,
+      owner: umi.identity,
       vault: vaultIssuance,
       metadata: baseMetadata,
       mint: baseMint,
@@ -129,7 +130,9 @@ describe.only("sold-issuance", () => {
       exchangeRate,
       emergencyFundBasisPoints,
       merkleRoot,
-      admin: stakePool,
+      admin: umi.identity.publicKey,
+      minter: stakePool,
+      gateKeepers: [],
       mintLimitPerSlot,
       redemptionLimitPerSlot,
     }))
@@ -157,7 +160,7 @@ describe.only("sold-issuance", () => {
   it.only("Stake Pool is initialized!", async () => {
     let txBuilder = new TransactionBuilder();
 
-    txBuilder = txBuilder.add(initializeStakePool(umi, {
+    txBuilder = txBuilder.add(initializePoolManager(umi, {
       stakePool,
       vault: vaultStaking,
       metadata: xMetadata,
@@ -169,6 +172,8 @@ describe.only("sold-issuance", () => {
       uri: "https://builderz.dev/_next/image?url=%2Fimages%2Fheader-gif.gif&w=3840&q=75",
       decimals: xMintDecimals,
       initialExchangeRate,
+      owner: umi.identity,
+      admin: umi.identity.publicKey,
     }))
 
     await txBuilder.sendAndConfirm(umi, { send: { skipPreflight: true } });

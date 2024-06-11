@@ -27,7 +27,7 @@ pub struct MintAdminTokens<'info> {
     )]
     pub admin_mint_ata: Account<'info, TokenAccount>,
     // Other
-    #[account(address = token_manager.admin @ SoldIssuanceError::InvalidAdminAddress)]
+    #[account(address = token_manager.minter @ SoldIssuanceError::InvalidAdminAddress)]
     pub admin: Signer<'info>,
     pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,

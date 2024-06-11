@@ -9,9 +9,10 @@
 use anchor_lang::prelude::{AnchorDeserialize, AnchorSerialize};
 #[cfg(not(feature = "anchor"))]
 use borsh::{BorshDeserialize, BorshSerialize};
+use solana_program::pubkey::Pubkey;
 
 /// Accounts.
-pub struct InitializeStakePool {
+pub struct InitializePoolManager {
     /// SPL Token Mint of the underlying token to be deposited for staking
     pub base_mint: solana_program::pubkey::Pubkey,
 
@@ -23,7 +24,7 @@ pub struct InitializeStakePool {
 
     pub vault: solana_program::pubkey::Pubkey,
 
-    pub payer: solana_program::pubkey::Pubkey,
+    pub owner: solana_program::pubkey::Pubkey,
 
     pub rent: solana_program::pubkey::Pubkey,
 
@@ -36,17 +37,17 @@ pub struct InitializeStakePool {
     pub associated_token_program: solana_program::pubkey::Pubkey,
 }
 
-impl InitializeStakePool {
+impl InitializePoolManager {
     pub fn instruction(
         &self,
-        args: InitializeStakePoolInstructionArgs,
+        args: InitializePoolManagerInstructionArgs,
     ) -> solana_program::instruction::Instruction {
         self.instruction_with_remaining_accounts(args, &[])
     }
     #[allow(clippy::vec_init_then_push)]
     pub fn instruction_with_remaining_accounts(
         &self,
-        args: InitializeStakePoolInstructionArgs,
+        args: InitializePoolManagerInstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
         let mut accounts = Vec::with_capacity(11 + remaining_accounts.len());
@@ -70,7 +71,7 @@ impl InitializeStakePool {
             self.vault, false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.payer, true,
+            self.owner, true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.rent, false,
@@ -92,7 +93,7 @@ impl InitializeStakePool {
             false,
         ));
         accounts.extend_from_slice(remaining_accounts);
-        let mut data = InitializeStakePoolInstructionData::new()
+        let mut data = InitializePoolManagerInstructionData::new()
             .try_to_vec()
             .unwrap();
         let mut args = args.try_to_vec().unwrap();
@@ -108,14 +109,14 @@ impl InitializeStakePool {
 
 #[cfg_attr(not(feature = "anchor"), derive(BorshSerialize, BorshDeserialize))]
 #[cfg_attr(feature = "anchor", derive(AnchorSerialize, AnchorDeserialize))]
-pub struct InitializeStakePoolInstructionData {
+pub struct InitializePoolManagerInstructionData {
     discriminator: [u8; 8],
 }
 
-impl InitializeStakePoolInstructionData {
+impl InitializePoolManagerInstructionData {
     pub fn new() -> Self {
         Self {
-            discriminator: [48, 189, 243, 73, 19, 67, 36, 83],
+            discriminator: [33, 34, 202, 132, 200, 11, 214, 124],
         }
     }
 }
@@ -124,15 +125,16 @@ impl InitializeStakePoolInstructionData {
 #[cfg_attr(feature = "anchor", derive(AnchorSerialize, AnchorDeserialize))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct InitializeStakePoolInstructionArgs {
+pub struct InitializePoolManagerInstructionArgs {
     pub name: String,
     pub symbol: String,
     pub uri: String,
     pub decimals: u8,
     pub initial_exchange_rate: u64,
+    pub admin: Pubkey,
 }
 
-/// Instruction builder for `InitializeStakePool`.
+/// Instruction builder for `InitializePoolManager`.
 ///
 /// ### Accounts:
 ///
@@ -141,20 +143,20 @@ pub struct InitializeStakePoolInstructionArgs {
 ///   2. `[writable]` metadata
 ///   3. `[writable]` stake_pool
 ///   4. `[writable]` vault
-///   5. `[writable, signer]` payer
+///   5. `[writable, signer]` owner
 ///   6. `[optional]` rent (default to `SysvarRent111111111111111111111111111111111`)
 ///   7. `[optional]` system_program (default to `11111111111111111111111111111111`)
 ///   8. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
 ///   9. `[optional]` token_metadata_program (default to `metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s`)
 ///   10. `[]` associated_token_program
 #[derive(Default)]
-pub struct InitializeStakePoolBuilder {
+pub struct InitializePoolManagerBuilder {
     base_mint: Option<solana_program::pubkey::Pubkey>,
     x_mint: Option<solana_program::pubkey::Pubkey>,
     metadata: Option<solana_program::pubkey::Pubkey>,
     stake_pool: Option<solana_program::pubkey::Pubkey>,
     vault: Option<solana_program::pubkey::Pubkey>,
-    payer: Option<solana_program::pubkey::Pubkey>,
+    owner: Option<solana_program::pubkey::Pubkey>,
     rent: Option<solana_program::pubkey::Pubkey>,
     system_program: Option<solana_program::pubkey::Pubkey>,
     token_program: Option<solana_program::pubkey::Pubkey>,
@@ -165,10 +167,11 @@ pub struct InitializeStakePoolBuilder {
     uri: Option<String>,
     decimals: Option<u8>,
     initial_exchange_rate: Option<u64>,
+    admin: Option<Pubkey>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
-impl InitializeStakePoolBuilder {
+impl InitializePoolManagerBuilder {
     pub fn new() -> Self {
         Self::default()
     }
@@ -199,8 +202,8 @@ impl InitializeStakePoolBuilder {
         self
     }
     #[inline(always)]
-    pub fn payer(&mut self, payer: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.payer = Some(payer);
+    pub fn owner(&mut self, owner: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.owner = Some(owner);
         self
     }
     /// `[optional account, default to 'SysvarRent111111111111111111111111111111111']`
@@ -263,6 +266,11 @@ impl InitializeStakePoolBuilder {
         self.initial_exchange_rate = Some(initial_exchange_rate);
         self
     }
+    #[inline(always)]
+    pub fn admin(&mut self, admin: Pubkey) -> &mut Self {
+        self.admin = Some(admin);
+        self
+    }
     /// Add an aditional account to the instruction.
     #[inline(always)]
     pub fn add_remaining_account(
@@ -284,13 +292,13 @@ impl InitializeStakePoolBuilder {
     #[allow(clippy::clone_on_copy)]
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
         let accounts =
-            InitializeStakePool {
+            InitializePoolManager {
                 base_mint: self.base_mint.expect("base_mint is not set"),
                 x_mint: self.x_mint.expect("x_mint is not set"),
                 metadata: self.metadata.expect("metadata is not set"),
                 stake_pool: self.stake_pool.expect("stake_pool is not set"),
                 vault: self.vault.expect("vault is not set"),
-                payer: self.payer.expect("payer is not set"),
+                owner: self.owner.expect("owner is not set"),
                 rent: self.rent.unwrap_or(solana_program::pubkey!(
                     "SysvarRent111111111111111111111111111111111"
                 )),
@@ -307,7 +315,7 @@ impl InitializeStakePoolBuilder {
                     .associated_token_program
                     .expect("associated_token_program is not set"),
             };
-        let args = InitializeStakePoolInstructionArgs {
+        let args = InitializePoolManagerInstructionArgs {
             name: self.name.clone().expect("name is not set"),
             symbol: self.symbol.clone().expect("symbol is not set"),
             uri: self.uri.clone().expect("uri is not set"),
@@ -316,14 +324,15 @@ impl InitializeStakePoolBuilder {
                 .initial_exchange_rate
                 .clone()
                 .expect("initial_exchange_rate is not set"),
+            admin: self.admin.clone().expect("admin is not set"),
         };
 
         accounts.instruction_with_remaining_accounts(args, &self.__remaining_accounts)
     }
 }
 
-/// `initialize_stake_pool` CPI accounts.
-pub struct InitializeStakePoolCpiAccounts<'a, 'b> {
+/// `initialize_pool_manager` CPI accounts.
+pub struct InitializePoolManagerCpiAccounts<'a, 'b> {
     /// SPL Token Mint of the underlying token to be deposited for staking
     pub base_mint: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -335,7 +344,7 @@ pub struct InitializeStakePoolCpiAccounts<'a, 'b> {
 
     pub vault: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub payer: &'b solana_program::account_info::AccountInfo<'a>,
+    pub owner: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub rent: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -348,8 +357,8 @@ pub struct InitializeStakePoolCpiAccounts<'a, 'b> {
     pub associated_token_program: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
-/// `initialize_stake_pool` CPI instruction.
-pub struct InitializeStakePoolCpi<'a, 'b> {
+/// `initialize_pool_manager` CPI instruction.
+pub struct InitializePoolManagerCpi<'a, 'b> {
     /// The program to invoke.
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
     /// SPL Token Mint of the underlying token to be deposited for staking
@@ -363,7 +372,7 @@ pub struct InitializeStakePoolCpi<'a, 'b> {
 
     pub vault: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub payer: &'b solana_program::account_info::AccountInfo<'a>,
+    pub owner: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub rent: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -375,14 +384,14 @@ pub struct InitializeStakePoolCpi<'a, 'b> {
 
     pub associated_token_program: &'b solana_program::account_info::AccountInfo<'a>,
     /// The arguments for the instruction.
-    pub __args: InitializeStakePoolInstructionArgs,
+    pub __args: InitializePoolManagerInstructionArgs,
 }
 
-impl<'a, 'b> InitializeStakePoolCpi<'a, 'b> {
+impl<'a, 'b> InitializePoolManagerCpi<'a, 'b> {
     pub fn new(
         program: &'b solana_program::account_info::AccountInfo<'a>,
-        accounts: InitializeStakePoolCpiAccounts<'a, 'b>,
-        args: InitializeStakePoolInstructionArgs,
+        accounts: InitializePoolManagerCpiAccounts<'a, 'b>,
+        args: InitializePoolManagerInstructionArgs,
     ) -> Self {
         Self {
             __program: program,
@@ -391,7 +400,7 @@ impl<'a, 'b> InitializeStakePoolCpi<'a, 'b> {
             metadata: accounts.metadata,
             stake_pool: accounts.stake_pool,
             vault: accounts.vault,
-            payer: accounts.payer,
+            owner: accounts.owner,
             rent: accounts.rent,
             system_program: accounts.system_program,
             token_program: accounts.token_program,
@@ -455,7 +464,7 @@ impl<'a, 'b> InitializeStakePoolCpi<'a, 'b> {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.payer.key,
+            *self.owner.key,
             true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -485,7 +494,7 @@ impl<'a, 'b> InitializeStakePoolCpi<'a, 'b> {
                 is_writable: remaining_account.2,
             })
         });
-        let mut data = InitializeStakePoolInstructionData::new()
+        let mut data = InitializePoolManagerInstructionData::new()
             .try_to_vec()
             .unwrap();
         let mut args = self.__args.try_to_vec().unwrap();
@@ -503,7 +512,7 @@ impl<'a, 'b> InitializeStakePoolCpi<'a, 'b> {
         account_infos.push(self.metadata.clone());
         account_infos.push(self.stake_pool.clone());
         account_infos.push(self.vault.clone());
-        account_infos.push(self.payer.clone());
+        account_infos.push(self.owner.clone());
         account_infos.push(self.rent.clone());
         account_infos.push(self.system_program.clone());
         account_infos.push(self.token_program.clone());
@@ -521,7 +530,7 @@ impl<'a, 'b> InitializeStakePoolCpi<'a, 'b> {
     }
 }
 
-/// Instruction builder for `InitializeStakePool` via CPI.
+/// Instruction builder for `InitializePoolManager` via CPI.
 ///
 /// ### Accounts:
 ///
@@ -530,26 +539,26 @@ impl<'a, 'b> InitializeStakePoolCpi<'a, 'b> {
 ///   2. `[writable]` metadata
 ///   3. `[writable]` stake_pool
 ///   4. `[writable]` vault
-///   5. `[writable, signer]` payer
+///   5. `[writable, signer]` owner
 ///   6. `[]` rent
 ///   7. `[]` system_program
 ///   8. `[]` token_program
 ///   9. `[]` token_metadata_program
 ///   10. `[]` associated_token_program
-pub struct InitializeStakePoolCpiBuilder<'a, 'b> {
-    instruction: Box<InitializeStakePoolCpiBuilderInstruction<'a, 'b>>,
+pub struct InitializePoolManagerCpiBuilder<'a, 'b> {
+    instruction: Box<InitializePoolManagerCpiBuilderInstruction<'a, 'b>>,
 }
 
-impl<'a, 'b> InitializeStakePoolCpiBuilder<'a, 'b> {
+impl<'a, 'b> InitializePoolManagerCpiBuilder<'a, 'b> {
     pub fn new(program: &'b solana_program::account_info::AccountInfo<'a>) -> Self {
-        let instruction = Box::new(InitializeStakePoolCpiBuilderInstruction {
+        let instruction = Box::new(InitializePoolManagerCpiBuilderInstruction {
             __program: program,
             base_mint: None,
             x_mint: None,
             metadata: None,
             stake_pool: None,
             vault: None,
-            payer: None,
+            owner: None,
             rent: None,
             system_program: None,
             token_program: None,
@@ -560,6 +569,7 @@ impl<'a, 'b> InitializeStakePoolCpiBuilder<'a, 'b> {
             uri: None,
             decimals: None,
             initial_exchange_rate: None,
+            admin: None,
             __remaining_accounts: Vec::new(),
         });
         Self { instruction }
@@ -603,8 +613,8 @@ impl<'a, 'b> InitializeStakePoolCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn payer(&mut self, payer: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
-        self.instruction.payer = Some(payer);
+    pub fn owner(&mut self, owner: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
+        self.instruction.owner = Some(owner);
         self
     }
     #[inline(always)]
@@ -669,6 +679,11 @@ impl<'a, 'b> InitializeStakePoolCpiBuilder<'a, 'b> {
         self.instruction.initial_exchange_rate = Some(initial_exchange_rate);
         self
     }
+    #[inline(always)]
+    pub fn admin(&mut self, admin: Pubkey) -> &mut Self {
+        self.instruction.admin = Some(admin);
+        self
+    }
     /// Add an additional account to the instruction.
     #[inline(always)]
     pub fn add_remaining_account(
@@ -710,7 +725,7 @@ impl<'a, 'b> InitializeStakePoolCpiBuilder<'a, 'b> {
         &self,
         signers_seeds: &[&[&[u8]]],
     ) -> solana_program::entrypoint::ProgramResult {
-        let args = InitializeStakePoolInstructionArgs {
+        let args = InitializePoolManagerInstructionArgs {
             name: self.instruction.name.clone().expect("name is not set"),
             symbol: self.instruction.symbol.clone().expect("symbol is not set"),
             uri: self.instruction.uri.clone().expect("uri is not set"),
@@ -724,8 +739,9 @@ impl<'a, 'b> InitializeStakePoolCpiBuilder<'a, 'b> {
                 .initial_exchange_rate
                 .clone()
                 .expect("initial_exchange_rate is not set"),
+            admin: self.instruction.admin.clone().expect("admin is not set"),
         };
-        let instruction = InitializeStakePoolCpi {
+        let instruction = InitializePoolManagerCpi {
             __program: self.instruction.__program,
 
             base_mint: self.instruction.base_mint.expect("base_mint is not set"),
@@ -738,7 +754,7 @@ impl<'a, 'b> InitializeStakePoolCpiBuilder<'a, 'b> {
 
             vault: self.instruction.vault.expect("vault is not set"),
 
-            payer: self.instruction.payer.expect("payer is not set"),
+            owner: self.instruction.owner.expect("owner is not set"),
 
             rent: self.instruction.rent.expect("rent is not set"),
 
@@ -770,14 +786,14 @@ impl<'a, 'b> InitializeStakePoolCpiBuilder<'a, 'b> {
     }
 }
 
-struct InitializeStakePoolCpiBuilderInstruction<'a, 'b> {
+struct InitializePoolManagerCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     base_mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     x_mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     metadata: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     stake_pool: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     vault: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    payer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    owner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     rent: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
@@ -788,6 +804,7 @@ struct InitializeStakePoolCpiBuilderInstruction<'a, 'b> {
     uri: Option<String>,
     decimals: Option<u8>,
     initial_exchange_rate: Option<u64>,
+    admin: Option<Pubkey>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(
         &'b solana_program::account_info::AccountInfo<'a>,
