@@ -20,7 +20,7 @@ pub struct WithdrawFunds {
 
     pub vault: solana_program::pubkey::Pubkey,
 
-    pub authority: solana_program::pubkey::Pubkey,
+    pub admin: solana_program::pubkey::Pubkey,
 
     pub rent: solana_program::pubkey::Pubkey,
 
@@ -61,8 +61,7 @@ impl WithdrawFunds {
             self.vault, false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.authority,
-            true,
+            self.admin, true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.rent, false,
@@ -122,7 +121,7 @@ pub struct WithdrawFundsInstructionArgs {
 ///   1. `[]` quote_mint
 ///   2. `[writable]` authority_quote_mint_ata
 ///   3. `[writable]` vault
-///   4. `[writable, signer]` authority
+///   4. `[writable, signer]` admin
 ///   5. `[optional]` rent (default to `SysvarRent111111111111111111111111111111111`)
 ///   6. `[optional]` system_program (default to `11111111111111111111111111111111`)
 ///   7. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
@@ -133,7 +132,7 @@ pub struct WithdrawFundsBuilder {
     quote_mint: Option<solana_program::pubkey::Pubkey>,
     authority_quote_mint_ata: Option<solana_program::pubkey::Pubkey>,
     vault: Option<solana_program::pubkey::Pubkey>,
-    authority: Option<solana_program::pubkey::Pubkey>,
+    admin: Option<solana_program::pubkey::Pubkey>,
     rent: Option<solana_program::pubkey::Pubkey>,
     system_program: Option<solana_program::pubkey::Pubkey>,
     token_program: Option<solana_program::pubkey::Pubkey>,
@@ -170,8 +169,8 @@ impl WithdrawFundsBuilder {
         self
     }
     #[inline(always)]
-    pub fn authority(&mut self, authority: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.authority = Some(authority);
+    pub fn admin(&mut self, admin: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.admin = Some(admin);
         self
     }
     /// `[optional account, default to 'SysvarRent111111111111111111111111111111111']`
@@ -232,7 +231,7 @@ impl WithdrawFundsBuilder {
                 .authority_quote_mint_ata
                 .expect("authority_quote_mint_ata is not set"),
             vault: self.vault.expect("vault is not set"),
-            authority: self.authority.expect("authority is not set"),
+            admin: self.admin.expect("admin is not set"),
             rent: self.rent.unwrap_or(solana_program::pubkey!(
                 "SysvarRent111111111111111111111111111111111"
             )),
@@ -264,7 +263,7 @@ pub struct WithdrawFundsCpiAccounts<'a, 'b> {
 
     pub vault: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub authority: &'b solana_program::account_info::AccountInfo<'a>,
+    pub admin: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub rent: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -288,7 +287,7 @@ pub struct WithdrawFundsCpi<'a, 'b> {
 
     pub vault: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub authority: &'b solana_program::account_info::AccountInfo<'a>,
+    pub admin: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub rent: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -313,7 +312,7 @@ impl<'a, 'b> WithdrawFundsCpi<'a, 'b> {
             quote_mint: accounts.quote_mint,
             authority_quote_mint_ata: accounts.authority_quote_mint_ata,
             vault: accounts.vault,
-            authority: accounts.authority,
+            admin: accounts.admin,
             rent: accounts.rent,
             system_program: accounts.system_program,
             token_program: accounts.token_program,
@@ -372,7 +371,7 @@ impl<'a, 'b> WithdrawFundsCpi<'a, 'b> {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.authority.key,
+            *self.admin.key,
             true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -413,7 +412,7 @@ impl<'a, 'b> WithdrawFundsCpi<'a, 'b> {
         account_infos.push(self.quote_mint.clone());
         account_infos.push(self.authority_quote_mint_ata.clone());
         account_infos.push(self.vault.clone());
-        account_infos.push(self.authority.clone());
+        account_infos.push(self.admin.clone());
         account_infos.push(self.rent.clone());
         account_infos.push(self.system_program.clone());
         account_infos.push(self.token_program.clone());
@@ -438,7 +437,7 @@ impl<'a, 'b> WithdrawFundsCpi<'a, 'b> {
 ///   1. `[]` quote_mint
 ///   2. `[writable]` authority_quote_mint_ata
 ///   3. `[writable]` vault
-///   4. `[writable, signer]` authority
+///   4. `[writable, signer]` admin
 ///   5. `[]` rent
 ///   6. `[]` system_program
 ///   7. `[]` token_program
@@ -455,7 +454,7 @@ impl<'a, 'b> WithdrawFundsCpiBuilder<'a, 'b> {
             quote_mint: None,
             authority_quote_mint_ata: None,
             vault: None,
-            authority: None,
+            admin: None,
             rent: None,
             system_program: None,
             token_program: None,
@@ -495,11 +494,8 @@ impl<'a, 'b> WithdrawFundsCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn authority(
-        &mut self,
-        authority: &'b solana_program::account_info::AccountInfo<'a>,
-    ) -> &mut Self {
-        self.instruction.authority = Some(authority);
+    pub fn admin(&mut self, admin: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
+        self.instruction.admin = Some(admin);
         self
     }
     #[inline(always)]
@@ -601,7 +597,7 @@ impl<'a, 'b> WithdrawFundsCpiBuilder<'a, 'b> {
 
             vault: self.instruction.vault.expect("vault is not set"),
 
-            authority: self.instruction.authority.expect("authority is not set"),
+            admin: self.instruction.admin.expect("admin is not set"),
 
             rent: self.instruction.rent.expect("rent is not set"),
 
@@ -634,7 +630,7 @@ struct WithdrawFundsCpiBuilderInstruction<'a, 'b> {
     quote_mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     authority_quote_mint_ata: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     vault: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    admin: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     rent: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,

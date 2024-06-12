@@ -35,7 +35,7 @@ export type WithdrawFundsInstructionAccounts = {
   quoteMint: PublicKey | Pda;
   authorityQuoteMintAta: PublicKey | Pda;
   vault: PublicKey | Pda;
-  authority?: Signer;
+  admin: Signer;
   rent?: PublicKey | Pda;
   systemProgram?: PublicKey | Pda;
   tokenProgram?: PublicKey | Pda;
@@ -81,7 +81,7 @@ export type WithdrawFundsInstructionArgs = WithdrawFundsInstructionDataArgs;
 
 // Instruction.
 export function withdrawFunds(
-  context: Pick<Context, 'identity' | 'programs'>,
+  context: Pick<Context, 'programs'>,
   input: WithdrawFundsInstructionAccounts & WithdrawFundsInstructionArgs
 ): TransactionBuilder {
   // Program ID.
@@ -112,10 +112,10 @@ export function withdrawFunds(
       isWritable: true as boolean,
       value: input.vault ?? null,
     },
-    authority: {
+    admin: {
       index: 4,
       isWritable: true as boolean,
-      value: input.authority ?? null,
+      value: input.admin ?? null,
     },
     rent: { index: 5, isWritable: false as boolean, value: input.rent ?? null },
     systemProgram: {
@@ -139,9 +139,6 @@ export function withdrawFunds(
   const resolvedArgs: WithdrawFundsInstructionArgs = { ...input };
 
   // Default values.
-  if (!resolvedAccounts.authority.value) {
-    resolvedAccounts.authority.value = context.identity;
-  }
   if (!resolvedAccounts.rent.value) {
     resolvedAccounts.rent.value = publicKey(
       'SysvarRent111111111111111111111111111111111'

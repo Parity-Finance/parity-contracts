@@ -24,6 +24,7 @@ import {
   option,
   publicKey as publicKeySerializer,
   struct,
+  u64,
   u8,
 } from '@metaplex-foundation/umi/serializers';
 import {
@@ -33,59 +34,65 @@ import {
 } from '../shared';
 
 // Accounts.
-export type UpdateTokenManagerInstructionAccounts = {
+export type UpdateTokenManagerAdminInstructionAccounts = {
   tokenManager: PublicKey | Pda;
   authority?: Signer;
 };
 
 // Data.
-export type UpdateTokenManagerInstructionData = {
+export type UpdateTokenManagerAdminInstructionData = {
   discriminator: Array<number>;
-  merkleRoot: Option<Uint8Array>;
-  admin: Option<PublicKey>;
+  newMerkleRoot: Option<Uint8Array>;
+  newGateKeepers: Option<Array<PublicKey>>;
+  newMintLimitPerSlot: Option<bigint>;
+  newRedemptionLimitPerSlot: Option<bigint>;
 };
 
-export type UpdateTokenManagerInstructionDataArgs = {
-  merkleRoot: OptionOrNullable<Uint8Array>;
-  admin: OptionOrNullable<PublicKey>;
+export type UpdateTokenManagerAdminInstructionDataArgs = {
+  newMerkleRoot: OptionOrNullable<Uint8Array>;
+  newGateKeepers: OptionOrNullable<Array<PublicKey>>;
+  newMintLimitPerSlot: OptionOrNullable<number | bigint>;
+  newRedemptionLimitPerSlot: OptionOrNullable<number | bigint>;
 };
 
-export function getUpdateTokenManagerInstructionDataSerializer(): Serializer<
-  UpdateTokenManagerInstructionDataArgs,
-  UpdateTokenManagerInstructionData
+export function getUpdateTokenManagerAdminInstructionDataSerializer(): Serializer<
+  UpdateTokenManagerAdminInstructionDataArgs,
+  UpdateTokenManagerAdminInstructionData
 > {
   return mapSerializer<
-    UpdateTokenManagerInstructionDataArgs,
+    UpdateTokenManagerAdminInstructionDataArgs,
     any,
-    UpdateTokenManagerInstructionData
+    UpdateTokenManagerAdminInstructionData
   >(
-    struct<UpdateTokenManagerInstructionData>(
+    struct<UpdateTokenManagerAdminInstructionData>(
       [
         ['discriminator', array(u8(), { size: 8 })],
-        ['merkleRoot', option(bytes({ size: 32 }))],
-        ['admin', option(publicKeySerializer())],
+        ['newMerkleRoot', option(bytes({ size: 32 }))],
+        ['newGateKeepers', option(array(publicKeySerializer()))],
+        ['newMintLimitPerSlot', option(u64())],
+        ['newRedemptionLimitPerSlot', option(u64())],
       ],
-      { description: 'UpdateTokenManagerInstructionData' }
+      { description: 'UpdateTokenManagerAdminInstructionData' }
     ),
     (value) => ({
       ...value,
-      discriminator: [231, 114, 7, 94, 146, 65, 122, 108],
+      discriminator: [17, 160, 88, 219, 48, 101, 22, 96],
     })
   ) as Serializer<
-    UpdateTokenManagerInstructionDataArgs,
-    UpdateTokenManagerInstructionData
+    UpdateTokenManagerAdminInstructionDataArgs,
+    UpdateTokenManagerAdminInstructionData
   >;
 }
 
 // Args.
-export type UpdateTokenManagerInstructionArgs =
-  UpdateTokenManagerInstructionDataArgs;
+export type UpdateTokenManagerAdminInstructionArgs =
+  UpdateTokenManagerAdminInstructionDataArgs;
 
 // Instruction.
-export function updateTokenManager(
+export function updateTokenManagerAdmin(
   context: Pick<Context, 'identity' | 'programs'>,
-  input: UpdateTokenManagerInstructionAccounts &
-    UpdateTokenManagerInstructionArgs
+  input: UpdateTokenManagerAdminInstructionAccounts &
+    UpdateTokenManagerAdminInstructionArgs
 ): TransactionBuilder {
   // Program ID.
   const programId = context.programs.getPublicKey(
@@ -108,7 +115,7 @@ export function updateTokenManager(
   } satisfies ResolvedAccountsWithIndices;
 
   // Arguments.
-  const resolvedArgs: UpdateTokenManagerInstructionArgs = { ...input };
+  const resolvedArgs: UpdateTokenManagerAdminInstructionArgs = { ...input };
 
   // Default values.
   if (!resolvedAccounts.authority.value) {
@@ -128,8 +135,8 @@ export function updateTokenManager(
   );
 
   // Data.
-  const data = getUpdateTokenManagerInstructionDataSerializer().serialize(
-    resolvedArgs as UpdateTokenManagerInstructionDataArgs
+  const data = getUpdateTokenManagerAdminInstructionDataSerializer().serialize(
+    resolvedArgs as UpdateTokenManagerAdminInstructionDataArgs
   );
 
   // Bytes Created On Chain.

@@ -1,9 +1,9 @@
 use anchor_lang::prelude::*;
 
-pub const STAKE_POOL_LENGTH: usize = 8 + 1 + (32 * 4) + 1 + 1 + (8 * 7);
+pub const POOL_MANAGER_LENGTH: usize = 8 + 1 + (32 * 4) + 1 + 1 + (8 * 7);
 
 #[account]
-pub struct StakePool {
+pub struct PoolManager {
     pub bump: u8, // 1 byte
 
     // Authorities
@@ -28,7 +28,7 @@ pub struct StakePool {
     pub x_supply: u64,     // 8 bytes
 }
 
-impl StakePool {
+impl PoolManager {
     // Constants for scaling
     const SCALE_FACTOR: u64 = 31_536_000;
     const SECONDS_PER_YEAR: u64 = 31_536_000; // 60 * 60 * 24 * 365

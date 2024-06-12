@@ -1,13 +1,6 @@
 {
   "version": "0.1.0",
   "name": "sold_staking",
-  "constants": [
-    {
-      "name": "SEED",
-      "type": "string",
-      "value": "\"anchor\""
-    }
-  ],
   "instructions": [
     {
       "name": "initializePoolManager",
@@ -31,7 +24,7 @@
           "isSigner": false
         },
         {
-          "name": "stakePool",
+          "name": "poolManager",
           "isMut": true,
           "isSigner": false
         },
@@ -84,7 +77,7 @@
       "name": "stake",
       "accounts": [
         {
-          "name": "stakePool",
+          "name": "poolManager",
           "isMut": true,
           "isSigner": false
         },
@@ -145,7 +138,7 @@
       "name": "unstake",
       "accounts": [
         {
-          "name": "stakePool",
+          "name": "poolManager",
           "isMut": true,
           "isSigner": false
         },
@@ -216,7 +209,7 @@
       "name": "updateAnnualYield",
       "accounts": [
         {
-          "name": "stakePool",
+          "name": "poolManager",
           "isMut": true,
           "isSigner": false
         },
@@ -236,7 +229,7 @@
           "isSigner": false
         },
         {
-          "name": "authority",
+          "name": "admin",
           "isMut": true,
           "isSigner": true
         },
@@ -269,11 +262,34 @@
           }
         }
       ]
+    },
+    {
+      "name": "updatePoolManager",
+      "accounts": [
+        {
+          "name": "poolManager",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": true
+        }
+      ],
+      "args": [
+        {
+          "name": "params",
+          "type": {
+            "defined": "UpdatePoolManagerParams"
+          }
+        }
+      ]
     }
   ],
   "accounts": [
     {
-      "name": "StakePool",
+      "name": "PoolManager",
       "type": {
         "kind": "struct",
         "fields": [
@@ -381,6 +397,26 @@
           }
         ]
       }
+    },
+    {
+      "name": "UpdatePoolManagerParams",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "newOwner",
+            "type": {
+              "option": "publicKey"
+            }
+          },
+          {
+            "name": "newAdmin",
+            "type": {
+              "option": "publicKey"
+            }
+          }
+        ]
+      }
     }
   ],
   "errors": [
@@ -423,6 +459,16 @@
       "code": 6007,
       "name": "CalculationOverflow",
       "msg": "Calculation overflow"
+    },
+    {
+      "code": 6008,
+      "name": "InvalidAdmin",
+      "msg": "Invalid admin"
+    },
+    {
+      "code": 6009,
+      "name": "InvalidOwner",
+      "msg": "Invalid owner"
     }
   ],
   "metadata": {

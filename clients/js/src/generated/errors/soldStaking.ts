@@ -133,6 +133,32 @@ export class SsCalculationOverflowError extends ProgramError {
 codeToErrorMap.set(0x1777, SsCalculationOverflowError);
 nameToErrorMap.set('CalculationOverflow', SsCalculationOverflowError);
 
+/** InvalidAdmin: Invalid admin */
+export class SsInvalidAdminError extends ProgramError {
+  override readonly name: string = 'InvalidAdmin';
+
+  readonly code: number = 0x1778; // 6008
+
+  constructor(program: Program, cause?: Error) {
+    super('Invalid admin', program, cause);
+  }
+}
+codeToErrorMap.set(0x1778, SsInvalidAdminError);
+nameToErrorMap.set('InvalidAdmin', SsInvalidAdminError);
+
+/** InvalidOwner: Invalid owner */
+export class SsInvalidOwnerError extends ProgramError {
+  override readonly name: string = 'InvalidOwner';
+
+  readonly code: number = 0x1779; // 6009
+
+  constructor(program: Program, cause?: Error) {
+    super('Invalid owner', program, cause);
+  }
+}
+codeToErrorMap.set(0x1779, SsInvalidOwnerError);
+nameToErrorMap.set('InvalidOwner', SsInvalidOwnerError);
+
 /**
  * Attempts to resolve a custom program error from the provided error code.
  * @category Errors

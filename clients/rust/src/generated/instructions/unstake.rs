@@ -12,7 +12,7 @@ use borsh::{BorshDeserialize, BorshSerialize};
 
 /// Accounts.
 pub struct Unstake {
-    pub stake_pool: solana_program::pubkey::Pubkey,
+    pub pool_manager: solana_program::pubkey::Pubkey,
 
     pub token_manager: solana_program::pubkey::Pubkey,
 
@@ -52,7 +52,7 @@ impl Unstake {
     ) -> solana_program::instruction::Instruction {
         let mut accounts = Vec::with_capacity(12 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.stake_pool,
+            self.pool_manager,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
@@ -136,7 +136,7 @@ pub struct UnstakeInstructionArgs {
 ///
 /// ### Accounts:
 ///
-///   0. `[writable]` stake_pool
+///   0. `[writable]` pool_manager
 ///   1. `[writable]` token_manager
 ///   2. `[writable]` base_mint
 ///   3. `[writable]` payer_base_mint_ata
@@ -150,7 +150,7 @@ pub struct UnstakeInstructionArgs {
 ///   11. `[]` sold_issuance_program
 #[derive(Default)]
 pub struct UnstakeBuilder {
-    stake_pool: Option<solana_program::pubkey::Pubkey>,
+    pool_manager: Option<solana_program::pubkey::Pubkey>,
     token_manager: Option<solana_program::pubkey::Pubkey>,
     base_mint: Option<solana_program::pubkey::Pubkey>,
     payer_base_mint_ata: Option<solana_program::pubkey::Pubkey>,
@@ -171,8 +171,8 @@ impl UnstakeBuilder {
         Self::default()
     }
     #[inline(always)]
-    pub fn stake_pool(&mut self, stake_pool: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.stake_pool = Some(stake_pool);
+    pub fn pool_manager(&mut self, pool_manager: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.pool_manager = Some(pool_manager);
         self
     }
     #[inline(always)]
@@ -270,7 +270,7 @@ impl UnstakeBuilder {
     #[allow(clippy::clone_on_copy)]
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
         let accounts = Unstake {
-            stake_pool: self.stake_pool.expect("stake_pool is not set"),
+            pool_manager: self.pool_manager.expect("pool_manager is not set"),
             token_manager: self.token_manager.expect("token_manager is not set"),
             base_mint: self.base_mint.expect("base_mint is not set"),
             payer_base_mint_ata: self
@@ -303,7 +303,7 @@ impl UnstakeBuilder {
 
 /// `unstake` CPI accounts.
 pub struct UnstakeCpiAccounts<'a, 'b> {
-    pub stake_pool: &'b solana_program::account_info::AccountInfo<'a>,
+    pub pool_manager: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub token_manager: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -333,7 +333,7 @@ pub struct UnstakeCpi<'a, 'b> {
     /// The program to invoke.
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub stake_pool: &'b solana_program::account_info::AccountInfo<'a>,
+    pub pool_manager: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub token_manager: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -368,7 +368,7 @@ impl<'a, 'b> UnstakeCpi<'a, 'b> {
     ) -> Self {
         Self {
             __program: program,
-            stake_pool: accounts.stake_pool,
+            pool_manager: accounts.pool_manager,
             token_manager: accounts.token_manager,
             base_mint: accounts.base_mint,
             payer_base_mint_ata: accounts.payer_base_mint_ata,
@@ -418,7 +418,7 @@ impl<'a, 'b> UnstakeCpi<'a, 'b> {
     ) -> solana_program::entrypoint::ProgramResult {
         let mut accounts = Vec::with_capacity(12 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.stake_pool.key,
+            *self.pool_manager.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
@@ -483,7 +483,7 @@ impl<'a, 'b> UnstakeCpi<'a, 'b> {
         };
         let mut account_infos = Vec::with_capacity(12 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
-        account_infos.push(self.stake_pool.clone());
+        account_infos.push(self.pool_manager.clone());
         account_infos.push(self.token_manager.clone());
         account_infos.push(self.base_mint.clone());
         account_infos.push(self.payer_base_mint_ata.clone());
@@ -511,7 +511,7 @@ impl<'a, 'b> UnstakeCpi<'a, 'b> {
 ///
 /// ### Accounts:
 ///
-///   0. `[writable]` stake_pool
+///   0. `[writable]` pool_manager
 ///   1. `[writable]` token_manager
 ///   2. `[writable]` base_mint
 ///   3. `[writable]` payer_base_mint_ata
@@ -531,7 +531,7 @@ impl<'a, 'b> UnstakeCpiBuilder<'a, 'b> {
     pub fn new(program: &'b solana_program::account_info::AccountInfo<'a>) -> Self {
         let instruction = Box::new(UnstakeCpiBuilderInstruction {
             __program: program,
-            stake_pool: None,
+            pool_manager: None,
             token_manager: None,
             base_mint: None,
             payer_base_mint_ata: None,
@@ -549,11 +549,11 @@ impl<'a, 'b> UnstakeCpiBuilder<'a, 'b> {
         Self { instruction }
     }
     #[inline(always)]
-    pub fn stake_pool(
+    pub fn pool_manager(
         &mut self,
-        stake_pool: &'b solana_program::account_info::AccountInfo<'a>,
+        pool_manager: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.stake_pool = Some(stake_pool);
+        self.instruction.pool_manager = Some(pool_manager);
         self
     }
     #[inline(always)]
@@ -694,7 +694,10 @@ impl<'a, 'b> UnstakeCpiBuilder<'a, 'b> {
         let instruction = UnstakeCpi {
             __program: self.instruction.__program,
 
-            stake_pool: self.instruction.stake_pool.expect("stake_pool is not set"),
+            pool_manager: self
+                .instruction
+                .pool_manager
+                .expect("pool_manager is not set"),
 
             token_manager: self
                 .instruction
@@ -749,7 +752,7 @@ impl<'a, 'b> UnstakeCpiBuilder<'a, 'b> {
 
 struct UnstakeCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
-    stake_pool: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    pool_manager: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     token_manager: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     base_mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     payer_base_mint_ata: Option<&'b solana_program::account_info::AccountInfo<'a>>,

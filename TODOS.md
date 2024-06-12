@@ -20,9 +20,12 @@ Settings timelock
 Different Authority Types
 Authorities same as Ethena
 ~~ Initialization of different authorities works ~~
-Owner Update function for updating owner/admin/minter
-Admin Update function for allowList/gate_keepers/mint&redeem_limit
-Adjust withdraw and deposit function to be checked for admin
+~~Owner Update function for updating owner/admin/minter~~
+~~Admin Update function for allowList/gate_keepers/mint&redeem_limit~~
+~~Adjust withdraw and deposit function to be checked for admin~~
+~~Adjust yield update function~~
+~~Create update pool_manager instruction gated for owner~~
+~~Pause functionality check for gatekeeper or admin~~
 
 Tests
 - ~~Pause Test~~

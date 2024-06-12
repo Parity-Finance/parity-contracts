@@ -32,8 +32,8 @@ import {
 export type MintAdminInstructionAccounts = {
   tokenManager: PublicKey | Pda;
   mint: PublicKey | Pda;
-  adminMintAta: PublicKey | Pda;
-  admin: Signer;
+  minterMintAta: PublicKey | Pda;
+  minter: Signer;
   systemProgram?: PublicKey | Pda;
   tokenProgram?: PublicKey | Pda;
   associatedTokenProgram: PublicKey | Pda;
@@ -92,15 +92,15 @@ export function mintAdmin(
       value: input.tokenManager ?? null,
     },
     mint: { index: 1, isWritable: true as boolean, value: input.mint ?? null },
-    adminMintAta: {
+    minterMintAta: {
       index: 2,
       isWritable: true as boolean,
-      value: input.adminMintAta ?? null,
+      value: input.minterMintAta ?? null,
     },
-    admin: {
+    minter: {
       index: 3,
       isWritable: false as boolean,
-      value: input.admin ?? null,
+      value: input.minter ?? null,
     },
     systemProgram: {
       index: 4,

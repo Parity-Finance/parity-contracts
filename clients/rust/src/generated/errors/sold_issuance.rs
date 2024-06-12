@@ -34,12 +34,21 @@ pub enum SoldIssuanceError {
     /// 6007 (0x1777) - Calculation overflow
     #[error("Calculation overflow")]
     CalculationOverflow,
-    /// 6008 (0x1778) - Invalid admin address
-    #[error("Invalid admin address")]
-    InvalidAdminAddress,
-    /// 6009 (0x1779) - Slot limit exceeded
+    /// 6008 (0x1778) - Slot limit exceeded
     #[error("Slot limit exceeded")]
     SlotLimitExceeded,
+    /// 6009 (0x1779) - Invalid admin
+    #[error("Invalid admin")]
+    InvalidAdmin,
+    /// 6010 (0x177A) - Invalid owner
+    #[error("Invalid owner")]
+    InvalidOwner,
+    /// 6011 (0x177B) - Invalid minter
+    #[error("Invalid minter")]
+    InvalidMinter,
+    /// 6012 (0x177C) - Invalid toggle active authority
+    #[error("Invalid toggle active authority")]
+    InvalidToggleActiveAuthority,
 }
 
 impl solana_program::program_error::PrintProgramError for SoldIssuanceError {

@@ -18,7 +18,7 @@ pub struct DepositFunds<'info> {
     #[account(
         mut,
         associated_token::mint = quote_mint,
-        associated_token::authority = authority,
+        associated_token::authority = admin,
     )]
     pub authority_quote_mint_ata: Account<'info, TokenAccount>,
     #[account(
@@ -29,8 +29,8 @@ pub struct DepositFunds<'info> {
     pub vault: Account<'info, TokenAccount>,
 
     // Other
-    #[account(mut)]
-    pub authority: Signer<'info>,
+    #[account(mut, address = token_manager.admin @ SoldIssuanceError::InvalidAdmin)]
+    pub admin: Signer<'info>,
     pub rent: Sysvar<'info, Rent>,
     pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,
@@ -41,8 +41,8 @@ pub fn handler(ctx: Context<DepositFunds>, quantity: u64) -> Result<()> {
     let token_manager = &mut ctx.accounts.token_manager;
     let quote_mint = &ctx.accounts.quote_mint;
 
-    // TODO: Authority Check
-    let _authority = &ctx.accounts.authority;
+    // Check done in accounts struct
+    // let _authority = &ctx.accounts.authority;
 
     let quote_amount = quantity;
 
@@ -74,7 +74,7 @@ pub fn handler(ctx: Context<DepositFunds>, quantity: u64) -> Result<()> {
                 from: ctx.accounts.authority_quote_mint_ata.to_account_info(),
                 to: ctx.accounts.vault.to_account_info(),
                 mint: quote_mint.to_account_info(),
-                authority: ctx.accounts.authority.to_account_info(),
+                authority: ctx.accounts.admin.to_account_info(),
             },
         ),
         quote_amount,

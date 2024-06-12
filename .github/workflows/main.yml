@@ -84,6 +84,9 @@ jobs:
       - name: Enable Corepack
         run: corepack enable
 
+      - name: Create IDLs directory if not exists
+        run: mkdir -p $GITHUB_WORKSPACE/idls
+
       - name: Generate IDLs and clients
         run: pnpm generate
 

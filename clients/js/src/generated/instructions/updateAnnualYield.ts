@@ -30,11 +30,11 @@ import {
 
 // Accounts.
 export type UpdateAnnualYieldInstructionAccounts = {
-  stakePool: PublicKey | Pda;
+  poolManager: PublicKey | Pda;
   tokenManager: PublicKey | Pda;
   baseMint: PublicKey | Pda;
   vault: PublicKey | Pda;
-  authority?: Signer;
+  admin: Signer;
   systemProgram?: PublicKey | Pda;
   tokenProgram?: PublicKey | Pda;
   associatedTokenProgram: PublicKey | Pda;
@@ -83,7 +83,7 @@ export type UpdateAnnualYieldInstructionArgs =
 
 // Instruction.
 export function updateAnnualYield(
-  context: Pick<Context, 'identity' | 'programs'>,
+  context: Pick<Context, 'programs'>,
   input: UpdateAnnualYieldInstructionAccounts & UpdateAnnualYieldInstructionArgs
 ): TransactionBuilder {
   // Program ID.
@@ -94,10 +94,10 @@ export function updateAnnualYield(
 
   // Accounts.
   const resolvedAccounts = {
-    stakePool: {
+    poolManager: {
       index: 0,
       isWritable: true as boolean,
-      value: input.stakePool ?? null,
+      value: input.poolManager ?? null,
     },
     tokenManager: {
       index: 1,
@@ -114,10 +114,10 @@ export function updateAnnualYield(
       isWritable: true as boolean,
       value: input.vault ?? null,
     },
-    authority: {
+    admin: {
       index: 4,
       isWritable: true as boolean,
-      value: input.authority ?? null,
+      value: input.admin ?? null,
     },
     systemProgram: {
       index: 5,
@@ -145,9 +145,6 @@ export function updateAnnualYield(
   const resolvedArgs: UpdateAnnualYieldInstructionArgs = { ...input };
 
   // Default values.
-  if (!resolvedAccounts.authority.value) {
-    resolvedAccounts.authority.value = context.identity;
-  }
   if (!resolvedAccounts.systemProgram.value) {
     resolvedAccounts.systemProgram.value = context.programs.getPublicKey(
       'splSystem',

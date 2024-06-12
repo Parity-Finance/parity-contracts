@@ -18,8 +18,14 @@ pub enum SoldIssuanceError {
     ExcessiveWithdrawal,
     #[msg("Calculation overflow")]
     CalculationOverflow,
-    #[msg("Invalid admin address")]
-    InvalidAdminAddress,
     #[msg("Slot limit exceeded")]
     SlotLimitExceeded,
+    #[msg("Invalid admin")]
+    InvalidAdmin,
+    #[msg("Invalid owner")]
+    InvalidOwner,
+    #[msg("Invalid minter")]
+    InvalidMinter,
+    #[msg("Invalid toggle active authority")]
+    InvalidToggleActiveAuthority,
 }

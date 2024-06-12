@@ -16,9 +16,9 @@ pub struct MintAdmin {
 
     pub mint: solana_program::pubkey::Pubkey,
 
-    pub admin_mint_ata: solana_program::pubkey::Pubkey,
+    pub minter_mint_ata: solana_program::pubkey::Pubkey,
 
-    pub admin: solana_program::pubkey::Pubkey,
+    pub minter: solana_program::pubkey::Pubkey,
 
     pub system_program: solana_program::pubkey::Pubkey,
 
@@ -49,11 +49,12 @@ impl MintAdmin {
             self.mint, false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.admin_mint_ata,
+            self.minter_mint_ata,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.admin, true,
+            self.minter,
+            true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.system_program,
@@ -108,8 +109,8 @@ pub struct MintAdminInstructionArgs {
 ///
 ///   0. `[writable]` token_manager
 ///   1. `[writable]` mint
-///   2. `[writable]` admin_mint_ata
-///   3. `[signer]` admin
+///   2. `[writable]` minter_mint_ata
+///   3. `[signer]` minter
 ///   4. `[optional]` system_program (default to `11111111111111111111111111111111`)
 ///   5. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
 ///   6. `[]` associated_token_program
@@ -117,8 +118,8 @@ pub struct MintAdminInstructionArgs {
 pub struct MintAdminBuilder {
     token_manager: Option<solana_program::pubkey::Pubkey>,
     mint: Option<solana_program::pubkey::Pubkey>,
-    admin_mint_ata: Option<solana_program::pubkey::Pubkey>,
-    admin: Option<solana_program::pubkey::Pubkey>,
+    minter_mint_ata: Option<solana_program::pubkey::Pubkey>,
+    minter: Option<solana_program::pubkey::Pubkey>,
     system_program: Option<solana_program::pubkey::Pubkey>,
     token_program: Option<solana_program::pubkey::Pubkey>,
     associated_token_program: Option<solana_program::pubkey::Pubkey>,
@@ -141,13 +142,16 @@ impl MintAdminBuilder {
         self
     }
     #[inline(always)]
-    pub fn admin_mint_ata(&mut self, admin_mint_ata: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.admin_mint_ata = Some(admin_mint_ata);
+    pub fn minter_mint_ata(
+        &mut self,
+        minter_mint_ata: solana_program::pubkey::Pubkey,
+    ) -> &mut Self {
+        self.minter_mint_ata = Some(minter_mint_ata);
         self
     }
     #[inline(always)]
-    pub fn admin(&mut self, admin: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.admin = Some(admin);
+    pub fn minter(&mut self, minter: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.minter = Some(minter);
         self
     }
     /// `[optional account, default to '11111111111111111111111111111111']`
@@ -198,8 +202,8 @@ impl MintAdminBuilder {
         let accounts = MintAdmin {
             token_manager: self.token_manager.expect("token_manager is not set"),
             mint: self.mint.expect("mint is not set"),
-            admin_mint_ata: self.admin_mint_ata.expect("admin_mint_ata is not set"),
-            admin: self.admin.expect("admin is not set"),
+            minter_mint_ata: self.minter_mint_ata.expect("minter_mint_ata is not set"),
+            minter: self.minter.expect("minter is not set"),
             system_program: self
                 .system_program
                 .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
@@ -224,9 +228,9 @@ pub struct MintAdminCpiAccounts<'a, 'b> {
 
     pub mint: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub admin_mint_ata: &'b solana_program::account_info::AccountInfo<'a>,
+    pub minter_mint_ata: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub admin: &'b solana_program::account_info::AccountInfo<'a>,
+    pub minter: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -244,9 +248,9 @@ pub struct MintAdminCpi<'a, 'b> {
 
     pub mint: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub admin_mint_ata: &'b solana_program::account_info::AccountInfo<'a>,
+    pub minter_mint_ata: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub admin: &'b solana_program::account_info::AccountInfo<'a>,
+    pub minter: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -267,8 +271,8 @@ impl<'a, 'b> MintAdminCpi<'a, 'b> {
             __program: program,
             token_manager: accounts.token_manager,
             mint: accounts.mint,
-            admin_mint_ata: accounts.admin_mint_ata,
-            admin: accounts.admin,
+            minter_mint_ata: accounts.minter_mint_ata,
+            minter: accounts.minter,
             system_program: accounts.system_program,
             token_program: accounts.token_program,
             associated_token_program: accounts.associated_token_program,
@@ -318,11 +322,11 @@ impl<'a, 'b> MintAdminCpi<'a, 'b> {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.admin_mint_ata.key,
+            *self.minter_mint_ata.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.admin.key,
+            *self.minter.key,
             true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -357,8 +361,8 @@ impl<'a, 'b> MintAdminCpi<'a, 'b> {
         account_infos.push(self.__program.clone());
         account_infos.push(self.token_manager.clone());
         account_infos.push(self.mint.clone());
-        account_infos.push(self.admin_mint_ata.clone());
-        account_infos.push(self.admin.clone());
+        account_infos.push(self.minter_mint_ata.clone());
+        account_infos.push(self.minter.clone());
         account_infos.push(self.system_program.clone());
         account_infos.push(self.token_program.clone());
         account_infos.push(self.associated_token_program.clone());
@@ -380,8 +384,8 @@ impl<'a, 'b> MintAdminCpi<'a, 'b> {
 ///
 ///   0. `[writable]` token_manager
 ///   1. `[writable]` mint
-///   2. `[writable]` admin_mint_ata
-///   3. `[signer]` admin
+///   2. `[writable]` minter_mint_ata
+///   3. `[signer]` minter
 ///   4. `[]` system_program
 ///   5. `[]` token_program
 ///   6. `[]` associated_token_program
@@ -395,8 +399,8 @@ impl<'a, 'b> MintAdminCpiBuilder<'a, 'b> {
             __program: program,
             token_manager: None,
             mint: None,
-            admin_mint_ata: None,
-            admin: None,
+            minter_mint_ata: None,
+            minter: None,
             system_program: None,
             token_program: None,
             associated_token_program: None,
@@ -419,16 +423,19 @@ impl<'a, 'b> MintAdminCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn admin_mint_ata(
+    pub fn minter_mint_ata(
         &mut self,
-        admin_mint_ata: &'b solana_program::account_info::AccountInfo<'a>,
+        minter_mint_ata: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.admin_mint_ata = Some(admin_mint_ata);
+        self.instruction.minter_mint_ata = Some(minter_mint_ata);
         self
     }
     #[inline(always)]
-    pub fn admin(&mut self, admin: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
-        self.instruction.admin = Some(admin);
+    pub fn minter(
+        &mut self,
+        minter: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.minter = Some(minter);
         self
     }
     #[inline(always)]
@@ -518,12 +525,12 @@ impl<'a, 'b> MintAdminCpiBuilder<'a, 'b> {
 
             mint: self.instruction.mint.expect("mint is not set"),
 
-            admin_mint_ata: self
+            minter_mint_ata: self
                 .instruction
-                .admin_mint_ata
-                .expect("admin_mint_ata is not set"),
+                .minter_mint_ata
+                .expect("minter_mint_ata is not set"),
 
-            admin: self.instruction.admin.expect("admin is not set"),
+            minter: self.instruction.minter.expect("minter is not set"),
 
             system_program: self
                 .instruction
@@ -552,8 +559,8 @@ struct MintAdminCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     token_manager: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    admin_mint_ata: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    admin: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    minter_mint_ata: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    minter: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     associated_token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,

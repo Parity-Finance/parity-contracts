@@ -133,31 +133,73 @@ export class SiCalculationOverflowError extends ProgramError {
 codeToErrorMap.set(0x1777, SiCalculationOverflowError);
 nameToErrorMap.set('CalculationOverflow', SiCalculationOverflowError);
 
-/** InvalidAdminAddress: Invalid admin address */
-export class SiInvalidAdminAddressError extends ProgramError {
-  override readonly name: string = 'InvalidAdminAddress';
-
-  readonly code: number = 0x1778; // 6008
-
-  constructor(program: Program, cause?: Error) {
-    super('Invalid admin address', program, cause);
-  }
-}
-codeToErrorMap.set(0x1778, SiInvalidAdminAddressError);
-nameToErrorMap.set('InvalidAdminAddress', SiInvalidAdminAddressError);
-
 /** SlotLimitExceeded: Slot limit exceeded */
 export class SiSlotLimitExceededError extends ProgramError {
   override readonly name: string = 'SlotLimitExceeded';
 
-  readonly code: number = 0x1779; // 6009
+  readonly code: number = 0x1778; // 6008
 
   constructor(program: Program, cause?: Error) {
     super('Slot limit exceeded', program, cause);
   }
 }
-codeToErrorMap.set(0x1779, SiSlotLimitExceededError);
+codeToErrorMap.set(0x1778, SiSlotLimitExceededError);
 nameToErrorMap.set('SlotLimitExceeded', SiSlotLimitExceededError);
+
+/** InvalidAdmin: Invalid admin */
+export class SiInvalidAdminError extends ProgramError {
+  override readonly name: string = 'InvalidAdmin';
+
+  readonly code: number = 0x1779; // 6009
+
+  constructor(program: Program, cause?: Error) {
+    super('Invalid admin', program, cause);
+  }
+}
+codeToErrorMap.set(0x1779, SiInvalidAdminError);
+nameToErrorMap.set('InvalidAdmin', SiInvalidAdminError);
+
+/** InvalidOwner: Invalid owner */
+export class SiInvalidOwnerError extends ProgramError {
+  override readonly name: string = 'InvalidOwner';
+
+  readonly code: number = 0x177a; // 6010
+
+  constructor(program: Program, cause?: Error) {
+    super('Invalid owner', program, cause);
+  }
+}
+codeToErrorMap.set(0x177a, SiInvalidOwnerError);
+nameToErrorMap.set('InvalidOwner', SiInvalidOwnerError);
+
+/** InvalidMinter: Invalid minter */
+export class SiInvalidMinterError extends ProgramError {
+  override readonly name: string = 'InvalidMinter';
+
+  readonly code: number = 0x177b; // 6011
+
+  constructor(program: Program, cause?: Error) {
+    super('Invalid minter', program, cause);
+  }
+}
+codeToErrorMap.set(0x177b, SiInvalidMinterError);
+nameToErrorMap.set('InvalidMinter', SiInvalidMinterError);
+
+/** InvalidToggleActiveAuthority: Invalid toggle active authority */
+export class SiInvalidToggleActiveAuthorityError extends ProgramError {
+  override readonly name: string = 'InvalidToggleActiveAuthority';
+
+  readonly code: number = 0x177c; // 6012
+
+  constructor(program: Program, cause?: Error) {
+    super('Invalid toggle active authority', program, cause);
+  }
+}
+codeToErrorMap.set(0x177c, SiInvalidToggleActiveAuthorityError);
+nameToErrorMap.set(
+  'InvalidToggleActiveAuthority',
+  SiInvalidToggleActiveAuthorityError
+);
 
 /**
  * Attempts to resolve a custom program error from the provided error code.

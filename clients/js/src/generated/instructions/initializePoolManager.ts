@@ -37,7 +37,7 @@ export type InitializePoolManagerInstructionAccounts = {
   baseMint: PublicKey | Pda;
   xMint: PublicKey | Pda;
   metadata: PublicKey | Pda;
-  stakePool: PublicKey | Pda;
+  poolManager: PublicKey | Pda;
   vault: PublicKey | Pda;
   owner: Signer;
   rent?: PublicKey | Pda;
@@ -131,10 +131,10 @@ export function initializePoolManager(
       isWritable: true as boolean,
       value: input.metadata ?? null,
     },
-    stakePool: {
+    poolManager: {
       index: 3,
       isWritable: true as boolean,
-      value: input.stakePool ?? null,
+      value: input.poolManager ?? null,
     },
     vault: {
       index: 4,

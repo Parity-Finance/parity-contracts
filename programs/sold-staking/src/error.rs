@@ -18,4 +18,8 @@ pub enum SoldStakingError {
     ExcessiveWithdrawal,
     #[msg("Calculation overflow")]
     CalculationOverflow,
+    #[msg("Invalid admin")]
+    InvalidAdmin,
+    #[msg("Invalid owner")]
+    InvalidOwner,
 }

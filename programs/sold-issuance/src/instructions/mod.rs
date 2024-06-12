@@ -4,7 +4,8 @@ pub mod mint;
 pub mod mint_admin;
 pub mod redeem;
 pub mod toggle_active;
-pub mod update_token_manager;
+pub mod update_token_manager_admin;
+pub mod update_token_manager_owner;
 pub mod withdraw_funds;
 
 pub use deposit_funds::*;
@@ -13,5 +14,6 @@ pub use mint::*;
 pub use mint_admin::*;
 pub use redeem::*;
 pub use toggle_active::*;
-pub use update_token_manager::*;
+pub use update_token_manager_admin::*;
+pub use update_token_manager_owner::*;
 pub use withdraw_funds::*;

@@ -30,7 +30,7 @@ import {
 
 // Accounts.
 export type UnstakeInstructionAccounts = {
-  stakePool: PublicKey | Pda;
+  poolManager: PublicKey | Pda;
   tokenManager: PublicKey | Pda;
   baseMint: PublicKey | Pda;
   payerBaseMintAta: PublicKey | Pda;
@@ -87,10 +87,10 @@ export function unstake(
 
   // Accounts.
   const resolvedAccounts = {
-    stakePool: {
+    poolManager: {
       index: 0,
       isWritable: true as boolean,
-      value: input.stakePool ?? null,
+      value: input.poolManager ?? null,
     },
     tokenManager: {
       index: 1,

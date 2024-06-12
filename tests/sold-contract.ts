@@ -1,8 +1,8 @@
-import { keypairIdentity, Pda, PublicKey, publicKey, TransactionBuilder, createAmount } from "@metaplex-foundation/umi";
+import { keypairIdentity, Pda, PublicKey, publicKey, TransactionBuilder, createAmount, some } from "@metaplex-foundation/umi";
 import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
 import { createAssociatedToken, createSplAssociatedTokenProgram, createSplTokenProgram, findAssociatedTokenPda, safeFetchToken, SPL_ASSOCIATED_TOKEN_PROGRAM_ID } from "@metaplex-foundation/mpl-toolbox"
 import { Connection, Keypair, PublicKey as Web3JsPublicKey } from "@solana/web3.js";
-import { createSoldIssuanceProgram, findTokenManagerPda, initializeTokenManager, SOLD_ISSUANCE_PROGRAM_ID, mint, redeem, safeFetchTokenManager, getMerkleRoot, getMerkleProof, toggleActive, updateTokenManager, depositFunds, withdrawFunds, initializePoolManager, findStakePoolPda, safeFetchStakePool, SOLD_STAKING_PROGRAM_ID, calculateExchangeRate, stake, unstake, updateAnnualYield } from "../clients/js/src"
+import { createSoldIssuanceProgram, findTokenManagerPda, initializeTokenManager, SOLD_ISSUANCE_PROGRAM_ID, mint, redeem, safeFetchTokenManager, getMerkleRoot, getMerkleProof, toggleActive, updatePoolManager, depositFunds, withdrawFunds, initializePoolManager, SOLD_STAKING_PROGRAM_ID, calculateExchangeRate, stake, unstake, updateAnnualYield, findPoolManagerPda, updateTokenManagerAdmin, safeFetchPoolManager } from "../clients/js/src"
 import { ASSOCIATED_TOKEN_PROGRAM_ID, createMint, getOrCreateAssociatedTokenAccount, mintTo, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { fromWeb3JsKeypair, fromWeb3JsPublicKey } from "@metaplex-foundation/umi-web3js-adapters";
 import { findMetadataPda } from "@metaplex-foundation/mpl-token-metadata";
@@ -44,9 +44,9 @@ describe.only("sold-issuance", () => {
   const redemptionLimitPerSlot = 5000 * 10 ** baseMintDecimals;
 
   // Staking Program
-  let stakePool = findStakePoolPda(umi)[0];
+  let poolManager = findPoolManagerPda(umi)[0];
   let tokenManager = findTokenManagerPda(umi);
-  let vaultStaking = findAssociatedTokenPda(umi, { owner: stakePool, mint: baseMint[0] })
+  let vaultStaking = findAssociatedTokenPda(umi, { owner: poolManager, mint: baseMint[0] })
 
   // xMint Mint and ATAs
   let xMint: PublicKey = umi.eddsa.findPda(SOLD_STAKING_PROGRAM_ID, [Buffer.from("mint")])[0];
@@ -110,7 +110,7 @@ describe.only("sold-issuance", () => {
     }
   })
 
-  it.only("Token manager is initialized!", async () => {
+  it("Token manager is initialized!", async () => {
     const merkleRoot = getMerkleRoot(allowedWallets);
 
     let txBuilder = new TransactionBuilder();
@@ -131,7 +131,7 @@ describe.only("sold-issuance", () => {
       emergencyFundBasisPoints,
       merkleRoot,
       admin: umi.identity.publicKey,
-      minter: stakePool,
+      minter: poolManager,
       gateKeepers: [],
       mintLimitPerSlot,
       redemptionLimitPerSlot,
@@ -157,11 +157,11 @@ describe.only("sold-issuance", () => {
     assert.equal(tokenManagerAcc.totalCollateral, 0, "Token manager's total collateral should be zero");
   });
 
-  it.only("Stake Pool is initialized!", async () => {
+  it("Stake Pool is initialized!", async () => {
     let txBuilder = new TransactionBuilder();
 
     txBuilder = txBuilder.add(initializePoolManager(umi, {
-      stakePool,
+      poolManager,
       vault: vaultStaking,
       metadata: xMetadata,
       baseMint: baseMint,
@@ -178,7 +178,7 @@ describe.only("sold-issuance", () => {
 
     await txBuilder.sendAndConfirm(umi, { send: { skipPreflight: true } });
 
-    const stakePoolAcc = await safeFetchStakePool(umi, stakePool);
+    const stakePoolAcc = await safeFetchPoolManager(umi, poolManager);
 
     assert.equal(stakePoolAcc.baseMint, baseMint[0]);
     assert.equal(stakePoolAcc.baseMintDecimals, baseMintDecimals);
@@ -189,7 +189,7 @@ describe.only("sold-issuance", () => {
     assert.equal(stakePoolAcc.xSupply, 0n);
   });
 
-  it.only("Sold can be minted for USDC", async () => {
+  it("Sold can be minted for USDC", async () => {
     const quantity = 10000 * 10 ** baseMintDecimals;
 
     const proof = getMerkleProof(allowedWallets, keypair.publicKey.toBase58());
@@ -390,10 +390,12 @@ describe.only("sold-issuance", () => {
 
     // Update the allowList to a new set of wallets
     let txBuilder = new TransactionBuilder();
-    txBuilder = txBuilder.add(updateTokenManager(umi, {
+    txBuilder = txBuilder.add(updateTokenManagerAdmin(umi, {
       tokenManager,
-      merkleRoot: newMerkleRoot,
-      admin: null
+      newMerkleRoot: some(newMerkleRoot),
+      newGateKeepers: null,
+      newMintLimitPerSlot: null,
+      newRedemptionLimitPerSlot: null,
     }));
     await txBuilder.sendAndConfirm(umi);
 
@@ -453,10 +455,12 @@ describe.only("sold-issuance", () => {
 
     // Restore the original allowList
     txBuilder = new TransactionBuilder();
-    txBuilder = txBuilder.add(updateTokenManager(umi, {
+    txBuilder = txBuilder.add(updateTokenManagerAdmin(umi, {
       tokenManager,
-      merkleRoot: originalMerkleRoot,
-      admin: null
+      newMerkleRoot: some(originalMerkleRoot),
+      newGateKeepers: null,
+      newMintLimitPerSlot: null,
+      newRedemptionLimitPerSlot: null,
     }));
     await txBuilder.sendAndConfirm(umi);
 
@@ -527,6 +531,7 @@ describe.only("sold-issuance", () => {
       authorityQuoteMintAta: userQuote,
       associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
       quantity,
+      admin: umi.identity
     }));
 
     await assert.rejects(
@@ -553,6 +558,7 @@ describe.only("sold-issuance", () => {
       authorityQuoteMintAta: userQuote,
       associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
       quantity,
+      admin: umi.identity
     }));
 
     await assert.rejects(
@@ -579,6 +585,7 @@ describe.only("sold-issuance", () => {
       authorityQuoteMintAta: userQuote,
       associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
       quantity,
+      admin: umi.identity
     }));
     await txBuilder.sendAndConfirm(umi);
 
@@ -603,6 +610,7 @@ describe.only("sold-issuance", () => {
       authorityQuoteMintAta: userQuote,
       associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
       quantity,
+      admin: umi.identity
     }));
 
     await assert.rejects(
@@ -632,6 +640,7 @@ describe.only("sold-issuance", () => {
       authorityQuoteMintAta: userQuote,
       associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
       quantity,
+      admin: umi.identity
     }));
 
     await txBuilder.sendAndConfirm(umi);
@@ -645,7 +654,7 @@ describe.only("sold-issuance", () => {
   });
 
   // Stake Program
-  it.only("baseMint can be staked for xMint", async () => {
+  it("baseMint can be staked for xMint", async () => {
     const quantity = 1000 * 10 ** baseMintDecimals;
 
     let txBuilder = new TransactionBuilder();
@@ -658,11 +667,11 @@ describe.only("sold-issuance", () => {
       }))
     }
 
-    const _stakePoolAcc = await safeFetchStakePool(umi, stakePool);
+    const _stakePoolAcc = await safeFetchPoolManager(umi, poolManager);
     const _vaultAcc = await safeFetchToken(umi, vaultStaking);
 
     txBuilder = txBuilder.add(stake(umi, {
-      stakePool,
+      poolManager,
       baseMint,
       xMint,
       payerBaseMintAta: userBase,
@@ -686,7 +695,7 @@ describe.only("sold-issuance", () => {
 
     await txBuilder.sendAndConfirm(umi, { send: { skipPreflight: true } });
 
-    const stakePoolAcc = await safeFetchStakePool(umi, stakePool);
+    const stakePoolAcc = await safeFetchPoolManager(umi, poolManager);
 
     const vaultAcc = await safeFetchToken(umi, vaultStaking);
 
@@ -700,7 +709,7 @@ describe.only("sold-issuance", () => {
     chaiAssert.closeTo(Number(stakePoolAcc.xSupply), Number(_stakePoolAcc.xSupply) + Number(expectedxMintAmount), 300000, "xSupply is not correct");
   })
 
-  it.only("baseMint can be unstaked by redeeming xMint", async () => {
+  it("baseMint can be unstaked by redeeming xMint", async () => {
     // const quantity = 10000 * 10 ** baseMintDecimals;
     let txBuilder = new TransactionBuilder();
 
@@ -712,14 +721,14 @@ describe.only("sold-issuance", () => {
       }))
     }
 
-    const _stakePoolAcc = await safeFetchStakePool(umi, stakePool);
+    const _stakePoolAcc = await safeFetchPoolManager(umi, poolManager);
     const _vaultAcc = await safeFetchToken(umi, vaultStaking);
 
     const quantity = Number(_stakePoolAcc.xSupply);
     // console.log("Quantity: ", quantity);
 
     txBuilder = txBuilder.add(unstake(umi, {
-      stakePool,
+      poolManager,
       baseMint,
       xMint,
       payerBaseMintAta: userBase,
@@ -746,7 +755,7 @@ describe.only("sold-issuance", () => {
 
     await txBuilder.sendAndConfirm(umi, { send: { skipPreflight: true } });
 
-    const stakePoolAcc = await safeFetchStakePool(umi, stakePool);
+    const stakePoolAcc = await safeFetchPoolManager(umi, poolManager);
 
     const vaultAcc = await safeFetchToken(umi, vaultStaking);
 
@@ -761,14 +770,14 @@ describe.only("sold-issuance", () => {
     chaiAssert.equal(stakePoolAcc.xSupply, _stakePoolAcc.xSupply - expectedxMintAmount, "xSupply is not correct");
   })
 
-  it.only("should update the annual yield rate of the stake pool", async function () {
+  it("should update the annual yield rate of the stake pool", async function () {
     const annualYieldRate = 2500;
 
     let txBuilder = new TransactionBuilder();
 
     txBuilder = txBuilder.add(updateAnnualYield(umi, {
-      stakePool,
-      authority: umi.identity,
+      poolManager,
+      admin: umi.identity,
       annualYieldRate,
       tokenManager,
       soldIssuanceProgram: SOLD_ISSUANCE_PROGRAM_ID,
@@ -779,7 +788,7 @@ describe.only("sold-issuance", () => {
 
     await txBuilder.sendAndConfirm(umi);
 
-    const stakePoolAcc = await safeFetchStakePool(umi, stakePool);
+    const stakePoolAcc = await safeFetchPoolManager(umi, poolManager);
 
     assert.equal(stakePoolAcc.annualYieldRate, 2500, "Annual yield rate should be updated to 25.00%");
   });

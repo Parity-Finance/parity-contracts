@@ -15,7 +15,7 @@ use solana_program::pubkey::Pubkey;
 #[cfg_attr(not(feature = "anchor"), derive(BorshSerialize, BorshDeserialize))]
 #[cfg_attr(feature = "anchor", derive(AnchorSerialize, AnchorDeserialize))]
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct StakePool {
+pub struct PoolManager {
     pub discriminator: [u8; 8],
     pub bump: u8,
     #[cfg_attr(
@@ -49,28 +49,28 @@ pub struct StakePool {
     pub x_supply: u64,
 }
 
-impl StakePool {
+impl PoolManager {
     pub const LEN: usize = 195;
 
     /// Prefix values used to generate a PDA for this account.
     ///
     /// Values are positional and appear in the following order:
     ///
-    ///   0. `StakePool::PREFIX`
-    pub const PREFIX: &'static [u8] = "stake-pool".as_bytes();
+    ///   0. `PoolManager::PREFIX`
+    pub const PREFIX: &'static [u8] = "pool-manager".as_bytes();
 
     pub fn create_pda(
         bump: u8,
     ) -> Result<solana_program::pubkey::Pubkey, solana_program::pubkey::PubkeyError> {
         solana_program::pubkey::Pubkey::create_program_address(
-            &["stake-pool".as_bytes(), &[bump]],
+            &["pool-manager".as_bytes(), &[bump]],
             &crate::SOLD_STAKING_ID,
         )
     }
 
     pub fn find_pda() -> (solana_program::pubkey::Pubkey, u8) {
         solana_program::pubkey::Pubkey::find_program_address(
-            &["stake-pool".as_bytes()],
+            &["pool-manager".as_bytes()],
             &crate::SOLD_STAKING_ID,
         )
     }
@@ -82,7 +82,7 @@ impl StakePool {
     }
 }
 
-impl<'a> TryFrom<&solana_program::account_info::AccountInfo<'a>> for StakePool {
+impl<'a> TryFrom<&solana_program::account_info::AccountInfo<'a>> for PoolManager {
     type Error = std::io::Error;
 
     fn try_from(

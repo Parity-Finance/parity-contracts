@@ -26,9 +26,9 @@ kinobi.update(
         k.constantPdaSeedNodeFromString("token-manager")
       ],
     },
-    stakePool: {
+    poolManager: {
       seeds: [
-        k.constantPdaSeedNodeFromString("stake-pool")
+        k.constantPdaSeedNodeFromString("pool-manager")
       ],
     },
   })

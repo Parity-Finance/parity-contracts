@@ -1,4 +1,4 @@
-use crate::{error::SoldStakingError, StakePool};
+use crate::{error::SoldStakingError, PoolManager};
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
@@ -20,27 +20,27 @@ pub struct UpdateAnnualYield<'info> {
     #[account(
         mut,
       seeds = [
-        b"stake-pool",
+        b"pool-manager",
       ],
       bump,
     )]
-    pub stake_pool: Account<'info, StakePool>,
+    pub pool_manager: Account<'info, PoolManager>,
     #[account(mut)]
     pub token_manager: Account<'info, TokenManager>,
     #[account(
         mut,
-        mint::decimals = stake_pool.base_mint_decimals,
-        address = stake_pool.base_mint,
+        mint::decimals = pool_manager.base_mint_decimals,
+        address = pool_manager.base_mint,
     )]
     pub base_mint: Account<'info, Mint>,
     #[account(
         mut,
         associated_token::mint = base_mint,
-        associated_token::authority = stake_pool,
+        associated_token::authority = pool_manager,
     )]
     pub vault: Account<'info, TokenAccount>,
-    #[account(mut)]
-    pub authority: Signer<'info>,
+    #[account(mut, address = pool_manager.admin @ SoldStakingError::InvalidAdmin)]
+    pub admin: Signer<'info>,
     pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,
     pub associated_token_program: Program<'info, AssociatedToken>,
@@ -48,33 +48,33 @@ pub struct UpdateAnnualYield<'info> {
 }
 
 pub fn handler(ctx: Context<UpdateAnnualYield>, params: UpdateYieldParams) -> Result<()> {
-    let stake_pool = &mut ctx.accounts.stake_pool;
+    let pool_manager = &mut ctx.accounts.pool_manager;
 
-    // TODO: Authority Check
-    let _authority = &ctx.accounts.authority;
+    // Check done in accounts struct
+    // let _authority = &ctx.accounts.admin;
 
     let clock = Clock::get()?;
     let current_timestamp = clock.unix_timestamp;
 
-    let exchange_rate = stake_pool
+    let exchange_rate = pool_manager
         .calculate_exchange_rate(current_timestamp)
         .ok_or(SoldStakingError::CalculationOverflow)?;
 
     msg!("Exchange Rate: {}", exchange_rate);
 
     // Mint Base into pool
-    let bump = stake_pool.bump; // Corrected to be a slice of a slice of a byte slice
-    let signer_seeds: &[&[&[u8]]] = &[&[b"stake-pool", &[bump]]];
+    let bump = pool_manager.bump; // Corrected to be a slice of a slice of a byte slice
+    let signer_seeds: &[&[&[u8]]] = &[&[b"pool-manager", &[bump]]];
 
-    let base_decimals = 10u64.pow(stake_pool.base_mint_decimals.into());
+    let base_decimals = 10u64.pow(pool_manager.base_mint_decimals.into());
 
-    let x_supply_value = (stake_pool.x_supply as u128)
+    let x_supply_value = (pool_manager.x_supply as u128)
         .checked_mul(base_decimals as u128)
         .ok_or(SoldStakingError::CalculationOverflow)?
         .checked_div(exchange_rate as u128)
         .ok_or(SoldStakingError::CalculationOverflow)?;
 
-    let base_balance = stake_pool.base_balance as u128;
+    let base_balance = pool_manager.base_balance as u128;
 
     msg!("X Supply Value: {}", x_supply_value);
     msg!("Base Balance: {}", base_balance);
@@ -94,8 +94,8 @@ pub fn handler(ctx: Context<UpdateAnnualYield>, params: UpdateYieldParams) -> Re
             ctx.accounts.sold_issuance_program.to_account_info(),
             MintAdminTokens {
                 token_manager: ctx.accounts.token_manager.to_account_info(),
-                admin_mint_ata: ctx.accounts.vault.to_account_info(),
-                admin: stake_pool.to_account_info(),
+                minter_mint_ata: ctx.accounts.vault.to_account_info(),
+                minter: pool_manager.to_account_info(),
                 system_program: ctx.accounts.system_program.to_account_info(),
                 token_program: ctx.accounts.token_program.to_account_info(),
                 associated_token_program: ctx.accounts.associated_token_program.to_account_info(),
@@ -107,13 +107,13 @@ pub fn handler(ctx: Context<UpdateAnnualYield>, params: UpdateYieldParams) -> Re
         mint_admin(mint_context, amount_to_mint)?;
     }
 
-    stake_pool.base_balance = stake_pool
+    pool_manager.base_balance = pool_manager
         .base_balance
         .checked_add(amount_to_mint)
         .ok_or(SoldStakingError::CalculationOverflow)?;
-    stake_pool.last_yield_change_timestamp = current_timestamp;
-    stake_pool.last_yield_change_exchange_rate = exchange_rate;
-    stake_pool.annual_yield_rate = params.annual_yield_rate;
+    pool_manager.last_yield_change_timestamp = current_timestamp;
+    pool_manager.last_yield_change_exchange_rate = exchange_rate;
+    pool_manager.annual_yield_rate = params.annual_yield_rate;
 
     Ok(())
 }

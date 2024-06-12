@@ -34,6 +34,12 @@ pub enum SoldStakingError {
     /// 6007 (0x1777) - Calculation overflow
     #[error("Calculation overflow")]
     CalculationOverflow,
+    /// 6008 (0x1778) - Invalid admin
+    #[error("Invalid admin")]
+    InvalidAdmin,
+    /// 6009 (0x1779) - Invalid owner
+    #[error("Invalid owner")]
+    InvalidOwner,
 }
 
 impl solana_program::program_error::PrintProgramError for SoldStakingError {

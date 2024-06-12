@@ -236,7 +236,7 @@
       ]
     },
     {
-      "name": "updateTokenManager",
+      "name": "updateTokenManagerAdmin",
       "accounts": [
         {
           "name": "tokenManager",
@@ -253,7 +253,30 @@
         {
           "name": "params",
           "type": {
-            "defined": "UpdateTokenManagerParams"
+            "defined": "UpdateTokenManagerAdminParams"
+          }
+        }
+      ]
+    },
+    {
+      "name": "updateTokenManagerOwner",
+      "accounts": [
+        {
+          "name": "tokenManager",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": false,
+          "isSigner": true
+        }
+      ],
+      "args": [
+        {
+          "name": "params",
+          "type": {
+            "defined": "UpdateTokenManagerOwnerParams"
           }
         }
       ]
@@ -282,7 +305,7 @@
           "isSigner": false
         },
         {
-          "name": "authority",
+          "name": "admin",
           "isMut": true,
           "isSigner": true
         },
@@ -338,7 +361,7 @@
           "isSigner": false
         },
         {
-          "name": "authority",
+          "name": "admin",
           "isMut": true,
           "isSigner": true
         },
@@ -384,12 +407,12 @@
           "isSigner": false
         },
         {
-          "name": "adminMintAta",
+          "name": "minterMintAta",
           "isMut": true,
           "isSigner": false
         },
         {
-          "name": "admin",
+          "name": "minter",
           "isMut": false,
           "isSigner": true
         },
@@ -579,12 +602,12 @@
       }
     },
     {
-      "name": "UpdateTokenManagerParams",
+      "name": "UpdateTokenManagerAdminParams",
       "type": {
         "kind": "struct",
         "fields": [
           {
-            "name": "merkleRoot",
+            "name": "newMerkleRoot",
             "type": {
               "option": {
                 "array": [
@@ -595,9 +618,55 @@
             }
           },
           {
-            "name": "admin",
+            "name": "newGateKeepers",
+            "type": {
+              "option": {
+                "vec": "publicKey"
+              }
+            }
+          },
+          {
+            "name": "newMintLimitPerSlot",
+            "type": {
+              "option": "u64"
+            }
+          },
+          {
+            "name": "newRedemptionLimitPerSlot",
+            "type": {
+              "option": "u64"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "UpdateTokenManagerOwnerParams",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "newOwner",
             "type": {
               "option": "publicKey"
+            }
+          },
+          {
+            "name": "newAdmin",
+            "type": {
+              "option": "publicKey"
+            }
+          },
+          {
+            "name": "newMinter",
+            "type": {
+              "option": "publicKey"
+            }
+          },
+          {
+            "name": "emergencyFundBasisPoints",
+            "type": {
+              "option": "u16"
             }
           }
         ]
@@ -647,13 +716,28 @@
     },
     {
       "code": 6008,
-      "name": "InvalidAdminAddress",
-      "msg": "Invalid admin address"
+      "name": "SlotLimitExceeded",
+      "msg": "Slot limit exceeded"
     },
     {
       "code": 6009,
-      "name": "SlotLimitExceeded",
-      "msg": "Slot limit exceeded"
+      "name": "InvalidAdmin",
+      "msg": "Invalid admin"
+    },
+    {
+      "code": 6010,
+      "name": "InvalidOwner",
+      "msg": "Invalid owner"
+    },
+    {
+      "code": 6011,
+      "name": "InvalidMinter",
+      "msg": "Invalid minter"
+    },
+    {
+      "code": 6012,
+      "name": "InvalidToggleActiveAuthority",
+      "msg": "Invalid toggle active authority"
     }
   ],
   "metadata": {

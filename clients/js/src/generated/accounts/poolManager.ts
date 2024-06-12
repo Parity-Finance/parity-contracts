@@ -31,9 +31,9 @@ import {
   u8,
 } from '@metaplex-foundation/umi/serializers';
 
-export type StakePool = Account<StakePoolAccountData>;
+export type PoolManager = Account<PoolManagerAccountData>;
 
-export type StakePoolAccountData = {
+export type PoolManagerAccountData = {
   discriminator: Array<number>;
   bump: number;
   owner: PublicKey;
@@ -51,7 +51,7 @@ export type StakePoolAccountData = {
   xSupply: bigint;
 };
 
-export type StakePoolAccountDataArgs = {
+export type PoolManagerAccountDataArgs = {
   bump: number;
   owner: PublicKey;
   admin: PublicKey;
@@ -68,12 +68,12 @@ export type StakePoolAccountDataArgs = {
   xSupply: number | bigint;
 };
 
-export function getStakePoolAccountDataSerializer(): Serializer<
-  StakePoolAccountDataArgs,
-  StakePoolAccountData
+export function getPoolManagerAccountDataSerializer(): Serializer<
+  PoolManagerAccountDataArgs,
+  PoolManagerAccountData
 > {
-  return mapSerializer<StakePoolAccountDataArgs, any, StakePoolAccountData>(
-    struct<StakePoolAccountData>(
+  return mapSerializer<PoolManagerAccountDataArgs, any, PoolManagerAccountData>(
+    struct<PoolManagerAccountData>(
       [
         ['discriminator', array(u8(), { size: 8 })],
         ['bump', u8()],
@@ -91,74 +91,74 @@ export function getStakePoolAccountDataSerializer(): Serializer<
         ['baseBalance', u64()],
         ['xSupply', u64()],
       ],
-      { description: 'StakePoolAccountData' }
+      { description: 'PoolManagerAccountData' }
     ),
     (value) => ({
       ...value,
-      discriminator: [121, 34, 206, 21, 79, 127, 255, 28],
+      discriminator: [54, 241, 200, 10, 177, 151, 78, 17],
     })
-  ) as Serializer<StakePoolAccountDataArgs, StakePoolAccountData>;
+  ) as Serializer<PoolManagerAccountDataArgs, PoolManagerAccountData>;
 }
 
-export function deserializeStakePool(rawAccount: RpcAccount): StakePool {
-  return deserializeAccount(rawAccount, getStakePoolAccountDataSerializer());
+export function deserializePoolManager(rawAccount: RpcAccount): PoolManager {
+  return deserializeAccount(rawAccount, getPoolManagerAccountDataSerializer());
 }
 
-export async function fetchStakePool(
+export async function fetchPoolManager(
   context: Pick<Context, 'rpc'>,
   publicKey: PublicKey | Pda,
   options?: RpcGetAccountOptions
-): Promise<StakePool> {
+): Promise<PoolManager> {
   const maybeAccount = await context.rpc.getAccount(
     toPublicKey(publicKey, false),
     options
   );
-  assertAccountExists(maybeAccount, 'StakePool');
-  return deserializeStakePool(maybeAccount);
+  assertAccountExists(maybeAccount, 'PoolManager');
+  return deserializePoolManager(maybeAccount);
 }
 
-export async function safeFetchStakePool(
+export async function safeFetchPoolManager(
   context: Pick<Context, 'rpc'>,
   publicKey: PublicKey | Pda,
   options?: RpcGetAccountOptions
-): Promise<StakePool | null> {
+): Promise<PoolManager | null> {
   const maybeAccount = await context.rpc.getAccount(
     toPublicKey(publicKey, false),
     options
   );
-  return maybeAccount.exists ? deserializeStakePool(maybeAccount) : null;
+  return maybeAccount.exists ? deserializePoolManager(maybeAccount) : null;
 }
 
-export async function fetchAllStakePool(
+export async function fetchAllPoolManager(
   context: Pick<Context, 'rpc'>,
   publicKeys: Array<PublicKey | Pda>,
   options?: RpcGetAccountsOptions
-): Promise<StakePool[]> {
+): Promise<PoolManager[]> {
   const maybeAccounts = await context.rpc.getAccounts(
     publicKeys.map((key) => toPublicKey(key, false)),
     options
   );
   return maybeAccounts.map((maybeAccount) => {
-    assertAccountExists(maybeAccount, 'StakePool');
-    return deserializeStakePool(maybeAccount);
+    assertAccountExists(maybeAccount, 'PoolManager');
+    return deserializePoolManager(maybeAccount);
   });
 }
 
-export async function safeFetchAllStakePool(
+export async function safeFetchAllPoolManager(
   context: Pick<Context, 'rpc'>,
   publicKeys: Array<PublicKey | Pda>,
   options?: RpcGetAccountsOptions
-): Promise<StakePool[]> {
+): Promise<PoolManager[]> {
   const maybeAccounts = await context.rpc.getAccounts(
     publicKeys.map((key) => toPublicKey(key, false)),
     options
   );
   return maybeAccounts
     .filter((maybeAccount) => maybeAccount.exists)
-    .map((maybeAccount) => deserializeStakePool(maybeAccount as RpcAccount));
+    .map((maybeAccount) => deserializePoolManager(maybeAccount as RpcAccount));
 }
 
-export function getStakePoolGpaBuilder(
+export function getPoolManagerGpaBuilder(
   context: Pick<Context, 'rpc' | 'programs'>
 ) {
   const programId = context.programs.getPublicKey(
@@ -199,15 +199,15 @@ export function getStakePoolGpaBuilder(
       baseBalance: [179, u64()],
       xSupply: [187, u64()],
     })
-    .deserializeUsing<StakePool>((account) => deserializeStakePool(account))
-    .whereField('discriminator', [121, 34, 206, 21, 79, 127, 255, 28]);
+    .deserializeUsing<PoolManager>((account) => deserializePoolManager(account))
+    .whereField('discriminator', [54, 241, 200, 10, 177, 151, 78, 17]);
 }
 
-export function getStakePoolSize(): number {
+export function getPoolManagerSize(): number {
   return 195;
 }
 
-export function findStakePoolPda(
+export function findPoolManagerPda(
   context: Pick<Context, 'eddsa' | 'programs'>
 ): Pda {
   const programId = context.programs.getPublicKey(
@@ -215,20 +215,20 @@ export function findStakePoolPda(
     'F9pkhuLyu1usfS5p6RCuXxeS2TQsAVqANo1M2iC8ze1t'
   );
   return context.eddsa.findPda(programId, [
-    string({ size: 'variable' }).serialize('stake-pool'),
+    string({ size: 'variable' }).serialize('pool-manager'),
   ]);
 }
 
-export async function fetchStakePoolFromSeeds(
+export async function fetchPoolManagerFromSeeds(
   context: Pick<Context, 'eddsa' | 'programs' | 'rpc'>,
   options?: RpcGetAccountOptions
-): Promise<StakePool> {
-  return fetchStakePool(context, findStakePoolPda(context), options);
+): Promise<PoolManager> {
+  return fetchPoolManager(context, findPoolManagerPda(context), options);
 }
 
-export async function safeFetchStakePoolFromSeeds(
+export async function safeFetchPoolManagerFromSeeds(
   context: Pick<Context, 'eddsa' | 'programs' | 'rpc'>,
   options?: RpcGetAccountOptions
-): Promise<StakePool | null> {
-  return safeFetchStakePool(context, findStakePoolPda(context), options);
+): Promise<PoolManager | null> {
+  return safeFetchPoolManager(context, findPoolManagerPda(context), options);
 }

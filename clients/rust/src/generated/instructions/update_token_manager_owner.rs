@@ -12,23 +12,23 @@ use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::pubkey::Pubkey;
 
 /// Accounts.
-pub struct UpdateTokenManager {
+pub struct UpdateTokenManagerOwner {
     pub token_manager: solana_program::pubkey::Pubkey,
 
-    pub authority: solana_program::pubkey::Pubkey,
+    pub owner: solana_program::pubkey::Pubkey,
 }
 
-impl UpdateTokenManager {
+impl UpdateTokenManagerOwner {
     pub fn instruction(
         &self,
-        args: UpdateTokenManagerInstructionArgs,
+        args: UpdateTokenManagerOwnerInstructionArgs,
     ) -> solana_program::instruction::Instruction {
         self.instruction_with_remaining_accounts(args, &[])
     }
     #[allow(clippy::vec_init_then_push)]
     pub fn instruction_with_remaining_accounts(
         &self,
-        args: UpdateTokenManagerInstructionArgs,
+        args: UpdateTokenManagerOwnerInstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
         let mut accounts = Vec::with_capacity(2 + remaining_accounts.len());
@@ -37,11 +37,10 @@ impl UpdateTokenManager {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.authority,
-            true,
+            self.owner, true,
         ));
         accounts.extend_from_slice(remaining_accounts);
-        let mut data = UpdateTokenManagerInstructionData::new()
+        let mut data = UpdateTokenManagerOwnerInstructionData::new()
             .try_to_vec()
             .unwrap();
         let mut args = args.try_to_vec().unwrap();
@@ -57,14 +56,14 @@ impl UpdateTokenManager {
 
 #[cfg_attr(not(feature = "anchor"), derive(BorshSerialize, BorshDeserialize))]
 #[cfg_attr(feature = "anchor", derive(AnchorSerialize, AnchorDeserialize))]
-pub struct UpdateTokenManagerInstructionData {
+pub struct UpdateTokenManagerOwnerInstructionData {
     discriminator: [u8; 8],
 }
 
-impl UpdateTokenManagerInstructionData {
+impl UpdateTokenManagerOwnerInstructionData {
     pub fn new() -> Self {
         Self {
-            discriminator: [231, 114, 7, 94, 146, 65, 122, 108],
+            discriminator: [31, 16, 91, 211, 211, 16, 93, 144],
         }
     }
 }
@@ -73,27 +72,31 @@ impl UpdateTokenManagerInstructionData {
 #[cfg_attr(feature = "anchor", derive(AnchorSerialize, AnchorDeserialize))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct UpdateTokenManagerInstructionArgs {
-    pub merkle_root: Option<[u8; 32]>,
-    pub admin: Option<Pubkey>,
+pub struct UpdateTokenManagerOwnerInstructionArgs {
+    pub new_owner: Option<Pubkey>,
+    pub new_admin: Option<Pubkey>,
+    pub new_minter: Option<Pubkey>,
+    pub emergency_fund_basis_points: Option<u16>,
 }
 
-/// Instruction builder for `UpdateTokenManager`.
+/// Instruction builder for `UpdateTokenManagerOwner`.
 ///
 /// ### Accounts:
 ///
 ///   0. `[writable]` token_manager
-///   1. `[signer]` authority
+///   1. `[signer]` owner
 #[derive(Default)]
-pub struct UpdateTokenManagerBuilder {
+pub struct UpdateTokenManagerOwnerBuilder {
     token_manager: Option<solana_program::pubkey::Pubkey>,
-    authority: Option<solana_program::pubkey::Pubkey>,
-    merkle_root: Option<[u8; 32]>,
-    admin: Option<Pubkey>,
+    owner: Option<solana_program::pubkey::Pubkey>,
+    new_owner: Option<Pubkey>,
+    new_admin: Option<Pubkey>,
+    new_minter: Option<Pubkey>,
+    emergency_fund_basis_points: Option<u16>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
-impl UpdateTokenManagerBuilder {
+impl UpdateTokenManagerOwnerBuilder {
     pub fn new() -> Self {
         Self::default()
     }
@@ -103,20 +106,32 @@ impl UpdateTokenManagerBuilder {
         self
     }
     #[inline(always)]
-    pub fn authority(&mut self, authority: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.authority = Some(authority);
+    pub fn owner(&mut self, owner: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.owner = Some(owner);
         self
     }
     /// `[optional argument]`
     #[inline(always)]
-    pub fn merkle_root(&mut self, merkle_root: [u8; 32]) -> &mut Self {
-        self.merkle_root = Some(merkle_root);
+    pub fn new_owner(&mut self, new_owner: Pubkey) -> &mut Self {
+        self.new_owner = Some(new_owner);
         self
     }
     /// `[optional argument]`
     #[inline(always)]
-    pub fn admin(&mut self, admin: Pubkey) -> &mut Self {
-        self.admin = Some(admin);
+    pub fn new_admin(&mut self, new_admin: Pubkey) -> &mut Self {
+        self.new_admin = Some(new_admin);
+        self
+    }
+    /// `[optional argument]`
+    #[inline(always)]
+    pub fn new_minter(&mut self, new_minter: Pubkey) -> &mut Self {
+        self.new_minter = Some(new_minter);
+        self
+    }
+    /// `[optional argument]`
+    #[inline(always)]
+    pub fn emergency_fund_basis_points(&mut self, emergency_fund_basis_points: u16) -> &mut Self {
+        self.emergency_fund_basis_points = Some(emergency_fund_basis_points);
         self
     }
     /// Add an aditional account to the instruction.
@@ -139,48 +154,50 @@ impl UpdateTokenManagerBuilder {
     }
     #[allow(clippy::clone_on_copy)]
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
-        let accounts = UpdateTokenManager {
+        let accounts = UpdateTokenManagerOwner {
             token_manager: self.token_manager.expect("token_manager is not set"),
-            authority: self.authority.expect("authority is not set"),
+            owner: self.owner.expect("owner is not set"),
         };
-        let args = UpdateTokenManagerInstructionArgs {
-            merkle_root: self.merkle_root.clone(),
-            admin: self.admin.clone(),
+        let args = UpdateTokenManagerOwnerInstructionArgs {
+            new_owner: self.new_owner.clone(),
+            new_admin: self.new_admin.clone(),
+            new_minter: self.new_minter.clone(),
+            emergency_fund_basis_points: self.emergency_fund_basis_points.clone(),
         };
 
         accounts.instruction_with_remaining_accounts(args, &self.__remaining_accounts)
     }
 }
 
-/// `update_token_manager` CPI accounts.
-pub struct UpdateTokenManagerCpiAccounts<'a, 'b> {
+/// `update_token_manager_owner` CPI accounts.
+pub struct UpdateTokenManagerOwnerCpiAccounts<'a, 'b> {
     pub token_manager: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub authority: &'b solana_program::account_info::AccountInfo<'a>,
+    pub owner: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
-/// `update_token_manager` CPI instruction.
-pub struct UpdateTokenManagerCpi<'a, 'b> {
+/// `update_token_manager_owner` CPI instruction.
+pub struct UpdateTokenManagerOwnerCpi<'a, 'b> {
     /// The program to invoke.
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub token_manager: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub authority: &'b solana_program::account_info::AccountInfo<'a>,
+    pub owner: &'b solana_program::account_info::AccountInfo<'a>,
     /// The arguments for the instruction.
-    pub __args: UpdateTokenManagerInstructionArgs,
+    pub __args: UpdateTokenManagerOwnerInstructionArgs,
 }
 
-impl<'a, 'b> UpdateTokenManagerCpi<'a, 'b> {
+impl<'a, 'b> UpdateTokenManagerOwnerCpi<'a, 'b> {
     pub fn new(
         program: &'b solana_program::account_info::AccountInfo<'a>,
-        accounts: UpdateTokenManagerCpiAccounts<'a, 'b>,
-        args: UpdateTokenManagerInstructionArgs,
+        accounts: UpdateTokenManagerOwnerCpiAccounts<'a, 'b>,
+        args: UpdateTokenManagerOwnerInstructionArgs,
     ) -> Self {
         Self {
             __program: program,
             token_manager: accounts.token_manager,
-            authority: accounts.authority,
+            owner: accounts.owner,
             __args: args,
         }
     }
@@ -223,7 +240,7 @@ impl<'a, 'b> UpdateTokenManagerCpi<'a, 'b> {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.authority.key,
+            *self.owner.key,
             true,
         ));
         remaining_accounts.iter().for_each(|remaining_account| {
@@ -233,7 +250,7 @@ impl<'a, 'b> UpdateTokenManagerCpi<'a, 'b> {
                 is_writable: remaining_account.2,
             })
         });
-        let mut data = UpdateTokenManagerInstructionData::new()
+        let mut data = UpdateTokenManagerOwnerInstructionData::new()
             .try_to_vec()
             .unwrap();
         let mut args = self.__args.try_to_vec().unwrap();
@@ -247,7 +264,7 @@ impl<'a, 'b> UpdateTokenManagerCpi<'a, 'b> {
         let mut account_infos = Vec::with_capacity(2 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.token_manager.clone());
-        account_infos.push(self.authority.clone());
+        account_infos.push(self.owner.clone());
         remaining_accounts
             .iter()
             .for_each(|remaining_account| account_infos.push(remaining_account.0.clone()));
@@ -260,24 +277,26 @@ impl<'a, 'b> UpdateTokenManagerCpi<'a, 'b> {
     }
 }
 
-/// Instruction builder for `UpdateTokenManager` via CPI.
+/// Instruction builder for `UpdateTokenManagerOwner` via CPI.
 ///
 /// ### Accounts:
 ///
 ///   0. `[writable]` token_manager
-///   1. `[signer]` authority
-pub struct UpdateTokenManagerCpiBuilder<'a, 'b> {
-    instruction: Box<UpdateTokenManagerCpiBuilderInstruction<'a, 'b>>,
+///   1. `[signer]` owner
+pub struct UpdateTokenManagerOwnerCpiBuilder<'a, 'b> {
+    instruction: Box<UpdateTokenManagerOwnerCpiBuilderInstruction<'a, 'b>>,
 }
 
-impl<'a, 'b> UpdateTokenManagerCpiBuilder<'a, 'b> {
+impl<'a, 'b> UpdateTokenManagerOwnerCpiBuilder<'a, 'b> {
     pub fn new(program: &'b solana_program::account_info::AccountInfo<'a>) -> Self {
-        let instruction = Box::new(UpdateTokenManagerCpiBuilderInstruction {
+        let instruction = Box::new(UpdateTokenManagerOwnerCpiBuilderInstruction {
             __program: program,
             token_manager: None,
-            authority: None,
-            merkle_root: None,
-            admin: None,
+            owner: None,
+            new_owner: None,
+            new_admin: None,
+            new_minter: None,
+            emergency_fund_basis_points: None,
             __remaining_accounts: Vec::new(),
         });
         Self { instruction }
@@ -291,23 +310,32 @@ impl<'a, 'b> UpdateTokenManagerCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn authority(
-        &mut self,
-        authority: &'b solana_program::account_info::AccountInfo<'a>,
-    ) -> &mut Self {
-        self.instruction.authority = Some(authority);
+    pub fn owner(&mut self, owner: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
+        self.instruction.owner = Some(owner);
         self
     }
     /// `[optional argument]`
     #[inline(always)]
-    pub fn merkle_root(&mut self, merkle_root: [u8; 32]) -> &mut Self {
-        self.instruction.merkle_root = Some(merkle_root);
+    pub fn new_owner(&mut self, new_owner: Pubkey) -> &mut Self {
+        self.instruction.new_owner = Some(new_owner);
         self
     }
     /// `[optional argument]`
     #[inline(always)]
-    pub fn admin(&mut self, admin: Pubkey) -> &mut Self {
-        self.instruction.admin = Some(admin);
+    pub fn new_admin(&mut self, new_admin: Pubkey) -> &mut Self {
+        self.instruction.new_admin = Some(new_admin);
+        self
+    }
+    /// `[optional argument]`
+    #[inline(always)]
+    pub fn new_minter(&mut self, new_minter: Pubkey) -> &mut Self {
+        self.instruction.new_minter = Some(new_minter);
+        self
+    }
+    /// `[optional argument]`
+    #[inline(always)]
+    pub fn emergency_fund_basis_points(&mut self, emergency_fund_basis_points: u16) -> &mut Self {
+        self.instruction.emergency_fund_basis_points = Some(emergency_fund_basis_points);
         self
     }
     /// Add an additional account to the instruction.
@@ -351,11 +379,13 @@ impl<'a, 'b> UpdateTokenManagerCpiBuilder<'a, 'b> {
         &self,
         signers_seeds: &[&[&[u8]]],
     ) -> solana_program::entrypoint::ProgramResult {
-        let args = UpdateTokenManagerInstructionArgs {
-            merkle_root: self.instruction.merkle_root.clone(),
-            admin: self.instruction.admin.clone(),
+        let args = UpdateTokenManagerOwnerInstructionArgs {
+            new_owner: self.instruction.new_owner.clone(),
+            new_admin: self.instruction.new_admin.clone(),
+            new_minter: self.instruction.new_minter.clone(),
+            emergency_fund_basis_points: self.instruction.emergency_fund_basis_points.clone(),
         };
-        let instruction = UpdateTokenManagerCpi {
+        let instruction = UpdateTokenManagerOwnerCpi {
             __program: self.instruction.__program,
 
             token_manager: self
@@ -363,7 +393,7 @@ impl<'a, 'b> UpdateTokenManagerCpiBuilder<'a, 'b> {
                 .token_manager
                 .expect("token_manager is not set"),
 
-            authority: self.instruction.authority.expect("authority is not set"),
+            owner: self.instruction.owner.expect("owner is not set"),
             __args: args,
         };
         instruction.invoke_signed_with_remaining_accounts(
@@ -373,12 +403,14 @@ impl<'a, 'b> UpdateTokenManagerCpiBuilder<'a, 'b> {
     }
 }
 
-struct UpdateTokenManagerCpiBuilderInstruction<'a, 'b> {
+struct UpdateTokenManagerOwnerCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     token_manager: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    merkle_root: Option<[u8; 32]>,
-    admin: Option<Pubkey>,
+    owner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    new_owner: Option<Pubkey>,
+    new_admin: Option<Pubkey>,
+    new_minter: Option<Pubkey>,
+    emergency_fund_basis_points: Option<u16>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(
         &'b solana_program::account_info::AccountInfo<'a>,

@@ -1,4 +1,4 @@
-use crate::{error::SoldStakingError, StakePool};
+use crate::{error::SoldStakingError, PoolManager};
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
@@ -12,14 +12,14 @@ use sold_issuance::{
 
 #[derive(Accounts)]
 pub struct Unstake<'info> {
-    #[account(mut, seeds = [b"stake-pool"], bump)]
-    pub stake_pool: Account<'info, StakePool>,
+    #[account(mut, seeds = [b"pool-manager"], bump)]
+    pub pool_manager: Account<'info, PoolManager>,
     #[account(mut)]
     pub token_manager: Account<'info, TokenManager>,
     #[account(
         mut,
-        mint::decimals = stake_pool.base_mint_decimals,
-        address = stake_pool.base_mint,
+        mint::decimals = pool_manager.base_mint_decimals,
+        address = pool_manager.base_mint,
     )]
     pub base_mint: Account<'info, Mint>,
     #[account(
@@ -32,11 +32,11 @@ pub struct Unstake<'info> {
     //  Quote Mint
     #[account(
         mut,
-        address = stake_pool.x_mint,
+        address = pool_manager.x_mint,
         seeds = [b"mint"],
         bump,
-        mint::decimals = stake_pool.x_mint_decimals,
-        mint::authority = stake_pool,
+        mint::decimals = pool_manager.x_mint_decimals,
+        mint::authority = pool_manager,
     )]
     pub x_mint: Account<'info, Mint>,
     #[account(
@@ -48,7 +48,7 @@ pub struct Unstake<'info> {
     #[account(
         mut,
         associated_token::mint = base_mint,
-        associated_token::authority = stake_pool,
+        associated_token::authority = pool_manager,
     )]
     pub vault: Account<'info, TokenAccount>,
 
@@ -62,10 +62,10 @@ pub struct Unstake<'info> {
 }
 
 pub fn handler(ctx: Context<Unstake>, quantity: u64) -> Result<()> {
-    let stake_pool = &mut ctx.accounts.stake_pool;
+    let pool_manager = &mut ctx.accounts.pool_manager;
 
     let current_timestamp = Clock::get()?.unix_timestamp;
-    let exchange_rate = stake_pool
+    let exchange_rate = pool_manager
         .calculate_exchange_rate(current_timestamp)
         .ok_or(SoldStakingError::CalculationOverflow)?;
 
@@ -74,8 +74,8 @@ pub fn handler(ctx: Context<Unstake>, quantity: u64) -> Result<()> {
     let x_amount = quantity;
 
     // Burning
-    let bump = stake_pool.bump; // Corrected to be a slice of a slice of a byte slice
-    let signer_seeds: &[&[&[u8]]] = &[&[b"stake-pool", &[bump]]];
+    let bump = pool_manager.bump; // Corrected to be a slice of a slice of a byte slice
+    let signer_seeds: &[&[&[u8]]] = &[&[b"pool-manager", &[bump]]];
 
     burn(
         CpiContext::new(
@@ -90,15 +90,14 @@ pub fn handler(ctx: Context<Unstake>, quantity: u64) -> Result<()> {
     )?;
 
     // Mint Base into pool
-    let base_decimals = 10u64.pow(stake_pool.base_mint_decimals.into());
-
-    let x_supply_value = (stake_pool.x_supply as u128)
+    let base_decimals = 10u64.pow(pool_manager.base_mint_decimals.into());
+    let x_supply_value = (pool_manager.x_supply as u128)
         .checked_mul(base_decimals as u128)
         .ok_or(SoldStakingError::CalculationOverflow)?
         .checked_div(exchange_rate as u128)
         .ok_or(SoldStakingError::CalculationOverflow)?;
 
-    let base_balance = stake_pool.base_balance as u128;
+    let base_balance = pool_manager.base_balance as u128;
 
     msg!("X Supply Value: {}", x_supply_value);
     msg!("Base Balance: {}", base_balance);
@@ -118,8 +117,8 @@ pub fn handler(ctx: Context<Unstake>, quantity: u64) -> Result<()> {
             ctx.accounts.sold_issuance_program.to_account_info(),
             MintAdminTokens {
                 token_manager: ctx.accounts.token_manager.to_account_info(),
-                admin_mint_ata: ctx.accounts.vault.to_account_info(),
-                admin: stake_pool.to_account_info(),
+                minter_mint_ata: ctx.accounts.vault.to_account_info(),
+                minter: pool_manager.to_account_info(),
                 system_program: ctx.accounts.system_program.to_account_info(),
                 token_program: ctx.accounts.token_program.to_account_info(),
                 associated_token_program: ctx.accounts.associated_token_program.to_account_info(),
@@ -132,12 +131,12 @@ pub fn handler(ctx: Context<Unstake>, quantity: u64) -> Result<()> {
     }
 
     // Update newly minted balance
-    stake_pool.base_balance = stake_pool
+    pool_manager.base_balance = pool_manager
         .base_balance
         .checked_add(amount_to_mint)
         .ok_or(SoldStakingError::CalculationOverflow)?;
 
-    msg!("Base Balance2: {}", stake_pool.base_balance);
+    msg!("Base Balance2: {}", pool_manager.base_balance);
 
     let base_amount = (quantity as u128)
         .checked_mul(base_decimals as u128)
@@ -154,20 +153,20 @@ pub fn handler(ctx: Context<Unstake>, quantity: u64) -> Result<()> {
                 from: ctx.accounts.vault.to_account_info(),
                 to: ctx.accounts.payer_base_mint_ata.to_account_info(),
                 mint: ctx.accounts.base_mint.to_account_info(),
-                authority: stake_pool.to_account_info(),
+                authority: pool_manager.to_account_info(),
             },
             signer_seeds,
         ),
         base_amount,
-        stake_pool.base_mint_decimals,
+        pool_manager.base_mint_decimals,
     )?;
 
     // Update token_manager
-    stake_pool.x_supply = stake_pool
+    pool_manager.x_supply = pool_manager
         .x_supply
         .checked_sub(x_amount)
         .ok_or(SoldStakingError::CalculationOverflow)?;
-    stake_pool.base_balance = stake_pool
+    pool_manager.base_balance = pool_manager
         .base_balance
         .checked_sub(base_amount)
         .ok_or(SoldStakingError::CalculationOverflow)?;

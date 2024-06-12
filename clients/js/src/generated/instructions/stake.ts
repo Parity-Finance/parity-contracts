@@ -30,7 +30,7 @@ import {
 
 // Accounts.
 export type StakeInstructionAccounts = {
-  stakePool: PublicKey | Pda;
+  poolManager: PublicKey | Pda;
   baseMint: PublicKey | Pda;
   payerBaseMintAta: PublicKey | Pda;
   xMint: PublicKey | Pda;
@@ -85,10 +85,10 @@ export function stake(
 
   // Accounts.
   const resolvedAccounts = {
-    stakePool: {
+    poolManager: {
       index: 0,
       isWritable: true as boolean,
-      value: input.stakePool ?? null,
+      value: input.poolManager ?? null,
     },
     baseMint: {
       index: 1,

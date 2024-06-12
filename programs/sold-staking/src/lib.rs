@@ -1,11 +1,10 @@
-pub mod constants;
 pub mod error;
 pub mod instructions;
 pub mod state;
 
 use anchor_lang::prelude::*;
 
-pub use constants::*;
+pub use error::*;
 pub use instructions::*;
 pub use state::*;
 
@@ -35,5 +34,12 @@ pub mod sold_staking {
         params: UpdateYieldParams,
     ) -> Result<()> {
         update_annual_yield::handler(ctx, params)
+    }
+
+    pub fn update_pool_manager(
+        ctx: Context<UpdatePoolManager>,
+        params: UpdatePoolManagerParams,
+    ) -> Result<()> {
+        update_pool_manager::handler(ctx, params)
     }
 }

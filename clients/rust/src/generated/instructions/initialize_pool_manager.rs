@@ -20,7 +20,7 @@ pub struct InitializePoolManager {
 
     pub metadata: solana_program::pubkey::Pubkey,
 
-    pub stake_pool: solana_program::pubkey::Pubkey,
+    pub pool_manager: solana_program::pubkey::Pubkey,
 
     pub vault: solana_program::pubkey::Pubkey,
 
@@ -64,7 +64,7 @@ impl InitializePoolManager {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.stake_pool,
+            self.pool_manager,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
@@ -141,7 +141,7 @@ pub struct InitializePoolManagerInstructionArgs {
 ///   0. `[]` base_mint
 ///   1. `[writable]` x_mint
 ///   2. `[writable]` metadata
-///   3. `[writable]` stake_pool
+///   3. `[writable]` pool_manager
 ///   4. `[writable]` vault
 ///   5. `[writable, signer]` owner
 ///   6. `[optional]` rent (default to `SysvarRent111111111111111111111111111111111`)
@@ -154,7 +154,7 @@ pub struct InitializePoolManagerBuilder {
     base_mint: Option<solana_program::pubkey::Pubkey>,
     x_mint: Option<solana_program::pubkey::Pubkey>,
     metadata: Option<solana_program::pubkey::Pubkey>,
-    stake_pool: Option<solana_program::pubkey::Pubkey>,
+    pool_manager: Option<solana_program::pubkey::Pubkey>,
     vault: Option<solana_program::pubkey::Pubkey>,
     owner: Option<solana_program::pubkey::Pubkey>,
     rent: Option<solana_program::pubkey::Pubkey>,
@@ -192,8 +192,8 @@ impl InitializePoolManagerBuilder {
         self
     }
     #[inline(always)]
-    pub fn stake_pool(&mut self, stake_pool: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.stake_pool = Some(stake_pool);
+    pub fn pool_manager(&mut self, pool_manager: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.pool_manager = Some(pool_manager);
         self
     }
     #[inline(always)]
@@ -296,7 +296,7 @@ impl InitializePoolManagerBuilder {
                 base_mint: self.base_mint.expect("base_mint is not set"),
                 x_mint: self.x_mint.expect("x_mint is not set"),
                 metadata: self.metadata.expect("metadata is not set"),
-                stake_pool: self.stake_pool.expect("stake_pool is not set"),
+                pool_manager: self.pool_manager.expect("pool_manager is not set"),
                 vault: self.vault.expect("vault is not set"),
                 owner: self.owner.expect("owner is not set"),
                 rent: self.rent.unwrap_or(solana_program::pubkey!(
@@ -340,7 +340,7 @@ pub struct InitializePoolManagerCpiAccounts<'a, 'b> {
 
     pub metadata: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub stake_pool: &'b solana_program::account_info::AccountInfo<'a>,
+    pub pool_manager: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub vault: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -368,7 +368,7 @@ pub struct InitializePoolManagerCpi<'a, 'b> {
 
     pub metadata: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub stake_pool: &'b solana_program::account_info::AccountInfo<'a>,
+    pub pool_manager: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub vault: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -398,7 +398,7 @@ impl<'a, 'b> InitializePoolManagerCpi<'a, 'b> {
             base_mint: accounts.base_mint,
             x_mint: accounts.x_mint,
             metadata: accounts.metadata,
-            stake_pool: accounts.stake_pool,
+            pool_manager: accounts.pool_manager,
             vault: accounts.vault,
             owner: accounts.owner,
             rent: accounts.rent,
@@ -456,7 +456,7 @@ impl<'a, 'b> InitializePoolManagerCpi<'a, 'b> {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.stake_pool.key,
+            *self.pool_manager.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
@@ -510,7 +510,7 @@ impl<'a, 'b> InitializePoolManagerCpi<'a, 'b> {
         account_infos.push(self.base_mint.clone());
         account_infos.push(self.x_mint.clone());
         account_infos.push(self.metadata.clone());
-        account_infos.push(self.stake_pool.clone());
+        account_infos.push(self.pool_manager.clone());
         account_infos.push(self.vault.clone());
         account_infos.push(self.owner.clone());
         account_infos.push(self.rent.clone());
@@ -537,7 +537,7 @@ impl<'a, 'b> InitializePoolManagerCpi<'a, 'b> {
 ///   0. `[]` base_mint
 ///   1. `[writable]` x_mint
 ///   2. `[writable]` metadata
-///   3. `[writable]` stake_pool
+///   3. `[writable]` pool_manager
 ///   4. `[writable]` vault
 ///   5. `[writable, signer]` owner
 ///   6. `[]` rent
@@ -556,7 +556,7 @@ impl<'a, 'b> InitializePoolManagerCpiBuilder<'a, 'b> {
             base_mint: None,
             x_mint: None,
             metadata: None,
-            stake_pool: None,
+            pool_manager: None,
             vault: None,
             owner: None,
             rent: None,
@@ -600,11 +600,11 @@ impl<'a, 'b> InitializePoolManagerCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn stake_pool(
+    pub fn pool_manager(
         &mut self,
-        stake_pool: &'b solana_program::account_info::AccountInfo<'a>,
+        pool_manager: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.stake_pool = Some(stake_pool);
+        self.instruction.pool_manager = Some(pool_manager);
         self
     }
     #[inline(always)]
@@ -750,7 +750,10 @@ impl<'a, 'b> InitializePoolManagerCpiBuilder<'a, 'b> {
 
             metadata: self.instruction.metadata.expect("metadata is not set"),
 
-            stake_pool: self.instruction.stake_pool.expect("stake_pool is not set"),
+            pool_manager: self
+                .instruction
+                .pool_manager
+                .expect("pool_manager is not set"),
 
             vault: self.instruction.vault.expect("vault is not set"),
 
@@ -791,7 +794,7 @@ struct InitializePoolManagerCpiBuilderInstruction<'a, 'b> {
     base_mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     x_mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     metadata: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    stake_pool: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    pool_manager: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     vault: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     owner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     rent: Option<&'b solana_program::account_info::AccountInfo<'a>>,

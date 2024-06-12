@@ -16,5 +16,7 @@ export * from './stake';
 export * from './toggleActive';
 export * from './unstake';
 export * from './updateAnnualYield';
-export * from './updateTokenManager';
+export * from './updatePoolManager';
+export * from './updateTokenManagerAdmin';
+export * from './updateTokenManagerOwner';
 export * from './withdrawFunds';

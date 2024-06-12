@@ -1,11 +1,9 @@
-pub mod constants;
 pub mod error;
 pub mod instructions;
 pub mod state;
 
 use anchor_lang::prelude::*;
 
-pub use constants::*;
 pub use error::*;
 pub use instructions::*;
 pub use state::*;
@@ -35,11 +33,18 @@ pub mod sold_issuance {
         toggle_active::handler(ctx, active)
     }
 
-    pub fn update_token_manager(
-        ctx: Context<UpdateTokenManager>,
-        params: UpdateTokenManagerParams,
+    pub fn update_token_manager_admin(
+        ctx: Context<UpdateTokenManagerAdmin>,
+        params: UpdateTokenManagerAdminParams,
     ) -> Result<()> {
-        update_token_manager::handler(ctx, params)
+        update_token_manager_admin::handler(ctx, params)
+    }
+
+    pub fn update_token_manager_owner(
+        ctx: Context<UpdateTokenManagerOwner>,
+        params: UpdateTokenManagerOwnerParams,
+    ) -> Result<()> {
+        update_token_manager_owner::handler(ctx, params)
     }
 
     pub fn withdraw_funds(ctx: Context<WithdrawFunds>, quantity: u64) -> Result<()> {

@@ -5,8 +5,8 @@
 //! [https://github.com/metaplex-foundation/kinobi]
 //!
 
-pub(crate) mod r#stake_pool;
+pub(crate) mod r#pool_manager;
 pub(crate) mod r#token_manager;
 
-pub use self::r#stake_pool::*;
+pub use self::r#pool_manager::*;
 pub use self::r#token_manager::*;

@@ -35,7 +35,7 @@ export type DepositFundsInstructionAccounts = {
   quoteMint: PublicKey | Pda;
   authorityQuoteMintAta: PublicKey | Pda;
   vault: PublicKey | Pda;
-  authority?: Signer;
+  admin: Signer;
   rent?: PublicKey | Pda;
   systemProgram?: PublicKey | Pda;
   tokenProgram?: PublicKey | Pda;
@@ -78,7 +78,7 @@ export type DepositFundsInstructionArgs = DepositFundsInstructionDataArgs;
 
 // Instruction.
 export function depositFunds(
-  context: Pick<Context, 'identity' | 'programs'>,
+  context: Pick<Context, 'programs'>,
   input: DepositFundsInstructionAccounts & DepositFundsInstructionArgs
 ): TransactionBuilder {
   // Program ID.
@@ -109,10 +109,10 @@ export function depositFunds(
       isWritable: true as boolean,
       value: input.vault ?? null,
     },
-    authority: {
+    admin: {
       index: 4,
       isWritable: true as boolean,
-      value: input.authority ?? null,
+      value: input.admin ?? null,
     },
     rent: { index: 5, isWritable: false as boolean, value: input.rent ?? null },
     systemProgram: {
@@ -136,9 +136,6 @@ export function depositFunds(
   const resolvedArgs: DepositFundsInstructionArgs = { ...input };
 
   // Default values.
-  if (!resolvedAccounts.authority.value) {
-    resolvedAccounts.authority.value = context.identity;
-  }
   if (!resolvedAccounts.rent.value) {
     resolvedAccounts.rent.value = publicKey(
       'SysvarRent111111111111111111111111111111111'
