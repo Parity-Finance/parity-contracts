@@ -8,7 +8,7 @@
 use solana_program::{pubkey, pubkey::Pubkey};
 
 /// `sold_issuance` program ID.
-pub const SOLD_ISSUANCE_ID: Pubkey = pubkey!("3ja6s1Pb55nhzhwYp4GY77n972iEQtWX55xoRwP2asCT");
+pub const SOLD_ISSUANCE_ID: Pubkey = pubkey!("77xdxhr4M3Y4tizBUp3yNpw9NfqpfxDaHxVdS4DqrDf2");
 
 /// `sold_staking` program ID.
-pub const SOLD_STAKING_ID: Pubkey = pubkey!("F9pkhuLyu1usfS5p6RCuXxeS2TQsAVqANo1M2iC8ze1t");
+pub const SOLD_STAKING_ID: Pubkey = pubkey!("8mtouzv4S2HHmjNsPtctuKcseioXmTgAdigdaX7AqfLt");

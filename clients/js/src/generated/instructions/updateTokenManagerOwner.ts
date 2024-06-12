@@ -96,7 +96,7 @@ export function updateTokenManagerOwner(
   // Program ID.
   const programId = context.programs.getPublicKey(
     'soldIssuance',
-    '3ja6s1Pb55nhzhwYp4GY77n972iEQtWX55xoRwP2asCT'
+    '77xdxhr4M3Y4tizBUp3yNpw9NfqpfxDaHxVdS4DqrDf2'
   );
 
   // Accounts.

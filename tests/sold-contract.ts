@@ -110,7 +110,7 @@ describe.only("sold-issuance", () => {
     }
   })
 
-  it("Token manager is initialized!", async () => {
+  it.only("Token manager is initialized!", async () => {
     const merkleRoot = getMerkleRoot(allowedWallets);
 
     let txBuilder = new TransactionBuilder();
@@ -157,7 +157,7 @@ describe.only("sold-issuance", () => {
     assert.equal(tokenManagerAcc.totalCollateral, 0, "Token manager's total collateral should be zero");
   });
 
-  it("Stake Pool is initialized!", async () => {
+  it.only("Stake Pool is initialized!", async () => {
     let txBuilder = new TransactionBuilder();
 
     txBuilder = txBuilder.add(initializePoolManager(umi, {
@@ -189,7 +189,7 @@ describe.only("sold-issuance", () => {
     assert.equal(stakePoolAcc.xSupply, 0n);
   });
 
-  it("Sold can be minted for USDC", async () => {
+  it.only("Sold can be minted for USDC", async () => {
     const quantity = 10000 * 10 ** baseMintDecimals;
 
     const proof = getMerkleProof(allowedWallets, keypair.publicKey.toBase58());
@@ -654,7 +654,7 @@ describe.only("sold-issuance", () => {
   });
 
   // Stake Program
-  it("baseMint can be staked for xMint", async () => {
+  it.only("baseMint can be staked for xMint", async () => {
     const quantity = 1000 * 10 ** baseMintDecimals;
 
     let txBuilder = new TransactionBuilder();
@@ -709,7 +709,7 @@ describe.only("sold-issuance", () => {
     chaiAssert.closeTo(Number(stakePoolAcc.xSupply), Number(_stakePoolAcc.xSupply) + Number(expectedxMintAmount), 300000, "xSupply is not correct");
   })
 
-  it("baseMint can be unstaked by redeeming xMint", async () => {
+  it.only("baseMint can be unstaked by redeeming xMint", async () => {
     // const quantity = 10000 * 10 ** baseMintDecimals;
     let txBuilder = new TransactionBuilder();
 
@@ -770,7 +770,7 @@ describe.only("sold-issuance", () => {
     chaiAssert.equal(stakePoolAcc.xSupply, _stakePoolAcc.xSupply - expectedxMintAmount, "xSupply is not correct");
   })
 
-  it("should update the annual yield rate of the stake pool", async function () {
+  it.only("should update the annual yield rate of the stake pool", async function () {
     const annualYieldRate = 2500;
 
     let txBuilder = new TransactionBuilder();

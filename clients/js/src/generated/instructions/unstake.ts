@@ -82,7 +82,7 @@ export function unstake(
   // Program ID.
   const programId = context.programs.getPublicKey(
     'soldStaking',
-    'F9pkhuLyu1usfS5p6RCuXxeS2TQsAVqANo1M2iC8ze1t'
+    '8mtouzv4S2HHmjNsPtctuKcseioXmTgAdigdaX7AqfLt'
   );
 
   // Accounts.
