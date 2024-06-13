@@ -1,4 +1,4 @@
-import { publicKey, PublicKey, TransactionBuilder, Umi } from "@metaplex-foundation/umi";
+import { publicKey, TransactionBuilder, Umi } from "@metaplex-foundation/umi";
 import { findMetadataPda } from "@metaplex-foundation/mpl-token-metadata";
 import { findAssociatedTokenPda, SPL_ASSOCIATED_TOKEN_PROGRAM_ID } from "@metaplex-foundation/mpl-toolbox"
 import { findPoolManagerPda, findTokenManagerPda, initializePoolManager, initializeTokenManager, SOLD_ISSUANCE_PROGRAM_ID, SOLD_STAKING_PROGRAM_ID } from "../generated";
@@ -9,7 +9,7 @@ export type SetupOptions = {
     baseMintSymbol: string,
     baseMintName: string,
     baseMintUri: string,
-    quoteMint: PublicKey,
+    quoteMint: string,
     exchangeRate: number,
     stakingInitialExchangeRate: number,
     emergencyFundBasisPoints: number,
@@ -26,7 +26,7 @@ export async function setup(umi: Umi, setupOptions: SetupOptions) {
     const tokenManager = findTokenManagerPda(umi)[0];
     const poolManager = findPoolManagerPda(umi)[0];
 
-    const vaultIssuance = findAssociatedTokenPda(umi, { owner: tokenManager, mint: setupOptions.quoteMint });
+    const vaultIssuance = findAssociatedTokenPda(umi, { owner: tokenManager, mint: publicKey(setupOptions.quoteMint) });
     const vaultStaking = findAssociatedTokenPda(umi, { owner: poolManager, mint: baseMint })
 
     const baseMetadata = findMetadataPda(umi, { mint: baseMint })
@@ -51,7 +51,7 @@ export async function setup(umi: Umi, setupOptions: SetupOptions) {
         vault: vaultIssuance,
         metadata: baseMetadata,
         mint: baseMint,
-        quoteMint: setupOptions.quoteMint,
+        quoteMint: publicKey(setupOptions.quoteMint),
         associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
         name: setupOptions.baseMintName,
         symbol: setupOptions.baseMintSymbol,
