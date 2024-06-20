@@ -37,41 +37,17 @@ pub struct WithdrawFunds<'info> {
     pub associated_token_program: Program<'info, AssociatedToken>,
 }
 
-pub fn handler(ctx: Context<WithdrawFunds>, quantity: u64) -> Result<()> {
+pub fn handler(ctx: Context<WithdrawFunds>) -> Result<()> {
     let token_manager = &mut ctx.accounts.token_manager;
+    let pending_withdrawal_amount = token_manager.pending_withdrawal_amount;
 
-    // Check done in accounts struct
-    // let _authority = &ctx.accounts.authority;
-
-    let quote_amount = quantity;
-
-    if quote_amount > token_manager.total_collateral {
-        return err!(SoldIssuanceError::ExcessiveWithdrawal);
+    // Checks
+    if token_manager.pending_withdrawal_amount == 0 {
+        return err!(SoldIssuanceError::NoPendingWithdrawal);
     }
 
-    // Check if withdrawal amount exceeds threshold of the total collateral
-    let min_required_collateral = token_manager
-        .total_supply
-        .checked_div(10u64.pow(token_manager.mint_decimals.into()))
-        .ok_or(SoldIssuanceError::CalculationOverflow)?
-        .checked_mul(token_manager.exchange_rate)
-        .ok_or(SoldIssuanceError::CalculationOverflow)?
-        .checked_div(10u64.pow(token_manager.mint_decimals.into()))
-        .ok_or(SoldIssuanceError::CalculationOverflow)?
-        .checked_mul(token_manager.emergency_fund_basis_points as u64)
-        .ok_or(SoldIssuanceError::CalculationOverflow)?
-        .checked_div(10000)
-        .ok_or(SoldIssuanceError::CalculationOverflow)?
-        .checked_mul(10u64.pow(token_manager.quote_mint_decimals.into()))
-        .ok_or(SoldIssuanceError::CalculationOverflow)?;
-
-    let new_total_collateral = token_manager
-        .total_collateral
-        .checked_sub(quote_amount)
-        .ok_or(SoldIssuanceError::CalculationOverflow)?;
-
-    if new_total_collateral < min_required_collateral {
-        return err!(SoldIssuanceError::ExcessiveWithdrawal);
+    if Clock::get()?.unix_timestamp < token_manager.withdrawal_initiation_time + 3600 {
+        return err!(SoldIssuanceError::WithdrawalNotReady);
     }
 
     // Withdraw
@@ -89,15 +65,18 @@ pub fn handler(ctx: Context<WithdrawFunds>, quantity: u64) -> Result<()> {
             },
             signer_seeds,
         ),
-        quote_amount,
+        pending_withdrawal_amount,
         ctx.accounts.quote_mint.decimals,
     )?;
 
     // Update token_manager
     token_manager.total_collateral = token_manager
         .total_collateral
-        .checked_sub(quote_amount)
+        .checked_sub(pending_withdrawal_amount)
         .ok_or(SoldIssuanceError::CalculationOverflow)?;
+
+    token_manager.pending_withdrawal_amount = 0;
+    token_manager.withdrawal_initiation_time = 0;
 
     Ok(())
 }

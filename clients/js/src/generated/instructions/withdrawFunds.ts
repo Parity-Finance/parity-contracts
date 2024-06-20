@@ -20,7 +20,6 @@ import {
   array,
   mapSerializer,
   struct,
-  u64,
   u8,
 } from '@metaplex-foundation/umi/serializers';
 import {
@@ -43,12 +42,9 @@ export type WithdrawFundsInstructionAccounts = {
 };
 
 // Data.
-export type WithdrawFundsInstructionData = {
-  discriminator: Array<number>;
-  quantity: bigint;
-};
+export type WithdrawFundsInstructionData = { discriminator: Array<number> };
 
-export type WithdrawFundsInstructionDataArgs = { quantity: number | bigint };
+export type WithdrawFundsInstructionDataArgs = {};
 
 export function getWithdrawFundsInstructionDataSerializer(): Serializer<
   WithdrawFundsInstructionDataArgs,
@@ -60,10 +56,7 @@ export function getWithdrawFundsInstructionDataSerializer(): Serializer<
     WithdrawFundsInstructionData
   >(
     struct<WithdrawFundsInstructionData>(
-      [
-        ['discriminator', array(u8(), { size: 8 })],
-        ['quantity', u64()],
-      ],
+      [['discriminator', array(u8(), { size: 8 })]],
       { description: 'WithdrawFundsInstructionData' }
     ),
     (value) => ({
@@ -76,13 +69,10 @@ export function getWithdrawFundsInstructionDataSerializer(): Serializer<
   >;
 }
 
-// Args.
-export type WithdrawFundsInstructionArgs = WithdrawFundsInstructionDataArgs;
-
 // Instruction.
 export function withdrawFunds(
   context: Pick<Context, 'programs'>,
-  input: WithdrawFundsInstructionAccounts & WithdrawFundsInstructionArgs
+  input: WithdrawFundsInstructionAccounts
 ): TransactionBuilder {
   // Program ID.
   const programId = context.programs.getPublicKey(
@@ -135,9 +125,6 @@ export function withdrawFunds(
     },
   } satisfies ResolvedAccountsWithIndices;
 
-  // Arguments.
-  const resolvedArgs: WithdrawFundsInstructionArgs = { ...input };
-
   // Default values.
   if (!resolvedAccounts.rent.value) {
     resolvedAccounts.rent.value = publicKey(
@@ -172,9 +159,7 @@ export function withdrawFunds(
   );
 
   // Data.
-  const data = getWithdrawFundsInstructionDataSerializer().serialize(
-    resolvedArgs as WithdrawFundsInstructionDataArgs
-  );
+  const data = getWithdrawFundsInstructionDataSerializer().serialize({});
 
   // Bytes Created On Chain.
   const bytesCreatedOnChain = 0;

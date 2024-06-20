@@ -201,6 +201,32 @@ nameToErrorMap.set(
   SiInvalidToggleActiveAuthorityError
 );
 
+/** NoPendingWithdrawal: No pending withdrawal */
+export class SiNoPendingWithdrawalError extends ProgramError {
+  override readonly name: string = 'NoPendingWithdrawal';
+
+  readonly code: number = 0x177d; // 6013
+
+  constructor(program: Program, cause?: Error) {
+    super('No pending withdrawal', program, cause);
+  }
+}
+codeToErrorMap.set(0x177d, SiNoPendingWithdrawalError);
+nameToErrorMap.set('NoPendingWithdrawal', SiNoPendingWithdrawalError);
+
+/** WithdrawalNotReady: Withdrawal not ready */
+export class SiWithdrawalNotReadyError extends ProgramError {
+  override readonly name: string = 'WithdrawalNotReady';
+
+  readonly code: number = 0x177e; // 6014
+
+  constructor(program: Program, cause?: Error) {
+    super('Withdrawal not ready', program, cause);
+  }
+}
+codeToErrorMap.set(0x177e, SiWithdrawalNotReadyError);
+nameToErrorMap.set('WithdrawalNotReady', SiWithdrawalNotReadyError);
+
 /**
  * Attempts to resolve a custom program error from the provided error code.
  * @category Errors

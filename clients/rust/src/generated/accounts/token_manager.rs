@@ -59,6 +59,8 @@ pub struct TokenManager {
     pub current_slot_redemption_volume: u64,
     pub active: bool,
     pub emergency_fund_basis_points: u16,
+    pub pending_withdrawal_amount: u64,
+    pub withdrawal_initiation_time: i64,
     pub total_supply: u64,
     pub total_collateral: u64,
 }

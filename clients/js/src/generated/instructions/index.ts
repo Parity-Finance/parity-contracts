@@ -9,6 +9,7 @@
 export * from './depositFunds';
 export * from './initializePoolManager';
 export * from './initializeTokenManager';
+export * from './initializeWithdrawFunds';
 export * from './mint';
 export * from './mintAdmin';
 export * from './redeem';

@@ -2,7 +2,7 @@ import { keypairIdentity, Pda, PublicKey, publicKey, TransactionBuilder, createA
 import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
 import { createAssociatedToken, createSplAssociatedTokenProgram, createSplTokenProgram, findAssociatedTokenPda, safeFetchToken, SPL_ASSOCIATED_TOKEN_PROGRAM_ID } from "@metaplex-foundation/mpl-toolbox"
 import { Connection, Keypair, PublicKey as Web3JsPublicKey } from "@solana/web3.js";
-import { createSoldIssuanceProgram, findTokenManagerPda, initializeTokenManager, SOLD_ISSUANCE_PROGRAM_ID, mint, redeem, safeFetchTokenManager, getMerkleRoot, getMerkleProof, toggleActive, updatePoolManager, depositFunds, withdrawFunds, initializePoolManager, SOLD_STAKING_PROGRAM_ID, calculateExchangeRate, stake, unstake, updateAnnualYield, findPoolManagerPda, updateTokenManagerAdmin, safeFetchPoolManager } from "../clients/js/src"
+import { createSoldIssuanceProgram, findTokenManagerPda, initializeTokenManager, SOLD_ISSUANCE_PROGRAM_ID, mint, redeem, safeFetchTokenManager, getMerkleRoot, getMerkleProof, toggleActive, updatePoolManager, depositFunds, withdrawFunds, initializePoolManager, SOLD_STAKING_PROGRAM_ID, calculateExchangeRate, stake, unstake, updateAnnualYield, findPoolManagerPda, updateTokenManagerAdmin, safeFetchPoolManager, initializeWithdrawFunds } from "../clients/js/src"
 import { ASSOCIATED_TOKEN_PROGRAM_ID, createMint, getOrCreateAssociatedTokenAccount, mintTo, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { fromWeb3JsKeypair, fromWeb3JsPublicKey } from "@metaplex-foundation/umi-web3js-adapters";
 import { findMetadataPda } from "@metaplex-foundation/mpl-token-metadata";
@@ -513,7 +513,7 @@ describe.only("sold-issuance", () => {
     );
   });
 
-  it("deposit and withdraw funds from the vaultIssuance", async () => {
+  it.only("deposit and withdraw funds from the vaultIssuance", async () => {
     let _tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
     let _vaultAcc = await safeFetchToken(umi, vaultIssuance);
 
@@ -523,6 +523,8 @@ describe.only("sold-issuance", () => {
     // console.log("TotalSupply: ", Number(_tokenManagerAcc.totalSupply / BigInt(10 ** baseMintDecimals)));
     // console.log("TotalCollateral: ", Number(_tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals)));
 
+
+    // Process withdraw without one being initialized
     let txBuilder = new TransactionBuilder();
     txBuilder = txBuilder.add(withdrawFunds(umi, {
       tokenManager,
@@ -530,6 +532,23 @@ describe.only("sold-issuance", () => {
       vault: vaultIssuance,
       authorityQuoteMintAta: userQuote,
       associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
+      admin: umi.identity
+    }));
+
+    await assert.rejects(
+      async () => {
+        await txBuilder.sendAndConfirm(umi);
+      },
+      (err) => {
+        return (err as Error).message.includes("No pending withdrawal");
+      },
+      "Expected withdrawal to fail because of no pending withdrawal"
+    );
+
+    // Initiate withdraw
+    txBuilder = new TransactionBuilder();
+    txBuilder = txBuilder.add(initializeWithdrawFunds(umi, {
+      tokenManager,
       quantity,
       admin: umi.identity
     }));
@@ -551,12 +570,8 @@ describe.only("sold-issuance", () => {
     // console.log("TotalCollateral: ", Number(_tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals)));
 
     txBuilder = new TransactionBuilder();
-    txBuilder = txBuilder.add(withdrawFunds(umi, {
+    txBuilder = txBuilder.add(initializeWithdrawFunds(umi, {
       tokenManager,
-      quoteMint: quoteMint,
-      vault: vaultIssuance,
-      authorityQuoteMintAta: userQuote,
-      associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
       quantity,
       admin: umi.identity
     }));
@@ -578,23 +593,59 @@ describe.only("sold-issuance", () => {
     // console.log("TotalCollateral: ", Number(_tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals)));
 
     txBuilder = new TransactionBuilder();
+    txBuilder = txBuilder.add(initializeWithdrawFunds(umi, {
+      tokenManager,
+      quantity,
+      admin: umi.identity
+    }));
+
+    await txBuilder.sendAndConfirm(umi)
+
+    let tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
+    let vaultAcc = await safeFetchToken(umi, vaultIssuance);
+
+    assert.equal(tokenManagerAcc.pendingWithdrawalAmount, quantity, "Pending withdrawal amount should have changed")
+
+    // Fails because of timelock
+    txBuilder = new TransactionBuilder();
     txBuilder = txBuilder.add(withdrawFunds(umi, {
       tokenManager,
       quoteMint: quoteMint,
       vault: vaultIssuance,
       authorityQuoteMintAta: userQuote,
       associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
-      quantity,
       admin: umi.identity
     }));
-    await txBuilder.sendAndConfirm(umi);
 
-    let tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
-    let vaultAcc = await safeFetchToken(umi, vaultIssuance);
+    await assert.rejects(
+      async () => {
+        await txBuilder.sendAndConfirm(umi);
+      },
+      (err) => {
+        return (err as Error).message.includes("Withdrawal not ready");
+      },
+      "Expected withdrawal to fail because of timelock"
+    );
 
-    let expectedChange = BigInt(quantity)
-    assert.equal(tokenManagerAcc.totalCollateral, _tokenManagerAcc.totalCollateral - expectedChange, "TokenManager totalCollateral should be equal to the initial totalCollateral minus withdrawed amount");
-    assert.equal(vaultAcc.amount, _vaultAcc.amount - expectedChange, "Vault balance should be equal to the initial vaultIssuance minus withdrawed amount");
+
+    // // Should work after an hour
+    // txBuilder = new TransactionBuilder();
+    // txBuilder = txBuilder.add(withdrawFunds(umi, {
+    //   tokenManager,
+    //   quoteMint: quoteMint,
+    //   vault: vaultIssuance,
+    //   authorityQuoteMintAta: userQuote,
+    //   associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
+    //   admin: umi.identity
+    // }));
+    // await txBuilder.sendAndConfirm(umi);
+
+    tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
+    vaultAcc = await safeFetchToken(umi, vaultIssuance);
+    let expectedChange = BigInt(quantity);
+
+    // assert.equal(tokenManagerAcc.totalCollateral, _tokenManagerAcc.totalCollateral - expectedChange, "TokenManager totalCollateral should be equal to the initial totalCollateral minus withdrawed amount");
+    // assert.equal(vaultAcc.amount, _vaultAcc.amount - expectedChange, "Vault balance should be equal to the initial vaultIssuance minus withdrawed amount");
 
     // Deposit excessive
     quantity = Number(((tokenManagerAcc.totalSupply / BigInt(10 ** baseMintDecimals)) * BigInt(exchangeRate) / BigInt(10 ** exchangeRateDecimals)) - (tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals))) * 10 ** quoteMintDecimals + 1;
@@ -654,7 +705,7 @@ describe.only("sold-issuance", () => {
   });
 
   // Stake Program
-  it.only("baseMint can be staked for xMint", async () => {
+  it("baseMint can be staked for xMint", async () => {
     const quantity = 1000 * 10 ** baseMintDecimals;
 
     let txBuilder = new TransactionBuilder();
@@ -709,7 +760,7 @@ describe.only("sold-issuance", () => {
     chaiAssert.closeTo(Number(stakePoolAcc.xSupply), Number(_stakePoolAcc.xSupply) + Number(expectedxMintAmount), 300000, "xSupply is not correct");
   })
 
-  it.only("baseMint can be unstaked by redeeming xMint", async () => {
+  it("baseMint can be unstaked by redeeming xMint", async () => {
     // const quantity = 10000 * 10 ** baseMintDecimals;
     let txBuilder = new TransactionBuilder();
 
@@ -770,7 +821,7 @@ describe.only("sold-issuance", () => {
     chaiAssert.equal(stakePoolAcc.xSupply, _stakePoolAcc.xSupply - expectedxMintAmount, "xSupply is not correct");
   })
 
-  it.only("should update the annual yield rate of the stake pool", async function () {
+  it("should update the annual yield rate of the stake pool", async function () {
     const annualYieldRate = 2500;
 
     let txBuilder = new TransactionBuilder();

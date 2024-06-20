@@ -24,6 +24,7 @@ import {
   array,
   bool,
   bytes,
+  i64,
   mapSerializer,
   publicKey as publicKeySerializer,
   string,
@@ -55,6 +56,8 @@ export type TokenManagerAccountData = {
   currentSlotRedemptionVolume: bigint;
   active: boolean;
   emergencyFundBasisPoints: number;
+  pendingWithdrawalAmount: bigint;
+  withdrawalInitiationTime: bigint;
   totalSupply: bigint;
   totalCollateral: bigint;
 };
@@ -78,6 +81,8 @@ export type TokenManagerAccountDataArgs = {
   currentSlotRedemptionVolume: number | bigint;
   active: boolean;
   emergencyFundBasisPoints: number;
+  pendingWithdrawalAmount: number | bigint;
+  withdrawalInitiationTime: number | bigint;
   totalSupply: number | bigint;
   totalCollateral: number | bigint;
 };
@@ -112,6 +117,8 @@ export function getTokenManagerAccountDataSerializer(): Serializer<
         ['currentSlotRedemptionVolume', u64()],
         ['active', bool()],
         ['emergencyFundBasisPoints', u16()],
+        ['pendingWithdrawalAmount', u64()],
+        ['withdrawalInitiationTime', i64()],
         ['totalSupply', u64()],
         ['totalCollateral', u64()],
       ],
@@ -210,6 +217,8 @@ export function getTokenManagerGpaBuilder(
       currentSlotRedemptionVolume: number | bigint;
       active: boolean;
       emergencyFundBasisPoints: number;
+      pendingWithdrawalAmount: number | bigint;
+      withdrawalInitiationTime: number | bigint;
       totalSupply: number | bigint;
       totalCollateral: number | bigint;
     }>({
@@ -232,6 +241,8 @@ export function getTokenManagerGpaBuilder(
       currentSlotRedemptionVolume: [null, u64()],
       active: [null, bool()],
       emergencyFundBasisPoints: [null, u16()],
+      pendingWithdrawalAmount: [null, u64()],
+      withdrawalInitiationTime: [null, i64()],
       totalSupply: [null, u64()],
       totalCollateral: [null, u64()],
     })

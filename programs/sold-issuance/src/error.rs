@@ -28,4 +28,8 @@ pub enum SoldIssuanceError {
     InvalidMinter,
     #[msg("Invalid toggle active authority")]
     InvalidToggleActiveAuthority,
+    #[msg("No pending withdrawal")]
+    NoPendingWithdrawal,
+    #[msg("Withdrawal not ready")]
+    WithdrawalNotReady,
 }

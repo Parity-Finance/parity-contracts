@@ -47,8 +47,15 @@ pub mod sold_issuance {
         update_token_manager_owner::handler(ctx, params)
     }
 
-    pub fn withdraw_funds(ctx: Context<WithdrawFunds>, quantity: u64) -> Result<()> {
-        withdraw_funds::handler(ctx, quantity)
+    pub fn initialize_withdraw_funds(
+        ctx: Context<InitializeWithdrawFunds>,
+        quantity: u64,
+    ) -> Result<()> {
+        initialize_withdraw_funds::handler(ctx, quantity)
+    }
+
+    pub fn withdraw_funds(ctx: Context<WithdrawFunds>) -> Result<()> {
+        withdraw_funds::handler(ctx)
     }
 
     pub fn deposit_funds(ctx: Context<DepositFunds>, quantity: u64) -> Result<()> {

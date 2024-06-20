@@ -8,6 +8,7 @@
 pub(crate) mod r#deposit_funds;
 pub(crate) mod r#initialize_pool_manager;
 pub(crate) mod r#initialize_token_manager;
+pub(crate) mod r#initialize_withdraw_funds;
 pub(crate) mod r#mint;
 pub(crate) mod r#mint_admin;
 pub(crate) mod r#redeem;
@@ -23,6 +24,7 @@ pub(crate) mod r#withdraw_funds;
 pub use self::r#deposit_funds::*;
 pub use self::r#initialize_pool_manager::*;
 pub use self::r#initialize_token_manager::*;
+pub use self::r#initialize_withdraw_funds::*;
 pub use self::r#mint::*;
 pub use self::r#mint_admin::*;
 pub use self::r#redeem::*;

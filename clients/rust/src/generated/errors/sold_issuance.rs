@@ -49,6 +49,12 @@ pub enum SoldIssuanceError {
     /// 6012 (0x177C) - Invalid toggle active authority
     #[error("Invalid toggle active authority")]
     InvalidToggleActiveAuthority,
+    /// 6013 (0x177D) - No pending withdrawal
+    #[error("No pending withdrawal")]
+    NoPendingWithdrawal,
+    /// 6014 (0x177E) - Withdrawal not ready
+    #[error("Withdrawal not ready")]
+    WithdrawalNotReady,
 }
 
 impl solana_program::program_error::PrintProgramError for SoldIssuanceError {

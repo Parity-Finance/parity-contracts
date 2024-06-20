@@ -136,5 +136,8 @@ pub fn handler(
     token_manager.mint_limit_per_slot = params.mint_limit_per_slot;
     token_manager.redemption_limit_per_slot = params.redemption_limit_per_slot;
 
+    token_manager.pending_withdrawal_amount = 0;
+    token_manager.withdrawal_initiation_time = 0;
+
     Ok(())
 }

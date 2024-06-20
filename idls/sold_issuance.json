@@ -282,6 +282,27 @@
       ]
     },
     {
+      "name": "initializeWithdrawFunds",
+      "accounts": [
+        {
+          "name": "tokenManager",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "admin",
+          "isMut": true,
+          "isSigner": true
+        }
+      ],
+      "args": [
+        {
+          "name": "quantity",
+          "type": "u64"
+        }
+      ]
+    },
+    {
       "name": "withdrawFunds",
       "accounts": [
         {
@@ -330,12 +351,7 @@
           "isSigner": false
         }
       ],
-      "args": [
-        {
-          "name": "quantity",
-          "type": "u64"
-        }
-      ]
+      "args": []
     },
     {
       "name": "depositFunds",
@@ -524,6 +540,14 @@
           {
             "name": "emergencyFundBasisPoints",
             "type": "u16"
+          },
+          {
+            "name": "pendingWithdrawalAmount",
+            "type": "u64"
+          },
+          {
+            "name": "withdrawalInitiationTime",
+            "type": "i64"
           },
           {
             "name": "totalSupply",
@@ -738,6 +762,16 @@
       "code": 6012,
       "name": "InvalidToggleActiveAuthority",
       "msg": "Invalid toggle active authority"
+    },
+    {
+      "code": 6013,
+      "name": "NoPendingWithdrawal",
+      "msg": "No pending withdrawal"
+    },
+    {
+      "code": 6014,
+      "name": "WithdrawalNotReady",
+      "msg": "Withdrawal not ready"
     }
   ],
   "metadata": {
