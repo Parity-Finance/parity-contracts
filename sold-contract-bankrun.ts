@@ -1,16 +1,33 @@
 import { keypairIdentity, Pda, PublicKey, publicKey, TransactionBuilder, createAmount, some } from "@metaplex-foundation/umi";
 import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
 import { createAssociatedToken, createSplAssociatedTokenProgram, createSplTokenProgram, findAssociatedTokenPda, safeFetchToken, SPL_ASSOCIATED_TOKEN_PROGRAM_ID } from "@metaplex-foundation/mpl-toolbox"
-import { Connection, Keypair, PublicKey as Web3JsPublicKey } from "@solana/web3.js";
-import { createSoldIssuanceProgram, findTokenManagerPda, initializeTokenManager, SOLD_ISSUANCE_PROGRAM_ID, mint, redeem, safeFetchTokenManager, getMerkleRoot, getMerkleProof, toggleActive, updatePoolManager, depositFunds, withdrawFunds, initializePoolManager, SOLD_STAKING_PROGRAM_ID, calculateExchangeRate, stake, unstake, updateAnnualYield, findPoolManagerPda, updateTokenManagerAdmin, safeFetchPoolManager, initializeWithdrawFunds } from "../clients/js/src"
-import { ASSOCIATED_TOKEN_PROGRAM_ID, createMint, getOrCreateAssociatedTokenAccount, mintTo, TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import { fromWeb3JsKeypair, fromWeb3JsPublicKey } from "@metaplex-foundation/umi-web3js-adapters";
+import { Connection, Keypair, PublicKey as Web3JsPublicKey, Transaction, SystemProgram } from "@solana/web3.js";
+import { createSoldIssuanceProgram, findTokenManagerPda, initializeTokenManager, SOLD_ISSUANCE_PROGRAM_ID, mint, redeem, safeFetchTokenManager, getMerkleRoot, getMerkleProof, toggleActive, updatePoolManager, depositFunds, withdrawFunds, initializePoolManager, SOLD_STAKING_PROGRAM_ID, calculateExchangeRate, stake, unstake, updateAnnualYield, findPoolManagerPda, updateTokenManagerAdmin, safeFetchPoolManager, initializeWithdrawFunds } from "./clients/js/src"
+import { ASSOCIATED_TOKEN_PROGRAM_ID, getAssociatedTokenAddressSync, createAssociatedTokenAccountInstruction, createInitializeMintInstruction, createMint, getMinimumBalanceForRentExemptMint, getOrCreateAssociatedTokenAccount, MINT_SIZE, mintTo, TOKEN_PROGRAM_ID, createMintToCheckedInstruction } from "@solana/spl-token";
+import { fromWeb3JsKeypair, fromWeb3JsPublicKey, toWeb3JsTransaction } from "@metaplex-foundation/umi-web3js-adapters";
 import { findMetadataPda } from "@metaplex-foundation/mpl-token-metadata";
 import assert from 'assert';
 import chai, { assert as chaiAssert } from 'chai';
+import { BanksClient, ProgramTestContext, start } from "solana-bankrun";
 
-describe.only("sold-issuance", () => {
+const umiBankrun = (context: ProgramTestContext) => {
+  const client = context.banksClient;
+  console.log(context.payer);
+  console.log(context.lastBlockhash);
+
+  const umi = createUmi("http://localhost:8899");
+  umi.programs.add(createSplAssociatedTokenProgram());
+  umi.programs.add(createSplTokenProgram());
+  umi.programs.add(createSoldIssuanceProgram())
+
+  umi.use(keypairIdentity(fromWeb3JsKeypair(context.payer)))
+
+  return { umi, client };
+}
+
+describe("sold-issuance", () => {
   let umi = createUmi("http://localhost:8899");
+  let client: BanksClient;
   umi.programs.add(createSplAssociatedTokenProgram());
   umi.programs.add(createSplTokenProgram());
   umi.programs.add(createSoldIssuanceProgram())
@@ -61,48 +78,91 @@ describe.only("sold-issuance", () => {
 
   before(async () => {
     try {
-      await umi.rpc.airdrop(umi.identity.publicKey, createAmount(100_000 * 10 ** 9, "SOL", 9), { commitment: "finalized" })
+      const context = await start([{ name: "sold_issuance", programId: new Web3JsPublicKey("77xdxhr4M3Y4tizBUp3yNpw9NfqpfxDaHxVdS4DqrDf2") }, { name: "sold_staking", programId: new Web3JsPublicKey("8mtouzv4S2HHmjNsPtctuKcseioXmTgAdigdaX7AqfLt") }], []);
 
-      const quoteMintWeb3js = await createMint(
-        connection,
-        keypair,
-        keypair.publicKey,
-        keypair.publicKey,
-        quoteMintDecimals // Decimals
-      );
+      const { umi: umiWithBankrunPayer, client: bankrunClient } = umiBankrun(context);
+      umi = umiWithBankrunPayer
+      client = bankrunClient
 
-      console.log("Created USDC: ", quoteMintWeb3js.toBase58());
+      // console.log("Requsting Airdrop");
 
-      const userUsdcInfo = await getOrCreateAssociatedTokenAccount(
-        connection,
-        keypair,
-        quoteMintWeb3js,
-        keypair.publicKey,
-        false,
-        "confirmed",
-        {
-          commitment: "confirmed",
-        },
-        TOKEN_PROGRAM_ID,
-        ASSOCIATED_TOKEN_PROGRAM_ID
-      );
+      // await umi.rpc.airdrop(umi.identity.publicKey, createAmount(100_000 * 10 ** 9, "SOL", 9), { commitment: "finalized" })
 
-      await mintTo(
-        connection,
-        keypair,
-        quoteMintWeb3js,
-        userUsdcInfo.address,
-        keypair.publicKey,
-        100_000_000 * 10 ** quoteMintDecimals,
-        [],
-        {
-          commitment: "confirmed",
-        },
-        TOKEN_PROGRAM_ID
-      );
+      // console.log("Requested Airdrop");
 
-      userQuote = fromWeb3JsPublicKey(userUsdcInfo.address);
-      quoteMint = fromWeb3JsPublicKey(quoteMintWeb3js)
+      // const quoteMintWeb3js = await createMint(
+      //   connection,
+      //   keypair,
+      //   keypair.publicKey,
+      //   keypair.publicKey,
+      //   quoteMintDecimals // Decimals
+      // );
+
+      const quoteMintWeb3Js = Keypair.generate().publicKey
+      const userQuoteMint = getAssociatedTokenAddressSync(quoteMintWeb3Js, context.payer.publicKey, false)
+
+      let tx = new Transaction();
+
+      tx = tx.add(SystemProgram.createAccount({
+        fromPubkey: context.payer.publicKey,
+        newAccountPubkey: Keypair.generate().publicKey,
+        space: MINT_SIZE,
+        lamports: await getMinimumBalanceForRentExemptMint(connection),
+        programId: TOKEN_PROGRAM_ID,
+      })).add(createInitializeMintInstruction(
+        quoteMintWeb3Js,
+        quoteMintDecimals,
+        context.payer.publicKey,
+        context.payer.publicKey
+      )).add(
+        createAssociatedTokenAccountInstruction(
+          context.payer.publicKey,
+          userQuoteMint,
+          context.payer.publicKey,
+          quoteMintWeb3Js,
+        )
+      ).add(
+        createMintToCheckedInstruction(
+          quoteMintWeb3Js,
+          context.payer.publicKey,
+          context.payer.publicKey,
+          100_000_000 * 10 ** quoteMintDecimals,
+          quoteMintDecimals
+        )
+      )
+
+      console.log("Created USDC: ", quoteMintWeb3Js.toBase58());
+
+      // const userUsdcInfo = await getOrCreateAssociatedTokenAccount(
+      //   connection,
+      //   keypair,
+      //   quoteMintWeb3js,
+      //   keypair.publicKey,
+      //   false,
+      //   "confirmed",
+      //   {
+      //     commitment: "confirmed",
+      //   },
+      //   TOKEN_PROGRAM_ID,
+      //   ASSOCIATED_TOKEN_PROGRAM_ID
+      // );
+
+      // await mintTo(
+      //   connection,
+      //   keypair,
+      //   quoteMintWeb3js,
+      //   userUsdcInfo.address,
+      //   keypair.publicKey,
+      //   100_000_000 * 10 ** quoteMintDecimals,
+      //   [],
+      //   {
+      //     commitment: "confirmed",
+      //   },
+      //   TOKEN_PROGRAM_ID
+      // );
+
+      userQuote = publicKey(userQuoteMint)
+      quoteMint = publicKey(quoteMintWeb3Js)
 
       vaultIssuance = findAssociatedTokenPda(umi, { owner: tokenManager[0], mint: quoteMint });
     } catch (error) {
@@ -137,17 +197,20 @@ describe.only("sold-issuance", () => {
       redemptionLimitPerSlot,
     }))
 
-    await txBuilder.sendAndConfirm(umi);
+    // TODO:
+    // const web3Tx = toWeb3JsTransaction()
+
+    // const res = await client.processTransaction()
+    // console.log(res);
+
+
+    // await txBuilder.sendAndConfirm(umi);
 
     const tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
 
-    const expectedMerkleRoot = merkleRoot.length === 0 ?
-      new Array(32).fill(0) :
-      Array.from(merkleRoot);
-
     assert.deepStrictEqual(
-      tokenManagerAcc.merkleRoot,
-      Uint8Array.from(expectedMerkleRoot),
+      new Uint8Array(tokenManagerAcc.merkleRoot),
+      new Uint8Array(merkleRoot),
       "Merkle root in token manager account should match expected merkle root"
     );
     assert.equal(tokenManagerAcc.mint, baseMint[0], "Token manager's mint should match the base mint");

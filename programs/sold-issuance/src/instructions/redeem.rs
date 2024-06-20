@@ -58,12 +58,18 @@ pub fn handler(ctx: Context<RedeemTokens>, quantity: u64, proof: Vec<[u8; 32]>) 
     }
 
     // Allow List Check
-    let leaf = solana_program::keccak::hashv(&[payer.key().to_string().as_bytes()]);
-
+    let empty_merkle_root = [0u8; 32];
     let merkle_root = &token_manager.merkle_root;
 
-    if !verify_merkle_proof(proof, merkle_root, &leaf.0) {
-        return err!(SoldIssuanceError::AddressNotFoundInAllowedList);
+    if merkle_root == &empty_merkle_root {
+        // If the Merkle root is from an empty array, allow all
+    } else {
+        // Allow List Check
+        let leaf = solana_program::keccak::hashv(&[payer.key().to_string().as_bytes()]);
+        // Proceed with normal verification
+        if !verify_merkle_proof(proof, merkle_root, &leaf.0) {
+            return err!(SoldIssuanceError::AddressNotFoundInAllowedList);
+        }
     }
 
     // Block Limit check
