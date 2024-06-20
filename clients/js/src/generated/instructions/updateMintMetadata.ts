@@ -94,7 +94,7 @@ export function updateMintMetadata(
   // Program ID.
   const programId = context.programs.getPublicKey(
     'soldIssuance',
-    '77xdxhr4M3Y4tizBUp3yNpw9NfqpfxDaHxVdS4DqrDf2'
+    'Ev4vixMJX6Czywj7TSjnmBapdoYmZkpVwU3cpT2akgYG'
   );
 
   // Accounts.

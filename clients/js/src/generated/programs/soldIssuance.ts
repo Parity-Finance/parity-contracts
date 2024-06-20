@@ -18,7 +18,7 @@ import {
 } from '../errors';
 
 export const SOLD_ISSUANCE_PROGRAM_ID =
-  '77xdxhr4M3Y4tizBUp3yNpw9NfqpfxDaHxVdS4DqrDf2' as PublicKey<'77xdxhr4M3Y4tizBUp3yNpw9NfqpfxDaHxVdS4DqrDf2'>;
+  'Ev4vixMJX6Czywj7TSjnmBapdoYmZkpVwU3cpT2akgYG' as PublicKey<'Ev4vixMJX6Czywj7TSjnmBapdoYmZkpVwU3cpT2akgYG'>;
 
 export function createSoldIssuanceProgram(): Program {
   return {

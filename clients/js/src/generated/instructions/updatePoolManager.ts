@@ -88,7 +88,7 @@ export function updatePoolManager(
   // Program ID.
   const programId = context.programs.getPublicKey(
     'soldStaking',
-    '8mtouzv4S2HHmjNsPtctuKcseioXmTgAdigdaX7AqfLt'
+    '9PEGJqYZCKBWvX6X652MCKJkT7WthKYo3ypYqyVV8dJ5'
   );
 
   // Accounts.
