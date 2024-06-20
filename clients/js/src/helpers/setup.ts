@@ -17,6 +17,8 @@ export type SetupOptions = {
     mintLimitPerSlot: number,
     redemptionLimitPerSlot: number,
     allowList: string[],
+    withdrawExecutionWindow: number,
+    withdrawTimeLock: number
 }
 
 export async function setup(umi: Umi, setupOptions: SetupOptions) {
@@ -65,6 +67,8 @@ export async function setup(umi: Umi, setupOptions: SetupOptions) {
         gateKeepers: [],
         mintLimitPerSlot: setupOptions.mintLimitPerSlot,
         redemptionLimitPerSlot: setupOptions.redemptionLimitPerSlot,
+        withdrawExecutionWindow: setupOptions.withdrawExecutionWindow,
+        withdrawTimeLock: setupOptions.withdrawTimeLock
     })).add(initializePoolManager(umi, {
         poolManager,
         vault: vaultStaking,
