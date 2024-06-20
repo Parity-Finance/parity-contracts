@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-use crate::TokenManager;
+use crate::{SoldIssuanceError, TokenManager};
 
 #[derive(AnchorSerialize, AnchorDeserialize, Debug, Clone)]
 pub struct UpdateTokenManagerAdminParams {
@@ -18,7 +18,8 @@ pub struct UpdateTokenManagerAdmin<'info> {
         bump = token_manager.bump
     )]
     pub token_manager: Account<'info, TokenManager>,
-    pub authority: Signer<'info>,
+    #[account(address = token_manager.owner @ SoldIssuanceError::InvalidAdmin)]
+    pub admin: Signer<'info>,
 }
 
 pub fn handler(
@@ -26,9 +27,6 @@ pub fn handler(
     params: UpdateTokenManagerAdminParams,
 ) -> Result<()> {
     let token_manager = &mut ctx.accounts.token_manager;
-
-    // TODO: Authority Check
-    let _authority = &ctx.accounts.authority;
 
     if let Some(new_merkle_root) = params.new_merkle_root {
         token_manager.merkle_root = new_merkle_root;

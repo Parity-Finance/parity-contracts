@@ -60,6 +60,9 @@ describe("sold-issuance", () => {
   const mintLimitPerSlot = 5000 * 10 ** baseMintDecimals;
   const redemptionLimitPerSlot = 5000 * 10 ** baseMintDecimals;
 
+  const withdrawExecutionWindow = 3600;
+  const withdrawTimeLock = 3600;
+
   // Staking Program
   let poolManager = findPoolManagerPda(umi)[0];
   let tokenManager = findTokenManagerPda(umi);
@@ -195,6 +198,8 @@ describe("sold-issuance", () => {
       gateKeepers: [],
       mintLimitPerSlot,
       redemptionLimitPerSlot,
+      withdrawExecutionWindow,
+      withdrawTimeLock
     }))
 
     // TODO:
@@ -463,6 +468,7 @@ describe("sold-issuance", () => {
       newGateKeepers: null,
       newMintLimitPerSlot: null,
       newRedemptionLimitPerSlot: null,
+      admin: null,
     }));
     await txBuilder.sendAndConfirm(umi);
 
@@ -528,6 +534,7 @@ describe("sold-issuance", () => {
       newGateKeepers: null,
       newMintLimitPerSlot: null,
       newRedemptionLimitPerSlot: null,
+      admin: null
     }));
     await txBuilder.sendAndConfirm(umi);
 

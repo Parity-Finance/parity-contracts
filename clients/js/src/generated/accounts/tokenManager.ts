@@ -58,6 +58,8 @@ export type TokenManagerAccountData = {
   emergencyFundBasisPoints: number;
   pendingWithdrawalAmount: bigint;
   withdrawalInitiationTime: bigint;
+  withdrawTimeLock: bigint;
+  withdrawExecutionWindow: bigint;
   totalSupply: bigint;
   totalCollateral: bigint;
 };
@@ -83,6 +85,8 @@ export type TokenManagerAccountDataArgs = {
   emergencyFundBasisPoints: number;
   pendingWithdrawalAmount: number | bigint;
   withdrawalInitiationTime: number | bigint;
+  withdrawTimeLock: number | bigint;
+  withdrawExecutionWindow: number | bigint;
   totalSupply: number | bigint;
   totalCollateral: number | bigint;
 };
@@ -119,6 +123,8 @@ export function getTokenManagerAccountDataSerializer(): Serializer<
         ['emergencyFundBasisPoints', u16()],
         ['pendingWithdrawalAmount', u64()],
         ['withdrawalInitiationTime', i64()],
+        ['withdrawTimeLock', i64()],
+        ['withdrawExecutionWindow', i64()],
         ['totalSupply', u64()],
         ['totalCollateral', u64()],
       ],
@@ -219,6 +225,8 @@ export function getTokenManagerGpaBuilder(
       emergencyFundBasisPoints: number;
       pendingWithdrawalAmount: number | bigint;
       withdrawalInitiationTime: number | bigint;
+      withdrawTimeLock: number | bigint;
+      withdrawExecutionWindow: number | bigint;
       totalSupply: number | bigint;
       totalCollateral: number | bigint;
     }>({
@@ -243,6 +251,8 @@ export function getTokenManagerGpaBuilder(
       emergencyFundBasisPoints: [null, u16()],
       pendingWithdrawalAmount: [null, u64()],
       withdrawalInitiationTime: [null, i64()],
+      withdrawTimeLock: [null, i64()],
+      withdrawExecutionWindow: [null, i64()],
       totalSupply: [null, u64()],
       totalCollateral: [null, u64()],
     })

@@ -15,7 +15,7 @@ use solana_program::pubkey::Pubkey;
 pub struct UpdateTokenManagerAdmin {
     pub token_manager: solana_program::pubkey::Pubkey,
 
-    pub authority: solana_program::pubkey::Pubkey,
+    pub admin: solana_program::pubkey::Pubkey,
 }
 
 impl UpdateTokenManagerAdmin {
@@ -37,8 +37,7 @@ impl UpdateTokenManagerAdmin {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.authority,
-            true,
+            self.admin, true,
         ));
         accounts.extend_from_slice(remaining_accounts);
         let mut data = UpdateTokenManagerAdminInstructionData::new()
@@ -85,11 +84,11 @@ pub struct UpdateTokenManagerAdminInstructionArgs {
 /// ### Accounts:
 ///
 ///   0. `[writable]` token_manager
-///   1. `[signer]` authority
+///   1. `[signer]` admin
 #[derive(Default)]
 pub struct UpdateTokenManagerAdminBuilder {
     token_manager: Option<solana_program::pubkey::Pubkey>,
-    authority: Option<solana_program::pubkey::Pubkey>,
+    admin: Option<solana_program::pubkey::Pubkey>,
     new_merkle_root: Option<[u8; 32]>,
     new_gate_keepers: Option<Vec<Pubkey>>,
     new_mint_limit_per_slot: Option<u64>,
@@ -107,8 +106,8 @@ impl UpdateTokenManagerAdminBuilder {
         self
     }
     #[inline(always)]
-    pub fn authority(&mut self, authority: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.authority = Some(authority);
+    pub fn admin(&mut self, admin: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.admin = Some(admin);
         self
     }
     /// `[optional argument]`
@@ -160,7 +159,7 @@ impl UpdateTokenManagerAdminBuilder {
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
         let accounts = UpdateTokenManagerAdmin {
             token_manager: self.token_manager.expect("token_manager is not set"),
-            authority: self.authority.expect("authority is not set"),
+            admin: self.admin.expect("admin is not set"),
         };
         let args = UpdateTokenManagerAdminInstructionArgs {
             new_merkle_root: self.new_merkle_root.clone(),
@@ -177,7 +176,7 @@ impl UpdateTokenManagerAdminBuilder {
 pub struct UpdateTokenManagerAdminCpiAccounts<'a, 'b> {
     pub token_manager: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub authority: &'b solana_program::account_info::AccountInfo<'a>,
+    pub admin: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
 /// `update_token_manager_admin` CPI instruction.
@@ -187,7 +186,7 @@ pub struct UpdateTokenManagerAdminCpi<'a, 'b> {
 
     pub token_manager: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub authority: &'b solana_program::account_info::AccountInfo<'a>,
+    pub admin: &'b solana_program::account_info::AccountInfo<'a>,
     /// The arguments for the instruction.
     pub __args: UpdateTokenManagerAdminInstructionArgs,
 }
@@ -201,7 +200,7 @@ impl<'a, 'b> UpdateTokenManagerAdminCpi<'a, 'b> {
         Self {
             __program: program,
             token_manager: accounts.token_manager,
-            authority: accounts.authority,
+            admin: accounts.admin,
             __args: args,
         }
     }
@@ -244,7 +243,7 @@ impl<'a, 'b> UpdateTokenManagerAdminCpi<'a, 'b> {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.authority.key,
+            *self.admin.key,
             true,
         ));
         remaining_accounts.iter().for_each(|remaining_account| {
@@ -268,7 +267,7 @@ impl<'a, 'b> UpdateTokenManagerAdminCpi<'a, 'b> {
         let mut account_infos = Vec::with_capacity(2 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.token_manager.clone());
-        account_infos.push(self.authority.clone());
+        account_infos.push(self.admin.clone());
         remaining_accounts
             .iter()
             .for_each(|remaining_account| account_infos.push(remaining_account.0.clone()));
@@ -286,7 +285,7 @@ impl<'a, 'b> UpdateTokenManagerAdminCpi<'a, 'b> {
 /// ### Accounts:
 ///
 ///   0. `[writable]` token_manager
-///   1. `[signer]` authority
+///   1. `[signer]` admin
 pub struct UpdateTokenManagerAdminCpiBuilder<'a, 'b> {
     instruction: Box<UpdateTokenManagerAdminCpiBuilderInstruction<'a, 'b>>,
 }
@@ -296,7 +295,7 @@ impl<'a, 'b> UpdateTokenManagerAdminCpiBuilder<'a, 'b> {
         let instruction = Box::new(UpdateTokenManagerAdminCpiBuilderInstruction {
             __program: program,
             token_manager: None,
-            authority: None,
+            admin: None,
             new_merkle_root: None,
             new_gate_keepers: None,
             new_mint_limit_per_slot: None,
@@ -314,11 +313,8 @@ impl<'a, 'b> UpdateTokenManagerAdminCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn authority(
-        &mut self,
-        authority: &'b solana_program::account_info::AccountInfo<'a>,
-    ) -> &mut Self {
-        self.instruction.authority = Some(authority);
+    pub fn admin(&mut self, admin: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
+        self.instruction.admin = Some(admin);
         self
     }
     /// `[optional argument]`
@@ -403,7 +399,7 @@ impl<'a, 'b> UpdateTokenManagerAdminCpiBuilder<'a, 'b> {
                 .token_manager
                 .expect("token_manager is not set"),
 
-            authority: self.instruction.authority.expect("authority is not set"),
+            admin: self.instruction.admin.expect("admin is not set"),
             __args: args,
         };
         instruction.invoke_signed_with_remaining_accounts(
@@ -416,7 +412,7 @@ impl<'a, 'b> UpdateTokenManagerAdminCpiBuilder<'a, 'b> {
 struct UpdateTokenManagerAdminCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     token_manager: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    admin: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     new_merkle_root: Option<[u8; 32]>,
     new_gate_keepers: Option<Vec<Pubkey>>,
     new_mint_limit_per_slot: Option<u64>,

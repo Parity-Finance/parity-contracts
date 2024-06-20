@@ -32,4 +32,6 @@ pub enum SoldIssuanceError {
     NoPendingWithdrawal,
     #[msg("Withdrawal not ready")]
     WithdrawalNotReady,
+    #[msg("Withdrawal expired")]
+    WithdrawalExpired,
 }

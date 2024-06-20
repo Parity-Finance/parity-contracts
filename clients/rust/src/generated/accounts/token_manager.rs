@@ -61,6 +61,8 @@ pub struct TokenManager {
     pub emergency_fund_basis_points: u16,
     pub pending_withdrawal_amount: u64,
     pub withdrawal_initiation_time: i64,
+    pub withdraw_time_lock: i64,
+    pub withdraw_execution_window: i64,
     pub total_supply: u64,
     pub total_collateral: u64,
 }

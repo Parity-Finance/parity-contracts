@@ -8,6 +8,8 @@ pub struct UpdateTokenManagerOwnerParams {
     pub new_admin: Option<Pubkey>,
     pub new_minter: Option<Pubkey>,
     pub emergency_fund_basis_points: Option<u16>,
+    pub new_withdraw_time_lock: Option<i64>,
+    pub new_withdraw_execution_window: Option<i64>,
 }
 
 #[derive(Accounts)]
@@ -41,6 +43,13 @@ pub fn handler(
 
     if let Some(emergency_fund_basis_points) = params.emergency_fund_basis_points {
         token_manager.emergency_fund_basis_points = emergency_fund_basis_points;
+    }
+
+    if let Some(withdraw_time_lock) = params.new_withdraw_time_lock {
+        token_manager.withdraw_time_lock = withdraw_time_lock;
+    }
+    if let Some(withdraw_execution_window) = params.new_withdraw_execution_window {
+        token_manager.withdraw_execution_window = withdraw_execution_window
     }
 
     Ok(())

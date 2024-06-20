@@ -42,4 +42,13 @@ pub mod sold_staking {
     ) -> Result<()> {
         update_pool_manager::handler(ctx, params)
     }
+
+    pub fn update_xmint_metadata(
+        ctx: Context<UpdateXmintMetadata>,
+        name: String,
+        symbol: String,
+        uri: String,
+    ) -> Result<()> {
+        update_xmint_metadata::handler(ctx, name, symbol, uri)
+    }
 }

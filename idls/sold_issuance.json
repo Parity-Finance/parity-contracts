@@ -244,7 +244,7 @@
           "isSigner": false
         },
         {
-          "name": "authority",
+          "name": "admin",
           "isMut": false,
           "isSigner": true
         }
@@ -454,6 +454,55 @@
           "type": "u64"
         }
       ]
+    },
+    {
+      "name": "updateMintMetadata",
+      "accounts": [
+        {
+          "name": "tokenManager",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "metadataAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenMetadataProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "symbol",
+          "type": "string"
+        },
+        {
+          "name": "uri",
+          "type": "string"
+        }
+      ]
     }
   ],
   "accounts": [
@@ -550,6 +599,14 @@
             "type": "i64"
           },
           {
+            "name": "withdrawTimeLock",
+            "type": "i64"
+          },
+          {
+            "name": "withdrawExecutionWindow",
+            "type": "i64"
+          },
+          {
             "name": "totalSupply",
             "type": "u64"
           },
@@ -621,6 +678,14 @@
           {
             "name": "redemptionLimitPerSlot",
             "type": "u64"
+          },
+          {
+            "name": "withdrawTimeLock",
+            "type": "i64"
+          },
+          {
+            "name": "withdrawExecutionWindow",
+            "type": "i64"
           }
         ]
       }
@@ -691,6 +756,18 @@
             "name": "emergencyFundBasisPoints",
             "type": {
               "option": "u16"
+            }
+          },
+          {
+            "name": "newWithdrawTimeLock",
+            "type": {
+              "option": "i64"
+            }
+          },
+          {
+            "name": "newWithdrawExecutionWindow",
+            "type": {
+              "option": "i64"
             }
           }
         ]
@@ -772,6 +849,11 @@
       "code": 6014,
       "name": "WithdrawalNotReady",
       "msg": "Withdrawal not ready"
+    },
+    {
+      "code": 6015,
+      "name": "WithdrawalExpired",
+      "msg": "Withdrawal expired"
     }
   ],
   "metadata": {

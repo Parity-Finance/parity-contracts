@@ -36,7 +36,7 @@ import {
 // Accounts.
 export type UpdateTokenManagerAdminInstructionAccounts = {
   tokenManager: PublicKey | Pda;
-  authority?: Signer;
+  admin: Signer;
 };
 
 // Data.
@@ -90,7 +90,7 @@ export type UpdateTokenManagerAdminInstructionArgs =
 
 // Instruction.
 export function updateTokenManagerAdmin(
-  context: Pick<Context, 'identity' | 'programs'>,
+  context: Pick<Context, 'programs'>,
   input: UpdateTokenManagerAdminInstructionAccounts &
     UpdateTokenManagerAdminInstructionArgs
 ): TransactionBuilder {
@@ -107,20 +107,15 @@ export function updateTokenManagerAdmin(
       isWritable: true as boolean,
       value: input.tokenManager ?? null,
     },
-    authority: {
+    admin: {
       index: 1,
       isWritable: false as boolean,
-      value: input.authority ?? null,
+      value: input.admin ?? null,
     },
   } satisfies ResolvedAccountsWithIndices;
 
   // Arguments.
   const resolvedArgs: UpdateTokenManagerAdminInstructionArgs = { ...input };
-
-  // Default values.
-  if (!resolvedAccounts.authority.value) {
-    resolvedAccounts.authority.value = context.identity;
-  }
 
   // Accounts in order.
   const orderedAccounts: ResolvedAccount[] = Object.values(

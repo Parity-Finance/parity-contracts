@@ -136,6 +136,8 @@ pub struct InitializeTokenManagerInstructionArgs {
     pub gate_keepers: Vec<Pubkey>,
     pub mint_limit_per_slot: u64,
     pub redemption_limit_per_slot: u64,
+    pub withdraw_time_lock: i64,
+    pub withdraw_execution_window: i64,
 }
 
 /// Instruction builder for `InitializeTokenManager`.
@@ -178,6 +180,8 @@ pub struct InitializeTokenManagerBuilder {
     gate_keepers: Option<Vec<Pubkey>>,
     mint_limit_per_slot: Option<u64>,
     redemption_limit_per_slot: Option<u64>,
+    withdraw_time_lock: Option<i64>,
+    withdraw_execution_window: Option<i64>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
@@ -310,6 +314,16 @@ impl InitializeTokenManagerBuilder {
         self.redemption_limit_per_slot = Some(redemption_limit_per_slot);
         self
     }
+    #[inline(always)]
+    pub fn withdraw_time_lock(&mut self, withdraw_time_lock: i64) -> &mut Self {
+        self.withdraw_time_lock = Some(withdraw_time_lock);
+        self
+    }
+    #[inline(always)]
+    pub fn withdraw_execution_window(&mut self, withdraw_execution_window: i64) -> &mut Self {
+        self.withdraw_execution_window = Some(withdraw_execution_window);
+        self
+    }
     /// Add an aditional account to the instruction.
     #[inline(always)]
     pub fn add_remaining_account(
@@ -379,6 +393,14 @@ impl InitializeTokenManagerBuilder {
                 .redemption_limit_per_slot
                 .clone()
                 .expect("redemption_limit_per_slot is not set"),
+            withdraw_time_lock: self
+                .withdraw_time_lock
+                .clone()
+                .expect("withdraw_time_lock is not set"),
+            withdraw_execution_window: self
+                .withdraw_execution_window
+                .clone()
+                .expect("withdraw_execution_window is not set"),
         };
 
         accounts.instruction_with_remaining_accounts(args, &self.__remaining_accounts)
@@ -629,6 +651,8 @@ impl<'a, 'b> InitializeTokenManagerCpiBuilder<'a, 'b> {
             gate_keepers: None,
             mint_limit_per_slot: None,
             redemption_limit_per_slot: None,
+            withdraw_time_lock: None,
+            withdraw_execution_window: None,
             __remaining_accounts: Vec::new(),
         });
         Self { instruction }
@@ -769,6 +793,16 @@ impl<'a, 'b> InitializeTokenManagerCpiBuilder<'a, 'b> {
         self.instruction.redemption_limit_per_slot = Some(redemption_limit_per_slot);
         self
     }
+    #[inline(always)]
+    pub fn withdraw_time_lock(&mut self, withdraw_time_lock: i64) -> &mut Self {
+        self.instruction.withdraw_time_lock = Some(withdraw_time_lock);
+        self
+    }
+    #[inline(always)]
+    pub fn withdraw_execution_window(&mut self, withdraw_execution_window: i64) -> &mut Self {
+        self.instruction.withdraw_execution_window = Some(withdraw_execution_window);
+        self
+    }
     /// Add an additional account to the instruction.
     #[inline(always)]
     pub fn add_remaining_account(
@@ -851,6 +885,16 @@ impl<'a, 'b> InitializeTokenManagerCpiBuilder<'a, 'b> {
                 .redemption_limit_per_slot
                 .clone()
                 .expect("redemption_limit_per_slot is not set"),
+            withdraw_time_lock: self
+                .instruction
+                .withdraw_time_lock
+                .clone()
+                .expect("withdraw_time_lock is not set"),
+            withdraw_execution_window: self
+                .instruction
+                .withdraw_execution_window
+                .clone()
+                .expect("withdraw_execution_window is not set"),
         };
         let instruction = InitializeTokenManagerCpi {
             __program: self.instruction.__program,
@@ -925,6 +969,8 @@ struct InitializeTokenManagerCpiBuilderInstruction<'a, 'b> {
     gate_keepers: Option<Vec<Pubkey>>,
     mint_limit_per_slot: Option<u64>,
     redemption_limit_per_slot: Option<u64>,
+    withdraw_time_lock: Option<i64>,
+    withdraw_execution_window: Option<i64>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(
         &'b solana_program::account_info::AccountInfo<'a>,

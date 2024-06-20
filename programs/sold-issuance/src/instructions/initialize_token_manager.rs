@@ -23,6 +23,8 @@ pub struct InitializeTokenManagerParams {
     pub gate_keepers: Vec<Pubkey>,
     pub mint_limit_per_slot: u64,
     pub redemption_limit_per_slot: u64,
+    pub withdraw_time_lock: i64,
+    pub withdraw_execution_window: i64,
 }
 
 #[derive(Accounts)]
@@ -138,6 +140,8 @@ pub fn handler(
 
     token_manager.pending_withdrawal_amount = 0;
     token_manager.withdrawal_initiation_time = 0;
+    token_manager.withdraw_time_lock = params.withdraw_time_lock;
+    token_manager.withdraw_execution_window = params.withdraw_execution_window;
 
     Ok(())
 }

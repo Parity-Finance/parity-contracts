@@ -65,4 +65,13 @@ pub mod sold_issuance {
     pub fn mint_admin(ctx: Context<MintAdminTokens>, quantity: u64) -> Result<()> {
         mint_admin::handler(ctx, quantity)
     }
+
+    pub fn update_mint_metadata(
+        ctx: Context<UpdateMintMetadata>,
+        name: String,
+        symbol: String,
+        uri: String,
+    ) -> Result<()> {
+        update_mint_metadata::handler(ctx, name, symbol, uri)
+    }
 }

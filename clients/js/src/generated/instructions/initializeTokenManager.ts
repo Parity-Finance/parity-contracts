@@ -19,6 +19,7 @@ import {
   Serializer,
   array,
   bytes,
+  i64,
   mapSerializer,
   publicKey as publicKeySerializer,
   string,
@@ -63,6 +64,8 @@ export type InitializeTokenManagerInstructionData = {
   gateKeepers: Array<PublicKey>;
   mintLimitPerSlot: bigint;
   redemptionLimitPerSlot: bigint;
+  withdrawTimeLock: bigint;
+  withdrawExecutionWindow: bigint;
 };
 
 export type InitializeTokenManagerInstructionDataArgs = {
@@ -78,6 +81,8 @@ export type InitializeTokenManagerInstructionDataArgs = {
   gateKeepers: Array<PublicKey>;
   mintLimitPerSlot: number | bigint;
   redemptionLimitPerSlot: number | bigint;
+  withdrawTimeLock: number | bigint;
+  withdrawExecutionWindow: number | bigint;
 };
 
 export function getInitializeTokenManagerInstructionDataSerializer(): Serializer<
@@ -104,6 +109,8 @@ export function getInitializeTokenManagerInstructionDataSerializer(): Serializer
         ['gateKeepers', array(publicKeySerializer())],
         ['mintLimitPerSlot', u64()],
         ['redemptionLimitPerSlot', u64()],
+        ['withdrawTimeLock', i64()],
+        ['withdrawExecutionWindow', i64()],
       ],
       { description: 'InitializeTokenManagerInstructionData' }
     ),

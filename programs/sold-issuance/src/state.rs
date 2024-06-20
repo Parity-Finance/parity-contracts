@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-pub const TOKEN_MANAGER_SIZE: usize = 8 + 4 + (32 * 11) + (8 * 9) + 2 + (1 * 4);
+pub const TOKEN_MANAGER_SIZE: usize = 8 + 4 + (32 * 11) + (8 * 11) + 2 + (1 * 4);
 
 #[account]
 pub struct TokenManager {
@@ -31,6 +31,8 @@ pub struct TokenManager {
     // Withdrawal
     pub pending_withdrawal_amount: u64,  // 8
     pub withdrawal_initiation_time: i64, // 8
+    pub withdraw_time_lock: i64,         // 8
+    pub withdraw_execution_window: i64,  // 8
 
     // Other
     pub total_supply: u64,     // 8

@@ -9,29 +9,36 @@
 use anchor_lang::prelude::{AnchorDeserialize, AnchorSerialize};
 #[cfg(not(feature = "anchor"))]
 use borsh::{BorshDeserialize, BorshSerialize};
-use solana_program::pubkey::Pubkey;
 
 /// Accounts.
-pub struct UpdateTokenManagerOwner {
+pub struct UpdateMintMetadata {
     pub token_manager: solana_program::pubkey::Pubkey,
 
     pub owner: solana_program::pubkey::Pubkey,
+
+    pub metadata_account: solana_program::pubkey::Pubkey,
+
+    pub rent: solana_program::pubkey::Pubkey,
+
+    pub token_metadata_program: solana_program::pubkey::Pubkey,
+
+    pub system_program: solana_program::pubkey::Pubkey,
 }
 
-impl UpdateTokenManagerOwner {
+impl UpdateMintMetadata {
     pub fn instruction(
         &self,
-        args: UpdateTokenManagerOwnerInstructionArgs,
+        args: UpdateMintMetadataInstructionArgs,
     ) -> solana_program::instruction::Instruction {
         self.instruction_with_remaining_accounts(args, &[])
     }
     #[allow(clippy::vec_init_then_push)]
     pub fn instruction_with_remaining_accounts(
         &self,
-        args: UpdateTokenManagerOwnerInstructionArgs,
+        args: UpdateMintMetadataInstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(2 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(6 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.token_manager,
             false,
@@ -39,8 +46,23 @@ impl UpdateTokenManagerOwner {
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.owner, true,
         ));
+        accounts.push(solana_program::instruction::AccountMeta::new(
+            self.metadata_account,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            self.rent, false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            self.token_metadata_program,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            self.system_program,
+            false,
+        ));
         accounts.extend_from_slice(remaining_accounts);
-        let mut data = UpdateTokenManagerOwnerInstructionData::new()
+        let mut data = UpdateMintMetadataInstructionData::new()
             .try_to_vec()
             .unwrap();
         let mut args = args.try_to_vec().unwrap();
@@ -56,14 +78,14 @@ impl UpdateTokenManagerOwner {
 
 #[cfg_attr(not(feature = "anchor"), derive(BorshSerialize, BorshDeserialize))]
 #[cfg_attr(feature = "anchor", derive(AnchorSerialize, AnchorDeserialize))]
-pub struct UpdateTokenManagerOwnerInstructionData {
+pub struct UpdateMintMetadataInstructionData {
     discriminator: [u8; 8],
 }
 
-impl UpdateTokenManagerOwnerInstructionData {
+impl UpdateMintMetadataInstructionData {
     pub fn new() -> Self {
         Self {
-            discriminator: [31, 16, 91, 211, 211, 16, 93, 144],
+            discriminator: [46, 244, 2, 123, 67, 219, 22, 121],
         }
     }
 }
@@ -72,35 +94,37 @@ impl UpdateTokenManagerOwnerInstructionData {
 #[cfg_attr(feature = "anchor", derive(AnchorSerialize, AnchorDeserialize))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct UpdateTokenManagerOwnerInstructionArgs {
-    pub new_owner: Option<Pubkey>,
-    pub new_admin: Option<Pubkey>,
-    pub new_minter: Option<Pubkey>,
-    pub emergency_fund_basis_points: Option<u16>,
-    pub new_withdraw_time_lock: Option<i64>,
-    pub new_withdraw_execution_window: Option<i64>,
+pub struct UpdateMintMetadataInstructionArgs {
+    pub name: String,
+    pub symbol: String,
+    pub uri: String,
 }
 
-/// Instruction builder for `UpdateTokenManagerOwner`.
+/// Instruction builder for `UpdateMintMetadata`.
 ///
 /// ### Accounts:
 ///
 ///   0. `[writable]` token_manager
 ///   1. `[signer]` owner
+///   2. `[writable]` metadata_account
+///   3. `[optional]` rent (default to `SysvarRent111111111111111111111111111111111`)
+///   4. `[optional]` token_metadata_program (default to `metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s`)
+///   5. `[optional]` system_program (default to `11111111111111111111111111111111`)
 #[derive(Default)]
-pub struct UpdateTokenManagerOwnerBuilder {
+pub struct UpdateMintMetadataBuilder {
     token_manager: Option<solana_program::pubkey::Pubkey>,
     owner: Option<solana_program::pubkey::Pubkey>,
-    new_owner: Option<Pubkey>,
-    new_admin: Option<Pubkey>,
-    new_minter: Option<Pubkey>,
-    emergency_fund_basis_points: Option<u16>,
-    new_withdraw_time_lock: Option<i64>,
-    new_withdraw_execution_window: Option<i64>,
+    metadata_account: Option<solana_program::pubkey::Pubkey>,
+    rent: Option<solana_program::pubkey::Pubkey>,
+    token_metadata_program: Option<solana_program::pubkey::Pubkey>,
+    system_program: Option<solana_program::pubkey::Pubkey>,
+    name: Option<String>,
+    symbol: Option<String>,
+    uri: Option<String>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
-impl UpdateTokenManagerOwnerBuilder {
+impl UpdateMintMetadataBuilder {
     pub fn new() -> Self {
         Self::default()
     }
@@ -114,43 +138,48 @@ impl UpdateTokenManagerOwnerBuilder {
         self.owner = Some(owner);
         self
     }
-    /// `[optional argument]`
     #[inline(always)]
-    pub fn new_owner(&mut self, new_owner: Pubkey) -> &mut Self {
-        self.new_owner = Some(new_owner);
-        self
-    }
-    /// `[optional argument]`
-    #[inline(always)]
-    pub fn new_admin(&mut self, new_admin: Pubkey) -> &mut Self {
-        self.new_admin = Some(new_admin);
-        self
-    }
-    /// `[optional argument]`
-    #[inline(always)]
-    pub fn new_minter(&mut self, new_minter: Pubkey) -> &mut Self {
-        self.new_minter = Some(new_minter);
-        self
-    }
-    /// `[optional argument]`
-    #[inline(always)]
-    pub fn emergency_fund_basis_points(&mut self, emergency_fund_basis_points: u16) -> &mut Self {
-        self.emergency_fund_basis_points = Some(emergency_fund_basis_points);
-        self
-    }
-    /// `[optional argument]`
-    #[inline(always)]
-    pub fn new_withdraw_time_lock(&mut self, new_withdraw_time_lock: i64) -> &mut Self {
-        self.new_withdraw_time_lock = Some(new_withdraw_time_lock);
-        self
-    }
-    /// `[optional argument]`
-    #[inline(always)]
-    pub fn new_withdraw_execution_window(
+    pub fn metadata_account(
         &mut self,
-        new_withdraw_execution_window: i64,
+        metadata_account: solana_program::pubkey::Pubkey,
     ) -> &mut Self {
-        self.new_withdraw_execution_window = Some(new_withdraw_execution_window);
+        self.metadata_account = Some(metadata_account);
+        self
+    }
+    /// `[optional account, default to 'SysvarRent111111111111111111111111111111111']`
+    #[inline(always)]
+    pub fn rent(&mut self, rent: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.rent = Some(rent);
+        self
+    }
+    /// `[optional account, default to 'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s']`
+    #[inline(always)]
+    pub fn token_metadata_program(
+        &mut self,
+        token_metadata_program: solana_program::pubkey::Pubkey,
+    ) -> &mut Self {
+        self.token_metadata_program = Some(token_metadata_program);
+        self
+    }
+    /// `[optional account, default to '11111111111111111111111111111111']`
+    #[inline(always)]
+    pub fn system_program(&mut self, system_program: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.system_program = Some(system_program);
+        self
+    }
+    #[inline(always)]
+    pub fn name(&mut self, name: String) -> &mut Self {
+        self.name = Some(name);
+        self
+    }
+    #[inline(always)]
+    pub fn symbol(&mut self, symbol: String) -> &mut Self {
+        self.symbol = Some(symbol);
+        self
+    }
+    #[inline(always)]
+    pub fn uri(&mut self, uri: String) -> &mut Self {
+        self.uri = Some(uri);
         self
     }
     /// Add an aditional account to the instruction.
@@ -173,52 +202,80 @@ impl UpdateTokenManagerOwnerBuilder {
     }
     #[allow(clippy::clone_on_copy)]
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
-        let accounts = UpdateTokenManagerOwner {
-            token_manager: self.token_manager.expect("token_manager is not set"),
-            owner: self.owner.expect("owner is not set"),
-        };
-        let args = UpdateTokenManagerOwnerInstructionArgs {
-            new_owner: self.new_owner.clone(),
-            new_admin: self.new_admin.clone(),
-            new_minter: self.new_minter.clone(),
-            emergency_fund_basis_points: self.emergency_fund_basis_points.clone(),
-            new_withdraw_time_lock: self.new_withdraw_time_lock.clone(),
-            new_withdraw_execution_window: self.new_withdraw_execution_window.clone(),
+        let accounts =
+            UpdateMintMetadata {
+                token_manager: self.token_manager.expect("token_manager is not set"),
+                owner: self.owner.expect("owner is not set"),
+                metadata_account: self.metadata_account.expect("metadata_account is not set"),
+                rent: self.rent.unwrap_or(solana_program::pubkey!(
+                    "SysvarRent111111111111111111111111111111111"
+                )),
+                token_metadata_program: self.token_metadata_program.unwrap_or(
+                    solana_program::pubkey!("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"),
+                ),
+                system_program: self
+                    .system_program
+                    .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
+            };
+        let args = UpdateMintMetadataInstructionArgs {
+            name: self.name.clone().expect("name is not set"),
+            symbol: self.symbol.clone().expect("symbol is not set"),
+            uri: self.uri.clone().expect("uri is not set"),
         };
 
         accounts.instruction_with_remaining_accounts(args, &self.__remaining_accounts)
     }
 }
 
-/// `update_token_manager_owner` CPI accounts.
-pub struct UpdateTokenManagerOwnerCpiAccounts<'a, 'b> {
+/// `update_mint_metadata` CPI accounts.
+pub struct UpdateMintMetadataCpiAccounts<'a, 'b> {
     pub token_manager: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub owner: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub metadata_account: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub rent: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub token_metadata_program: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
-/// `update_token_manager_owner` CPI instruction.
-pub struct UpdateTokenManagerOwnerCpi<'a, 'b> {
+/// `update_mint_metadata` CPI instruction.
+pub struct UpdateMintMetadataCpi<'a, 'b> {
     /// The program to invoke.
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub token_manager: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub owner: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub metadata_account: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub rent: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub token_metadata_program: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
     /// The arguments for the instruction.
-    pub __args: UpdateTokenManagerOwnerInstructionArgs,
+    pub __args: UpdateMintMetadataInstructionArgs,
 }
 
-impl<'a, 'b> UpdateTokenManagerOwnerCpi<'a, 'b> {
+impl<'a, 'b> UpdateMintMetadataCpi<'a, 'b> {
     pub fn new(
         program: &'b solana_program::account_info::AccountInfo<'a>,
-        accounts: UpdateTokenManagerOwnerCpiAccounts<'a, 'b>,
-        args: UpdateTokenManagerOwnerInstructionArgs,
+        accounts: UpdateMintMetadataCpiAccounts<'a, 'b>,
+        args: UpdateMintMetadataInstructionArgs,
     ) -> Self {
         Self {
             __program: program,
             token_manager: accounts.token_manager,
             owner: accounts.owner,
+            metadata_account: accounts.metadata_account,
+            rent: accounts.rent,
+            token_metadata_program: accounts.token_metadata_program,
+            system_program: accounts.system_program,
             __args: args,
         }
     }
@@ -255,7 +312,7 @@ impl<'a, 'b> UpdateTokenManagerOwnerCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(2 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(6 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.token_manager.key,
             false,
@@ -264,6 +321,22 @@ impl<'a, 'b> UpdateTokenManagerOwnerCpi<'a, 'b> {
             *self.owner.key,
             true,
         ));
+        accounts.push(solana_program::instruction::AccountMeta::new(
+            *self.metadata_account.key,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            *self.rent.key,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            *self.token_metadata_program.key,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            *self.system_program.key,
+            false,
+        ));
         remaining_accounts.iter().for_each(|remaining_account| {
             accounts.push(solana_program::instruction::AccountMeta {
                 pubkey: *remaining_account.0.key,
@@ -271,7 +344,7 @@ impl<'a, 'b> UpdateTokenManagerOwnerCpi<'a, 'b> {
                 is_writable: remaining_account.2,
             })
         });
-        let mut data = UpdateTokenManagerOwnerInstructionData::new()
+        let mut data = UpdateMintMetadataInstructionData::new()
             .try_to_vec()
             .unwrap();
         let mut args = self.__args.try_to_vec().unwrap();
@@ -282,10 +355,14 @@ impl<'a, 'b> UpdateTokenManagerOwnerCpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(2 + 1 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(6 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.token_manager.clone());
         account_infos.push(self.owner.clone());
+        account_infos.push(self.metadata_account.clone());
+        account_infos.push(self.rent.clone());
+        account_infos.push(self.token_metadata_program.clone());
+        account_infos.push(self.system_program.clone());
         remaining_accounts
             .iter()
             .for_each(|remaining_account| account_infos.push(remaining_account.0.clone()));
@@ -298,28 +375,33 @@ impl<'a, 'b> UpdateTokenManagerOwnerCpi<'a, 'b> {
     }
 }
 
-/// Instruction builder for `UpdateTokenManagerOwner` via CPI.
+/// Instruction builder for `UpdateMintMetadata` via CPI.
 ///
 /// ### Accounts:
 ///
 ///   0. `[writable]` token_manager
 ///   1. `[signer]` owner
-pub struct UpdateTokenManagerOwnerCpiBuilder<'a, 'b> {
-    instruction: Box<UpdateTokenManagerOwnerCpiBuilderInstruction<'a, 'b>>,
+///   2. `[writable]` metadata_account
+///   3. `[]` rent
+///   4. `[]` token_metadata_program
+///   5. `[]` system_program
+pub struct UpdateMintMetadataCpiBuilder<'a, 'b> {
+    instruction: Box<UpdateMintMetadataCpiBuilderInstruction<'a, 'b>>,
 }
 
-impl<'a, 'b> UpdateTokenManagerOwnerCpiBuilder<'a, 'b> {
+impl<'a, 'b> UpdateMintMetadataCpiBuilder<'a, 'b> {
     pub fn new(program: &'b solana_program::account_info::AccountInfo<'a>) -> Self {
-        let instruction = Box::new(UpdateTokenManagerOwnerCpiBuilderInstruction {
+        let instruction = Box::new(UpdateMintMetadataCpiBuilderInstruction {
             __program: program,
             token_manager: None,
             owner: None,
-            new_owner: None,
-            new_admin: None,
-            new_minter: None,
-            emergency_fund_basis_points: None,
-            new_withdraw_time_lock: None,
-            new_withdraw_execution_window: None,
+            metadata_account: None,
+            rent: None,
+            token_metadata_program: None,
+            system_program: None,
+            name: None,
+            symbol: None,
+            uri: None,
             __remaining_accounts: Vec::new(),
         });
         Self { instruction }
@@ -337,43 +419,48 @@ impl<'a, 'b> UpdateTokenManagerOwnerCpiBuilder<'a, 'b> {
         self.instruction.owner = Some(owner);
         self
     }
-    /// `[optional argument]`
     #[inline(always)]
-    pub fn new_owner(&mut self, new_owner: Pubkey) -> &mut Self {
-        self.instruction.new_owner = Some(new_owner);
-        self
-    }
-    /// `[optional argument]`
-    #[inline(always)]
-    pub fn new_admin(&mut self, new_admin: Pubkey) -> &mut Self {
-        self.instruction.new_admin = Some(new_admin);
-        self
-    }
-    /// `[optional argument]`
-    #[inline(always)]
-    pub fn new_minter(&mut self, new_minter: Pubkey) -> &mut Self {
-        self.instruction.new_minter = Some(new_minter);
-        self
-    }
-    /// `[optional argument]`
-    #[inline(always)]
-    pub fn emergency_fund_basis_points(&mut self, emergency_fund_basis_points: u16) -> &mut Self {
-        self.instruction.emergency_fund_basis_points = Some(emergency_fund_basis_points);
-        self
-    }
-    /// `[optional argument]`
-    #[inline(always)]
-    pub fn new_withdraw_time_lock(&mut self, new_withdraw_time_lock: i64) -> &mut Self {
-        self.instruction.new_withdraw_time_lock = Some(new_withdraw_time_lock);
-        self
-    }
-    /// `[optional argument]`
-    #[inline(always)]
-    pub fn new_withdraw_execution_window(
+    pub fn metadata_account(
         &mut self,
-        new_withdraw_execution_window: i64,
+        metadata_account: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.new_withdraw_execution_window = Some(new_withdraw_execution_window);
+        self.instruction.metadata_account = Some(metadata_account);
+        self
+    }
+    #[inline(always)]
+    pub fn rent(&mut self, rent: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
+        self.instruction.rent = Some(rent);
+        self
+    }
+    #[inline(always)]
+    pub fn token_metadata_program(
+        &mut self,
+        token_metadata_program: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.token_metadata_program = Some(token_metadata_program);
+        self
+    }
+    #[inline(always)]
+    pub fn system_program(
+        &mut self,
+        system_program: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.system_program = Some(system_program);
+        self
+    }
+    #[inline(always)]
+    pub fn name(&mut self, name: String) -> &mut Self {
+        self.instruction.name = Some(name);
+        self
+    }
+    #[inline(always)]
+    pub fn symbol(&mut self, symbol: String) -> &mut Self {
+        self.instruction.symbol = Some(symbol);
+        self
+    }
+    #[inline(always)]
+    pub fn uri(&mut self, uri: String) -> &mut Self {
+        self.instruction.uri = Some(uri);
         self
     }
     /// Add an additional account to the instruction.
@@ -417,15 +504,12 @@ impl<'a, 'b> UpdateTokenManagerOwnerCpiBuilder<'a, 'b> {
         &self,
         signers_seeds: &[&[&[u8]]],
     ) -> solana_program::entrypoint::ProgramResult {
-        let args = UpdateTokenManagerOwnerInstructionArgs {
-            new_owner: self.instruction.new_owner.clone(),
-            new_admin: self.instruction.new_admin.clone(),
-            new_minter: self.instruction.new_minter.clone(),
-            emergency_fund_basis_points: self.instruction.emergency_fund_basis_points.clone(),
-            new_withdraw_time_lock: self.instruction.new_withdraw_time_lock.clone(),
-            new_withdraw_execution_window: self.instruction.new_withdraw_execution_window.clone(),
+        let args = UpdateMintMetadataInstructionArgs {
+            name: self.instruction.name.clone().expect("name is not set"),
+            symbol: self.instruction.symbol.clone().expect("symbol is not set"),
+            uri: self.instruction.uri.clone().expect("uri is not set"),
         };
-        let instruction = UpdateTokenManagerOwnerCpi {
+        let instruction = UpdateMintMetadataCpi {
             __program: self.instruction.__program,
 
             token_manager: self
@@ -434,6 +518,23 @@ impl<'a, 'b> UpdateTokenManagerOwnerCpiBuilder<'a, 'b> {
                 .expect("token_manager is not set"),
 
             owner: self.instruction.owner.expect("owner is not set"),
+
+            metadata_account: self
+                .instruction
+                .metadata_account
+                .expect("metadata_account is not set"),
+
+            rent: self.instruction.rent.expect("rent is not set"),
+
+            token_metadata_program: self
+                .instruction
+                .token_metadata_program
+                .expect("token_metadata_program is not set"),
+
+            system_program: self
+                .instruction
+                .system_program
+                .expect("system_program is not set"),
             __args: args,
         };
         instruction.invoke_signed_with_remaining_accounts(
@@ -443,16 +544,17 @@ impl<'a, 'b> UpdateTokenManagerOwnerCpiBuilder<'a, 'b> {
     }
 }
 
-struct UpdateTokenManagerOwnerCpiBuilderInstruction<'a, 'b> {
+struct UpdateMintMetadataCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     token_manager: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     owner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    new_owner: Option<Pubkey>,
-    new_admin: Option<Pubkey>,
-    new_minter: Option<Pubkey>,
-    emergency_fund_basis_points: Option<u16>,
-    new_withdraw_time_lock: Option<i64>,
-    new_withdraw_execution_window: Option<i64>,
+    metadata_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    rent: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    token_metadata_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    name: Option<String>,
+    symbol: Option<String>,
+    uri: Option<String>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(
         &'b solana_program::account_info::AccountInfo<'a>,

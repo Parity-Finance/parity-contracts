@@ -227,6 +227,19 @@ export class SiWithdrawalNotReadyError extends ProgramError {
 codeToErrorMap.set(0x177e, SiWithdrawalNotReadyError);
 nameToErrorMap.set('WithdrawalNotReady', SiWithdrawalNotReadyError);
 
+/** WithdrawalExpired: Withdrawal expired */
+export class SiWithdrawalExpiredError extends ProgramError {
+  override readonly name: string = 'WithdrawalExpired';
+
+  readonly code: number = 0x177f; // 6015
+
+  constructor(program: Program, cause?: Error) {
+    super('Withdrawal expired', program, cause);
+  }
+}
+codeToErrorMap.set(0x177f, SiWithdrawalExpiredError);
+nameToErrorMap.set('WithdrawalExpired', SiWithdrawalExpiredError);
+
 /**
  * Attempts to resolve a custom program error from the provided error code.
  * @category Errors

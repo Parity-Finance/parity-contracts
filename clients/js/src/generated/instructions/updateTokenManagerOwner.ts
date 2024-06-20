@@ -19,6 +19,7 @@ import {
 import {
   Serializer,
   array,
+  i64,
   mapSerializer,
   option,
   publicKey as publicKeySerializer,
@@ -45,6 +46,8 @@ export type UpdateTokenManagerOwnerInstructionData = {
   newAdmin: Option<PublicKey>;
   newMinter: Option<PublicKey>;
   emergencyFundBasisPoints: Option<number>;
+  newWithdrawTimeLock: Option<bigint>;
+  newWithdrawExecutionWindow: Option<bigint>;
 };
 
 export type UpdateTokenManagerOwnerInstructionDataArgs = {
@@ -52,6 +55,8 @@ export type UpdateTokenManagerOwnerInstructionDataArgs = {
   newAdmin: OptionOrNullable<PublicKey>;
   newMinter: OptionOrNullable<PublicKey>;
   emergencyFundBasisPoints: OptionOrNullable<number>;
+  newWithdrawTimeLock: OptionOrNullable<number | bigint>;
+  newWithdrawExecutionWindow: OptionOrNullable<number | bigint>;
 };
 
 export function getUpdateTokenManagerOwnerInstructionDataSerializer(): Serializer<
@@ -70,6 +75,8 @@ export function getUpdateTokenManagerOwnerInstructionDataSerializer(): Serialize
         ['newAdmin', option(publicKeySerializer())],
         ['newMinter', option(publicKeySerializer())],
         ['emergencyFundBasisPoints', option(u16())],
+        ['newWithdrawTimeLock', option(i64())],
+        ['newWithdrawExecutionWindow', option(i64())],
       ],
       { description: 'UpdateTokenManagerOwnerInstructionData' }
     ),

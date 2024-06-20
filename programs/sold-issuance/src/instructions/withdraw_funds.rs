@@ -46,8 +46,26 @@ pub fn handler(ctx: Context<WithdrawFunds>) -> Result<()> {
         return err!(SoldIssuanceError::NoPendingWithdrawal);
     }
 
-    if Clock::get()?.unix_timestamp < token_manager.withdrawal_initiation_time + 3600 {
+    let timestamp = Clock::get()?.unix_timestamp;
+
+    if timestamp
+        < token_manager
+            .withdrawal_initiation_time
+            .checked_add(token_manager.withdraw_time_lock)
+            .ok_or(SoldIssuanceError::CalculationOverflow)?
+    {
         return err!(SoldIssuanceError::WithdrawalNotReady);
+    }
+
+    if timestamp
+        > token_manager
+            .withdrawal_initiation_time
+            .checked_add(token_manager.withdraw_time_lock)
+            .ok_or(SoldIssuanceError::CalculationOverflow)?
+            .checked_add(token_manager.withdraw_execution_window)
+            .ok_or(SoldIssuanceError::CalculationOverflow)?
+    {
+        return err!(SoldIssuanceError::WithdrawalExpired);
     }
 
     // Withdraw

@@ -55,6 +55,9 @@ pub enum SoldIssuanceError {
     /// 6014 (0x177E) - Withdrawal not ready
     #[error("Withdrawal not ready")]
     WithdrawalNotReady,
+    /// 6015 (0x177F) - Withdrawal expired
+    #[error("Withdrawal expired")]
+    WithdrawalExpired,
 }
 
 impl solana_program::program_error::PrintProgramError for SoldIssuanceError {

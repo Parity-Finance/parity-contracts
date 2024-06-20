@@ -16,6 +16,8 @@ Different Circuit Breaks
 Refactor to token2022
 (Unstake timelock)
 Settings timelock
+~~Withdraw timelock~~
+Update Owner two step function
 
 Different Authority Types
 Authorities same as Ethena
@@ -38,7 +40,7 @@ Tests
 - Authority Tests
 - Extensive yield rate tests
 - Test for Max amount per block
-
+- Test for update metadata
 
 ---
 
