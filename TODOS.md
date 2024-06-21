@@ -85,3 +85,5 @@ Liabilities = total SOLD issued + yield accrued but not paid
 
 ---
 
+Critical Bug:
+Depositing 0 tokens or less than the other 

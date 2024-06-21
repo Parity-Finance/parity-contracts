@@ -8,8 +8,6 @@
 
 import {
   Context,
-  Option,
-  OptionOrNullable,
   Pda,
   PublicKey,
   Signer,
@@ -20,8 +18,6 @@ import {
   Serializer,
   array,
   mapSerializer,
-  option,
-  publicKey as publicKeySerializer,
   struct,
   u8,
 } from '@metaplex-foundation/umi/serializers';
@@ -32,58 +28,44 @@ import {
 } from '../shared';
 
 // Accounts.
-export type UpdatePoolManagerInstructionAccounts = {
+export type ClosePoolManagerInstructionAccounts = {
   poolManager: PublicKey | Pda;
   owner: Signer;
+  systemProgram?: PublicKey | Pda;
 };
 
 // Data.
-export type UpdatePoolManagerInstructionData = {
-  discriminator: Array<number>;
-  newOwner: Option<PublicKey>;
-  newAdmin: Option<PublicKey>;
-};
+export type ClosePoolManagerInstructionData = { discriminator: Array<number> };
 
-export type UpdatePoolManagerInstructionDataArgs = {
-  newOwner: OptionOrNullable<PublicKey>;
-  newAdmin: OptionOrNullable<PublicKey>;
-};
+export type ClosePoolManagerInstructionDataArgs = {};
 
-export function getUpdatePoolManagerInstructionDataSerializer(): Serializer<
-  UpdatePoolManagerInstructionDataArgs,
-  UpdatePoolManagerInstructionData
+export function getClosePoolManagerInstructionDataSerializer(): Serializer<
+  ClosePoolManagerInstructionDataArgs,
+  ClosePoolManagerInstructionData
 > {
   return mapSerializer<
-    UpdatePoolManagerInstructionDataArgs,
+    ClosePoolManagerInstructionDataArgs,
     any,
-    UpdatePoolManagerInstructionData
+    ClosePoolManagerInstructionData
   >(
-    struct<UpdatePoolManagerInstructionData>(
-      [
-        ['discriminator', array(u8(), { size: 8 })],
-        ['newOwner', option(publicKeySerializer())],
-        ['newAdmin', option(publicKeySerializer())],
-      ],
-      { description: 'UpdatePoolManagerInstructionData' }
+    struct<ClosePoolManagerInstructionData>(
+      [['discriminator', array(u8(), { size: 8 })]],
+      { description: 'ClosePoolManagerInstructionData' }
     ),
     (value) => ({
       ...value,
-      discriminator: [49, 214, 121, 235, 177, 200, 48, 241],
+      discriminator: [147, 222, 197, 77, 66, 219, 247, 107],
     })
   ) as Serializer<
-    UpdatePoolManagerInstructionDataArgs,
-    UpdatePoolManagerInstructionData
+    ClosePoolManagerInstructionDataArgs,
+    ClosePoolManagerInstructionData
   >;
 }
 
-// Args.
-export type UpdatePoolManagerInstructionArgs =
-  UpdatePoolManagerInstructionDataArgs;
-
 // Instruction.
-export function updatePoolManager(
+export function closePoolManager(
   context: Pick<Context, 'programs'>,
-  input: UpdatePoolManagerInstructionAccounts & UpdatePoolManagerInstructionArgs
+  input: ClosePoolManagerInstructionAccounts
 ): TransactionBuilder {
   // Program ID.
   const programId = context.programs.getPublicKey(
@@ -103,10 +85,21 @@ export function updatePoolManager(
       isWritable: true as boolean,
       value: input.owner ?? null,
     },
+    systemProgram: {
+      index: 2,
+      isWritable: false as boolean,
+      value: input.systemProgram ?? null,
+    },
   } satisfies ResolvedAccountsWithIndices;
 
-  // Arguments.
-  const resolvedArgs: UpdatePoolManagerInstructionArgs = { ...input };
+  // Default values.
+  if (!resolvedAccounts.systemProgram.value) {
+    resolvedAccounts.systemProgram.value = context.programs.getPublicKey(
+      'splSystem',
+      '11111111111111111111111111111111'
+    );
+    resolvedAccounts.systemProgram.isWritable = false;
+  }
 
   // Accounts in order.
   const orderedAccounts: ResolvedAccount[] = Object.values(
@@ -121,9 +114,7 @@ export function updatePoolManager(
   );
 
   // Data.
-  const data = getUpdatePoolManagerInstructionDataSerializer().serialize(
-    resolvedArgs as UpdatePoolManagerInstructionDataArgs
-  );
+  const data = getClosePoolManagerInstructionDataSerializer().serialize({});
 
   // Bytes Created On Chain.
   const bytesCreatedOnChain = 0;

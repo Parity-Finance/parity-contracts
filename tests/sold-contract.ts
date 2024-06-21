@@ -8,6 +8,7 @@ import { fromWeb3JsKeypair, fromWeb3JsPublicKey } from "@metaplex-foundation/umi
 import { findMetadataPda } from "@metaplex-foundation/mpl-token-metadata";
 import assert from 'assert';
 import chai, { assert as chaiAssert } from 'chai';
+import { bs58 } from "@coral-xyz/anchor/dist/cjs/utils/bytes";
 
 describe.only("sold-issuance", () => {
   let umi = createUmi("http://localhost:8899");
@@ -34,11 +35,11 @@ describe.only("sold-issuance", () => {
   let vaultIssuance: Pda
 
   // Test Controls
-  const baseMintDecimals = 9;
-  const quoteMintDecimals = 9;
+  const baseMintDecimals = 6;
+  const quoteMintDecimals = 6;
   const emergencyFundBasisPoints = 1200; // 12% have to stay in the vaultIssuance
-  const exchangeRate = 250 * 10 ** baseMintDecimals;
-  const exchangeRateDecimals = baseMintDecimals
+  const exchangeRate = 1 * 10 ** quoteMintDecimals; // Exchange rate is exactly how many quoteMint you will get for 1 baseMint. That's why quote mint decimals have to be considered
+  const exchangeRateDecimals = quoteMintDecimals
 
   const mintLimitPerSlot = 5000 * 10 ** baseMintDecimals;
   const redemptionLimitPerSlot = 5000 * 10 ** baseMintDecimals;
@@ -59,7 +60,7 @@ describe.only("sold-issuance", () => {
   // Stake Pool Controls
   const xMintDecimals = 6;
   const stakeExchangeRateDecimals = xMintDecimals
-  const initialExchangeRate = 2 * 10 ** exchangeRateDecimals;
+  const initialExchangeRate = 1 * 10 ** stakeExchangeRateDecimals;
   const allowedWallets = [keypair.publicKey.toBase58()]
 
   before(async () => {
@@ -228,7 +229,8 @@ describe.only("sold-issuance", () => {
       proof
     }))
 
-    await txBuilder.sendAndConfirm(umi, { send: { skipPreflight: false } });
+    const res = await txBuilder.sendAndConfirm(umi, { send: { skipPreflight: false } });
+    console.log(bs58.encode(res.signature));
 
     const tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
     const vaultAcc = await safeFetchToken(umi, vaultIssuance);
@@ -285,6 +287,9 @@ describe.only("sold-issuance", () => {
     }))
 
     await txBuilder.sendAndConfirm(umi, { send: { skipPreflight: false } });
+
+    const res = await txBuilder.sendAndConfirm(umi, { send: { skipPreflight: false } });
+    console.log(bs58.encode(res.signature));
 
     const tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
     const vaultAcc = await safeFetchToken(umi, vaultIssuance);

@@ -200,7 +200,7 @@ export function getTokenManagerGpaBuilder(
 ) {
   const programId = context.programs.getPublicKey(
     'soldIssuance',
-    'Ev4vixMJX6Czywj7TSjnmBapdoYmZkpVwU3cpT2akgYG'
+    'JCLA8ET4DCCsJsvNcaNBhpY8ZudFfAbpgspPBnni1NQy'
   );
   return gpaBuilder(context, programId)
     .registerFields<{
@@ -267,7 +267,7 @@ export function findTokenManagerPda(
 ): Pda {
   const programId = context.programs.getPublicKey(
     'soldIssuance',
-    'Ev4vixMJX6Czywj7TSjnmBapdoYmZkpVwU3cpT2akgYG'
+    'JCLA8ET4DCCsJsvNcaNBhpY8ZudFfAbpgspPBnni1NQy'
   );
   return context.eddsa.findPda(programId, [
     string({ size: 'variable' }).serialize('token-manager'),

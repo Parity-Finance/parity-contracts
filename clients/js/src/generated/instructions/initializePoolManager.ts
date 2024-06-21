@@ -111,7 +111,7 @@ export function initializePoolManager(
   // Program ID.
   const programId = context.programs.getPublicKey(
     'soldStaking',
-    '9PEGJqYZCKBWvX6X652MCKJkT7WthKYo3ypYqyVV8dJ5'
+    'EuhcfekB1smmCcNqr38FvXtmWGkDy3rx8u9L1hf7ee3E'
   );
 
   // Accounts.

@@ -19,7 +19,6 @@ import {
   array,
   mapSerializer,
   struct,
-  u64,
   u8,
 } from '@metaplex-foundation/umi/serializers';
 import {
@@ -29,56 +28,44 @@ import {
 } from '../shared';
 
 // Accounts.
-export type InitializeWithdrawFundsInstructionAccounts = {
+export type CloseTokenManagerInstructionAccounts = {
   tokenManager: PublicKey | Pda;
-  admin: Signer;
+  owner: Signer;
+  systemProgram?: PublicKey | Pda;
 };
 
 // Data.
-export type InitializeWithdrawFundsInstructionData = {
-  discriminator: Array<number>;
-  quantity: bigint;
-};
+export type CloseTokenManagerInstructionData = { discriminator: Array<number> };
 
-export type InitializeWithdrawFundsInstructionDataArgs = {
-  quantity: number | bigint;
-};
+export type CloseTokenManagerInstructionDataArgs = {};
 
-export function getInitializeWithdrawFundsInstructionDataSerializer(): Serializer<
-  InitializeWithdrawFundsInstructionDataArgs,
-  InitializeWithdrawFundsInstructionData
+export function getCloseTokenManagerInstructionDataSerializer(): Serializer<
+  CloseTokenManagerInstructionDataArgs,
+  CloseTokenManagerInstructionData
 > {
   return mapSerializer<
-    InitializeWithdrawFundsInstructionDataArgs,
+    CloseTokenManagerInstructionDataArgs,
     any,
-    InitializeWithdrawFundsInstructionData
+    CloseTokenManagerInstructionData
   >(
-    struct<InitializeWithdrawFundsInstructionData>(
-      [
-        ['discriminator', array(u8(), { size: 8 })],
-        ['quantity', u64()],
-      ],
-      { description: 'InitializeWithdrawFundsInstructionData' }
+    struct<CloseTokenManagerInstructionData>(
+      [['discriminator', array(u8(), { size: 8 })]],
+      { description: 'CloseTokenManagerInstructionData' }
     ),
     (value) => ({
       ...value,
-      discriminator: [21, 242, 187, 197, 254, 233, 162, 72],
+      discriminator: [129, 93, 164, 22, 152, 220, 186, 74],
     })
   ) as Serializer<
-    InitializeWithdrawFundsInstructionDataArgs,
-    InitializeWithdrawFundsInstructionData
+    CloseTokenManagerInstructionDataArgs,
+    CloseTokenManagerInstructionData
   >;
 }
 
-// Args.
-export type InitializeWithdrawFundsInstructionArgs =
-  InitializeWithdrawFundsInstructionDataArgs;
-
 // Instruction.
-export function initializeWithdrawFunds(
+export function closeTokenManager(
   context: Pick<Context, 'programs'>,
-  input: InitializeWithdrawFundsInstructionAccounts &
-    InitializeWithdrawFundsInstructionArgs
+  input: CloseTokenManagerInstructionAccounts
 ): TransactionBuilder {
   // Program ID.
   const programId = context.programs.getPublicKey(
@@ -93,15 +80,26 @@ export function initializeWithdrawFunds(
       isWritable: true as boolean,
       value: input.tokenManager ?? null,
     },
-    admin: {
+    owner: {
       index: 1,
       isWritable: true as boolean,
-      value: input.admin ?? null,
+      value: input.owner ?? null,
+    },
+    systemProgram: {
+      index: 2,
+      isWritable: false as boolean,
+      value: input.systemProgram ?? null,
     },
   } satisfies ResolvedAccountsWithIndices;
 
-  // Arguments.
-  const resolvedArgs: InitializeWithdrawFundsInstructionArgs = { ...input };
+  // Default values.
+  if (!resolvedAccounts.systemProgram.value) {
+    resolvedAccounts.systemProgram.value = context.programs.getPublicKey(
+      'splSystem',
+      '11111111111111111111111111111111'
+    );
+    resolvedAccounts.systemProgram.isWritable = false;
+  }
 
   // Accounts in order.
   const orderedAccounts: ResolvedAccount[] = Object.values(
@@ -116,9 +114,7 @@ export function initializeWithdrawFunds(
   );
 
   // Data.
-  const data = getInitializeWithdrawFundsInstructionDataSerializer().serialize(
-    resolvedArgs as InitializeWithdrawFundsInstructionDataArgs
-  );
+  const data = getCloseTokenManagerInstructionDataSerializer().serialize({});
 
   // Bytes Created On Chain.
   const bytesCreatedOnChain = 0;

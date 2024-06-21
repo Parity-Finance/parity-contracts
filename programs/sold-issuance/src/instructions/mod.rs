@@ -1,3 +1,4 @@
+pub mod close_token_manager;
 pub mod deposit_funds;
 pub mod initialize_token_manager;
 pub mod initialize_withdraw_funds;
@@ -10,6 +11,7 @@ pub mod update_token_manager_admin;
 pub mod update_token_manager_owner;
 pub mod withdraw_funds;
 
+pub use close_token_manager::*;
 pub use deposit_funds::*;
 pub use initialize_token_manager::*;
 pub use initialize_withdraw_funds::*;

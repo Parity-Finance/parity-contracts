@@ -334,6 +334,27 @@
           "type": "string"
         }
       ]
+    },
+    {
+      "name": "closePoolManager",
+      "accounts": [
+        {
+          "name": "poolManager",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
     }
   ],
   "accounts": [
@@ -521,7 +542,7 @@
     }
   ],
   "metadata": {
-    "address": "9PEGJqYZCKBWvX6X652MCKJkT7WthKYo3ypYqyVV8dJ5",
+    "address": "EuhcfekB1smmCcNqr38FvXtmWGkDy3rx8u9L1hf7ee3E",
     "origin": "anchor",
     "binaryVersion": "0.29.0",
     "libVersion": "0.29.0"

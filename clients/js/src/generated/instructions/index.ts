@@ -6,6 +6,8 @@
  * @see https://github.com/metaplex-foundation/kinobi
  */
 
+export * from './closePoolManager';
+export * from './closeTokenManager';
 export * from './depositFunds';
 export * from './initializePoolManager';
 export * from './initializeTokenManager';

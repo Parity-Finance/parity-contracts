@@ -5,6 +5,8 @@
 //! [https://github.com/metaplex-foundation/kinobi]
 //!
 
+pub(crate) mod r#close_pool_manager;
+pub(crate) mod r#close_token_manager;
 pub(crate) mod r#deposit_funds;
 pub(crate) mod r#initialize_pool_manager;
 pub(crate) mod r#initialize_token_manager;
@@ -23,6 +25,8 @@ pub(crate) mod r#update_token_manager_owner;
 pub(crate) mod r#update_xmint_metadata;
 pub(crate) mod r#withdraw_funds;
 
+pub use self::r#close_pool_manager::*;
+pub use self::r#close_token_manager::*;
 pub use self::r#deposit_funds::*;
 pub use self::r#initialize_pool_manager::*;
 pub use self::r#initialize_token_manager::*;

@@ -503,6 +503,27 @@
           "type": "string"
         }
       ]
+    },
+    {
+      "name": "closeTokenManager",
+      "accounts": [
+        {
+          "name": "tokenManager",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
     }
   ],
   "accounts": [
@@ -857,7 +878,7 @@
     }
   ],
   "metadata": {
-    "address": "Ev4vixMJX6Czywj7TSjnmBapdoYmZkpVwU3cpT2akgYG",
+    "address": "JCLA8ET4DCCsJsvNcaNBhpY8ZudFfAbpgspPBnni1NQy",
     "origin": "anchor",
     "binaryVersion": "0.29.0",
     "libVersion": "0.29.0"

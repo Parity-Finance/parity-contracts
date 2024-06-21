@@ -3,8 +3,8 @@ seeds = false
 skip-lint = false
 
 [programs.localnet]
-sold_issuance = "Ev4vixMJX6Czywj7TSjnmBapdoYmZkpVwU3cpT2akgYG"
-sold_staking = "9PEGJqYZCKBWvX6X652MCKJkT7WthKYo3ypYqyVV8dJ5"
+sold_issuance = "JCLA8ET4DCCsJsvNcaNBhpY8ZudFfAbpgspPBnni1NQy"
+sold_staking = "EuhcfekB1smmCcNqr38FvXtmWGkDy3rx8u9L1hf7ee3E"
 
 [toolchain]
 anchor_version = "0.29.0"

@@ -92,6 +92,7 @@ pub fn handler(ctx: Context<MintTokens>, quantity: u64, proof: Vec<[u8; 32]>) ->
     let signer_seeds: &[&[&[u8]]] = &[&[b"token-manager", &[bump]]];
 
     let mint_amount = quantity;
+    msg!("Mint amount: {}", mint_amount);
 
     mint_to(
         CpiContext::new_with_signer(
@@ -127,6 +128,8 @@ pub fn handler(ctx: Context<MintTokens>, quantity: u64, proof: Vec<[u8; 32]>) ->
         .ok_or(SoldIssuanceError::CalculationOverflow)?
         .checked_mul(token_manager.exchange_rate)
         .ok_or(SoldIssuanceError::CalculationOverflow)?;
+
+    msg!("Quote amount: {}", quote_amount);
 
     transfer_checked(
         CpiContext::new(

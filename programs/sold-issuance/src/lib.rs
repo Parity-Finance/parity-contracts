@@ -8,7 +8,7 @@ pub use error::*;
 pub use instructions::*;
 pub use state::*;
 
-declare_id!("Ev4vixMJX6Czywj7TSjnmBapdoYmZkpVwU3cpT2akgYG");
+declare_id!("JCLA8ET4DCCsJsvNcaNBhpY8ZudFfAbpgspPBnni1NQy");
 
 #[program]
 pub mod sold_issuance {
@@ -73,5 +73,9 @@ pub mod sold_issuance {
         uri: String,
     ) -> Result<()> {
         update_mint_metadata::handler(ctx, name, symbol, uri)
+    }
+
+    pub fn close_token_manager(ctx: Context<CloseTokenManager>) -> Result<()> {
+        close_token_manager::handler(ctx)
     }
 }
