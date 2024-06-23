@@ -8,7 +8,7 @@ pub use error::*;
 pub use instructions::*;
 pub use state::*;
 
-declare_id!("EuhcfekB1smmCcNqr38FvXtmWGkDy3rx8u9L1hf7ee3E");
+declare_id!("EUo32ZPAZkwX1dYmHQMiT8XPCnTPiYWrAvukW3WdDgHA");
 
 #[program]
 pub mod sold_staking {

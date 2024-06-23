@@ -48,10 +48,11 @@ pub struct UpdateAnnualYield<'info> {
 }
 
 pub fn handler(ctx: Context<UpdateAnnualYield>, params: UpdateYieldParams) -> Result<()> {
-    let pool_manager = &mut ctx.accounts.pool_manager;
+    if params.annual_yield_rate > 20000 {
+        return err!(SoldStakingError::InvalidYieldRate);
+    }
 
-    // Check done in accounts struct
-    // let _authority = &ctx.accounts.admin;
+    let pool_manager = &mut ctx.accounts.pool_manager;
 
     let clock = Clock::get()?;
     let current_timestamp = clock.unix_timestamp;

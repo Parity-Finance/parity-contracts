@@ -22,4 +22,6 @@ pub enum SoldStakingError {
     InvalidAdmin,
     #[msg("Invalid owner")]
     InvalidOwner,
+    #[msg("Invalid yield rate")]
+    InvalidYieldRate,
 }

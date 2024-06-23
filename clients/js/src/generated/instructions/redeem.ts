@@ -86,7 +86,7 @@ export function redeem(
   // Program ID.
   const programId = context.programs.getPublicKey(
     'soldIssuance',
-    'JCLA8ET4DCCsJsvNcaNBhpY8ZudFfAbpgspPBnni1NQy'
+    '5rEgzyEQ6mQEYEetybHXuuvojbKi2mpKXP1fKsVJXJYo'
   );
 
   // Accounts.

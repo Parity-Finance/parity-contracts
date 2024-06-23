@@ -539,10 +539,15 @@
       "code": 6009,
       "name": "InvalidOwner",
       "msg": "Invalid owner"
+    },
+    {
+      "code": 6010,
+      "name": "InvalidYieldRate",
+      "msg": "Invalid yield rate"
     }
   ],
   "metadata": {
-    "address": "EuhcfekB1smmCcNqr38FvXtmWGkDy3rx8u9L1hf7ee3E",
+    "address": "EUo32ZPAZkwX1dYmHQMiT8XPCnTPiYWrAvukW3WdDgHA",
     "origin": "anchor",
     "binaryVersion": "0.29.0",
     "libVersion": "0.29.0"

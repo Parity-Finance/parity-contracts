@@ -159,6 +159,19 @@ export class SsInvalidOwnerError extends ProgramError {
 codeToErrorMap.set(0x1779, SsInvalidOwnerError);
 nameToErrorMap.set('InvalidOwner', SsInvalidOwnerError);
 
+/** InvalidYieldRate: Invalid yield rate */
+export class SsInvalidYieldRateError extends ProgramError {
+  override readonly name: string = 'InvalidYieldRate';
+
+  readonly code: number = 0x177a; // 6010
+
+  constructor(program: Program, cause?: Error) {
+    super('Invalid yield rate', program, cause);
+  }
+}
+codeToErrorMap.set(0x177a, SsInvalidYieldRateError);
+nameToErrorMap.set('InvalidYieldRate', SsInvalidYieldRateError);
+
 /**
  * Attempts to resolve a custom program error from the provided error code.
  * @category Errors

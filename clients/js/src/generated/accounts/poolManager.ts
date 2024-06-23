@@ -163,7 +163,7 @@ export function getPoolManagerGpaBuilder(
 ) {
   const programId = context.programs.getPublicKey(
     'soldStaking',
-    'EuhcfekB1smmCcNqr38FvXtmWGkDy3rx8u9L1hf7ee3E'
+    'EUo32ZPAZkwX1dYmHQMiT8XPCnTPiYWrAvukW3WdDgHA'
   );
   return gpaBuilder(context, programId)
     .registerFields<{
@@ -212,7 +212,7 @@ export function findPoolManagerPda(
 ): Pda {
   const programId = context.programs.getPublicKey(
     'soldStaking',
-    'EuhcfekB1smmCcNqr38FvXtmWGkDy3rx8u9L1hf7ee3E'
+    'EUo32ZPAZkwX1dYmHQMiT8XPCnTPiYWrAvukW3WdDgHA'
   );
   return context.eddsa.findPda(programId, [
     string({ size: 'variable' }).serialize('pool-manager'),

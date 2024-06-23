@@ -40,6 +40,9 @@ pub enum SoldStakingError {
     /// 6009 (0x1779) - Invalid owner
     #[error("Invalid owner")]
     InvalidOwner,
+    /// 6010 (0x177A) - Invalid yield rate
+    #[error("Invalid yield rate")]
+    InvalidYieldRate,
 }
 
 impl solana_program::program_error::PrintProgramError for SoldStakingError {

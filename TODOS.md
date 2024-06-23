@@ -18,6 +18,7 @@ Refactor to token2022
 Settings timelock
 ~~Withdraw timelock~~
 Update Owner two step function
+Use signed numbers to ensure no overflow or underflow
 
 Different Authority Types
 Authorities same as Ethena
