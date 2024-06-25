@@ -336,7 +336,23 @@
       ]
     },
     {
-      "name": "closePoolManager",
+      "name": "updatePoolOwner",
+      "accounts": [
+        {
+          "name": "poolManager",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "newOwner",
+          "isMut": false,
+          "isSigner": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "initiateUpdatePoolOwner",
       "accounts": [
         {
           "name": "poolManager",
@@ -345,16 +361,16 @@
         },
         {
           "name": "owner",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
-          "name": "systemProgram",
           "isMut": false,
-          "isSigner": false
+          "isSigner": true
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "newOwner",
+          "type": "publicKey"
+        }
+      ]
     }
   ],
   "accounts": [
@@ -369,6 +385,10 @@
           },
           {
             "name": "owner",
+            "type": "publicKey"
+          },
+          {
+            "name": "pendingOwner",
             "type": "publicKey"
           },
           {
@@ -547,7 +567,7 @@
     }
   ],
   "metadata": {
-    "address": "EUo32ZPAZkwX1dYmHQMiT8XPCnTPiYWrAvukW3WdDgHA",
+    "address": "BmyPBNiuBnKrjcHPmGDkgmiYNgQA2s6ygKNR38CXSaxW",
     "origin": "anchor",
     "binaryVersion": "0.29.0",
     "libVersion": "0.29.0"

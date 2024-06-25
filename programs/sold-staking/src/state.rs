@@ -1,14 +1,15 @@
 use anchor_lang::prelude::*;
 
-pub const POOL_MANAGER_LENGTH: usize = 8 + 1 + (32 * 4) + 1 + 1 + (8 * 7);
+pub const POOL_MANAGER_LENGTH: usize = 8 + 1 + (32 * 5) + 1 + 1 + (8 * 7);
 
 #[account]
 pub struct PoolManager {
     pub bump: u8, // 1 byte
 
     // Authorities
-    pub owner: Pubkey, // 32 bytes
-    pub admin: Pubkey, // 32 bytes
+    pub owner: Pubkey,         // 32 bytes
+    pub pending_owner: Pubkey, // 32 bytes
+    pub admin: Pubkey,         // 32 bytes
 
     // Tokens
     pub base_mint: Pubkey,      // 32 bytes - SOLD token mint

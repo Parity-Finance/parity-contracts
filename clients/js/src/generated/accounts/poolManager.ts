@@ -37,6 +37,7 @@ export type PoolManagerAccountData = {
   discriminator: Array<number>;
   bump: number;
   owner: PublicKey;
+  pendingOwner: PublicKey;
   admin: PublicKey;
   baseMint: PublicKey;
   xMint: PublicKey;
@@ -54,6 +55,7 @@ export type PoolManagerAccountData = {
 export type PoolManagerAccountDataArgs = {
   bump: number;
   owner: PublicKey;
+  pendingOwner: PublicKey;
   admin: PublicKey;
   baseMint: PublicKey;
   xMint: PublicKey;
@@ -78,6 +80,7 @@ export function getPoolManagerAccountDataSerializer(): Serializer<
         ['discriminator', array(u8(), { size: 8 })],
         ['bump', u8()],
         ['owner', publicKeySerializer()],
+        ['pendingOwner', publicKeySerializer()],
         ['admin', publicKeySerializer()],
         ['baseMint', publicKeySerializer()],
         ['xMint', publicKeySerializer()],
@@ -163,13 +166,14 @@ export function getPoolManagerGpaBuilder(
 ) {
   const programId = context.programs.getPublicKey(
     'soldStaking',
-    'EUo32ZPAZkwX1dYmHQMiT8XPCnTPiYWrAvukW3WdDgHA'
+    'BmyPBNiuBnKrjcHPmGDkgmiYNgQA2s6ygKNR38CXSaxW'
   );
   return gpaBuilder(context, programId)
     .registerFields<{
       discriminator: Array<number>;
       bump: number;
       owner: PublicKey;
+      pendingOwner: PublicKey;
       admin: PublicKey;
       baseMint: PublicKey;
       xMint: PublicKey;
@@ -186,25 +190,26 @@ export function getPoolManagerGpaBuilder(
       discriminator: [0, array(u8(), { size: 8 })],
       bump: [8, u8()],
       owner: [9, publicKeySerializer()],
-      admin: [41, publicKeySerializer()],
-      baseMint: [73, publicKeySerializer()],
-      xMint: [105, publicKeySerializer()],
-      baseMintDecimals: [137, u8()],
-      xMintDecimals: [138, u8()],
-      annualYieldRate: [139, u64()],
-      initialExchangeRate: [147, u64()],
-      lastYieldChangeExchangeRate: [155, u64()],
-      inceptionTimestamp: [163, i64()],
-      lastYieldChangeTimestamp: [171, i64()],
-      baseBalance: [179, u64()],
-      xSupply: [187, u64()],
+      pendingOwner: [41, publicKeySerializer()],
+      admin: [73, publicKeySerializer()],
+      baseMint: [105, publicKeySerializer()],
+      xMint: [137, publicKeySerializer()],
+      baseMintDecimals: [169, u8()],
+      xMintDecimals: [170, u8()],
+      annualYieldRate: [171, u64()],
+      initialExchangeRate: [179, u64()],
+      lastYieldChangeExchangeRate: [187, u64()],
+      inceptionTimestamp: [195, i64()],
+      lastYieldChangeTimestamp: [203, i64()],
+      baseBalance: [211, u64()],
+      xSupply: [219, u64()],
     })
     .deserializeUsing<PoolManager>((account) => deserializePoolManager(account))
     .whereField('discriminator', [54, 241, 200, 10, 177, 151, 78, 17]);
 }
 
 export function getPoolManagerSize(): number {
-  return 195;
+  return 227;
 }
 
 export function findPoolManagerPda(
@@ -212,7 +217,7 @@ export function findPoolManagerPda(
 ): Pda {
   const programId = context.programs.getPublicKey(
     'soldStaking',
-    'EUo32ZPAZkwX1dYmHQMiT8XPCnTPiYWrAvukW3WdDgHA'
+    'BmyPBNiuBnKrjcHPmGDkgmiYNgQA2s6ygKNR38CXSaxW'
   );
   return context.eddsa.findPda(programId, [
     string({ size: 'variable' }).serialize('pool-manager'),

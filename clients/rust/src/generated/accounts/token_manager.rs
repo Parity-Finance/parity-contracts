@@ -27,6 +27,11 @@ pub struct TokenManager {
         feature = "serde",
         serde(with = "serde_with::As::<serde_with::DisplayFromStr>")
     )]
+    pub pending_owner: Pubkey,
+    #[cfg_attr(
+        feature = "serde",
+        serde(with = "serde_with::As::<serde_with::DisplayFromStr>")
+    )]
     pub admin: Pubkey,
     #[cfg_attr(
         feature = "serde",

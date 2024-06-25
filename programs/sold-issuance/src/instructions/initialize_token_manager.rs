@@ -102,7 +102,7 @@ pub fn handler(
         &signer_seeds,
     );
 
-    create_metadata_accounts_v3(metadata_ctx, token_data, false, true, None)?;
+    create_metadata_accounts_v3(metadata_ctx, token_data, true, true, None)?;
 
     msg!("Token mint created successfully.");
 
@@ -112,6 +112,7 @@ pub fn handler(
 
     // Authorities
     token_manager.owner = ctx.accounts.owner.key();
+    token_manager.pending_owner = Pubkey::default();
     token_manager.admin = params.admin;
     token_manager.minter = params.minter;
     token_manager.gate_keepers = params.gate_keepers;

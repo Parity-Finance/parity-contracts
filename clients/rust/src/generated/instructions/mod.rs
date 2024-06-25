@@ -5,12 +5,12 @@
 //! [https://github.com/metaplex-foundation/kinobi]
 //!
 
-pub(crate) mod r#close_pool_manager;
-pub(crate) mod r#close_token_manager;
 pub(crate) mod r#deposit_funds;
 pub(crate) mod r#initialize_pool_manager;
 pub(crate) mod r#initialize_token_manager;
 pub(crate) mod r#initialize_withdraw_funds;
+pub(crate) mod r#initiate_update_manager_owner;
+pub(crate) mod r#initiate_update_pool_owner;
 pub(crate) mod r#mint;
 pub(crate) mod r#mint_admin;
 pub(crate) mod r#redeem;
@@ -18,19 +18,21 @@ pub(crate) mod r#stake;
 pub(crate) mod r#toggle_active;
 pub(crate) mod r#unstake;
 pub(crate) mod r#update_annual_yield;
+pub(crate) mod r#update_manager_owner;
 pub(crate) mod r#update_mint_metadata;
 pub(crate) mod r#update_pool_manager;
+pub(crate) mod r#update_pool_owner;
 pub(crate) mod r#update_token_manager_admin;
 pub(crate) mod r#update_token_manager_owner;
 pub(crate) mod r#update_xmint_metadata;
 pub(crate) mod r#withdraw_funds;
 
-pub use self::r#close_pool_manager::*;
-pub use self::r#close_token_manager::*;
 pub use self::r#deposit_funds::*;
 pub use self::r#initialize_pool_manager::*;
 pub use self::r#initialize_token_manager::*;
 pub use self::r#initialize_withdraw_funds::*;
+pub use self::r#initiate_update_manager_owner::*;
+pub use self::r#initiate_update_pool_owner::*;
 pub use self::r#mint::*;
 pub use self::r#mint_admin::*;
 pub use self::r#redeem::*;
@@ -38,8 +40,10 @@ pub use self::r#stake::*;
 pub use self::r#toggle_active::*;
 pub use self::r#unstake::*;
 pub use self::r#update_annual_yield::*;
+pub use self::r#update_manager_owner::*;
 pub use self::r#update_mint_metadata::*;
 pub use self::r#update_pool_manager::*;
+pub use self::r#update_pool_owner::*;
 pub use self::r#update_token_manager_admin::*;
 pub use self::r#update_token_manager_owner::*;
 pub use self::r#update_xmint_metadata::*;

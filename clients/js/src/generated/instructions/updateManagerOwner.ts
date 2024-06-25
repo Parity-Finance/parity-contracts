@@ -28,78 +28,65 @@ import {
 } from '../shared';
 
 // Accounts.
-export type ClosePoolManagerInstructionAccounts = {
-  poolManager: PublicKey | Pda;
-  owner: Signer;
-  systemProgram?: PublicKey | Pda;
+export type UpdateManagerOwnerInstructionAccounts = {
+  tokenManager: PublicKey | Pda;
+  newOwner: Signer;
 };
 
 // Data.
-export type ClosePoolManagerInstructionData = { discriminator: Array<number> };
+export type UpdateManagerOwnerInstructionData = {
+  discriminator: Array<number>;
+};
 
-export type ClosePoolManagerInstructionDataArgs = {};
+export type UpdateManagerOwnerInstructionDataArgs = {};
 
-export function getClosePoolManagerInstructionDataSerializer(): Serializer<
-  ClosePoolManagerInstructionDataArgs,
-  ClosePoolManagerInstructionData
+export function getUpdateManagerOwnerInstructionDataSerializer(): Serializer<
+  UpdateManagerOwnerInstructionDataArgs,
+  UpdateManagerOwnerInstructionData
 > {
   return mapSerializer<
-    ClosePoolManagerInstructionDataArgs,
+    UpdateManagerOwnerInstructionDataArgs,
     any,
-    ClosePoolManagerInstructionData
+    UpdateManagerOwnerInstructionData
   >(
-    struct<ClosePoolManagerInstructionData>(
+    struct<UpdateManagerOwnerInstructionData>(
       [['discriminator', array(u8(), { size: 8 })]],
-      { description: 'ClosePoolManagerInstructionData' }
+      { description: 'UpdateManagerOwnerInstructionData' }
     ),
     (value) => ({
       ...value,
-      discriminator: [147, 222, 197, 77, 66, 219, 247, 107],
+      discriminator: [222, 39, 178, 32, 216, 177, 170, 117],
     })
   ) as Serializer<
-    ClosePoolManagerInstructionDataArgs,
-    ClosePoolManagerInstructionData
+    UpdateManagerOwnerInstructionDataArgs,
+    UpdateManagerOwnerInstructionData
   >;
 }
 
 // Instruction.
-export function closePoolManager(
+export function updateManagerOwner(
   context: Pick<Context, 'programs'>,
-  input: ClosePoolManagerInstructionAccounts
+  input: UpdateManagerOwnerInstructionAccounts
 ): TransactionBuilder {
   // Program ID.
   const programId = context.programs.getPublicKey(
-    'soldStaking',
-    'EUo32ZPAZkwX1dYmHQMiT8XPCnTPiYWrAvukW3WdDgHA'
+    'soldIssuance',
+    '6JfYz5itjCP6jjaxqX8KQizXYcRtzmSsHJdbiLBeqvEH'
   );
 
   // Accounts.
   const resolvedAccounts = {
-    poolManager: {
+    tokenManager: {
       index: 0,
       isWritable: true as boolean,
-      value: input.poolManager ?? null,
+      value: input.tokenManager ?? null,
     },
-    owner: {
+    newOwner: {
       index: 1,
-      isWritable: true as boolean,
-      value: input.owner ?? null,
-    },
-    systemProgram: {
-      index: 2,
       isWritable: false as boolean,
-      value: input.systemProgram ?? null,
+      value: input.newOwner ?? null,
     },
   } satisfies ResolvedAccountsWithIndices;
-
-  // Default values.
-  if (!resolvedAccounts.systemProgram.value) {
-    resolvedAccounts.systemProgram.value = context.programs.getPublicKey(
-      'splSystem',
-      '11111111111111111111111111111111'
-    );
-    resolvedAccounts.systemProgram.isWritable = false;
-  }
 
   // Accounts in order.
   const orderedAccounts: ResolvedAccount[] = Object.values(
@@ -114,7 +101,7 @@ export function closePoolManager(
   );
 
   // Data.
-  const data = getClosePoolManagerInstructionDataSerializer().serialize({});
+  const data = getUpdateManagerOwnerInstructionDataSerializer().serialize({});
 
   // Bytes Created On Chain.
   const bytesCreatedOnChain = 0;

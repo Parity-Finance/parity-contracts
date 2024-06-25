@@ -38,10 +38,11 @@ Tests
 - ~~Withdraw Deposit Controls~~
 - ~~Different exchange_rate tests~~
 - ~~Updated Staking Tests~~
+- ~~Test to update owner~~
 - Authority Tests
 - Extensive yield rate tests
 - Test for Max amount per block
-- Test for update metadata
+- ~~Test for update metadata~~
 
 ---
 

@@ -505,7 +505,23 @@
       ]
     },
     {
-      "name": "closeTokenManager",
+      "name": "updateManagerOwner",
+      "accounts": [
+        {
+          "name": "tokenManager",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "newOwner",
+          "isMut": false,
+          "isSigner": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "initiateUpdateManagerOwner",
       "accounts": [
         {
           "name": "tokenManager",
@@ -514,16 +530,16 @@
         },
         {
           "name": "owner",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
-          "name": "systemProgram",
           "isMut": false,
-          "isSigner": false
+          "isSigner": true
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "newOwner",
+          "type": "publicKey"
+        }
+      ]
     }
   ],
   "accounts": [
@@ -538,6 +554,10 @@
           },
           {
             "name": "owner",
+            "type": "publicKey"
+          },
+          {
+            "name": "pendingOwner",
             "type": "publicKey"
           },
           {
@@ -756,12 +776,6 @@
         "kind": "struct",
         "fields": [
           {
-            "name": "newOwner",
-            "type": {
-              "option": "publicKey"
-            }
-          },
-          {
             "name": "newAdmin",
             "type": {
               "option": "publicKey"
@@ -878,7 +892,7 @@
     }
   ],
   "metadata": {
-    "address": "5rEgzyEQ6mQEYEetybHXuuvojbKi2mpKXP1fKsVJXJYo",
+    "address": "6JfYz5itjCP6jjaxqX8KQizXYcRtzmSsHJdbiLBeqvEH",
     "origin": "anchor",
     "binaryVersion": "0.29.0",
     "libVersion": "0.29.0"

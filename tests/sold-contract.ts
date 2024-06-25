@@ -2,10 +2,10 @@ import { keypairIdentity, Pda, PublicKey, publicKey, TransactionBuilder, createA
 import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
 import { createAssociatedToken, createSplAssociatedTokenProgram, createSplTokenProgram, findAssociatedTokenPda, safeFetchToken, SPL_ASSOCIATED_TOKEN_PROGRAM_ID } from "@metaplex-foundation/mpl-toolbox"
 import { Connection, Keypair, PublicKey as Web3JsPublicKey } from "@solana/web3.js";
-import { createSoldIssuanceProgram, findTokenManagerPda, initializeTokenManager, SOLD_ISSUANCE_PROGRAM_ID, mint, redeem, safeFetchTokenManager, getMerkleRoot, getMerkleProof, toggleActive, updatePoolManager, depositFunds, withdrawFunds, initializePoolManager, SOLD_STAKING_PROGRAM_ID, calculateExchangeRate, stake, unstake, updateAnnualYield, findPoolManagerPda, updateTokenManagerAdmin, safeFetchPoolManager, initializeWithdrawFunds } from "../clients/js/src"
+import { createSoldIssuanceProgram, findTokenManagerPda, initializeTokenManager, SOLD_ISSUANCE_PROGRAM_ID, mint, redeem, safeFetchTokenManager, getMerkleRoot, getMerkleProof, toggleActive, updatePoolManager, depositFunds, withdrawFunds, initializePoolManager, SOLD_STAKING_PROGRAM_ID, calculateExchangeRate, stake, unstake, updateAnnualYield, findPoolManagerPda, updateTokenManagerAdmin, safeFetchPoolManager, initializeWithdrawFunds, initiateUpdatePoolOwner, updatePoolOwner, updateManagerOwner, initiateUpdateManagerOwner, updateXmintMetadata, updateMintMetadata } from "../clients/js/src"
 import { ASSOCIATED_TOKEN_PROGRAM_ID, createMint, getOrCreateAssociatedTokenAccount, mintTo, TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import { fromWeb3JsKeypair, fromWeb3JsPublicKey } from "@metaplex-foundation/umi-web3js-adapters";
-import { findMetadataPda } from "@metaplex-foundation/mpl-token-metadata";
+import { fromWeb3JsKeypair, fromWeb3JsPublicKey, toWeb3JsKeypair } from "@metaplex-foundation/umi-web3js-adapters";
+import { findMetadataPda, safeFetchMetadata } from "@metaplex-foundation/mpl-token-metadata";
 import assert from 'assert';
 import chai, { assert as chaiAssert } from 'chai';
 import { bs58 } from "@coral-xyz/anchor/dist/cjs/utils/bytes";
@@ -199,7 +199,7 @@ describe.only("sold-issuance", () => {
     assert.equal(stakePoolAcc.xSupply, 0n);
   });
 
-  it.only("Sold can be minted for USDC", async () => {
+  it("Sold can be minted for USDC", async () => {
     const quantity = 10000 * 10 ** baseMintDecimals;
 
     const proof = getMerkleProof(allowedWallets, keypair.publicKey.toBase58());
@@ -256,7 +256,7 @@ describe.only("sold-issuance", () => {
     assert.equal(vaultAcc.amount, _vaultAcc.amount + expectedQuoteAmount, "Vault amount should be correct");
   })
 
-  it.only("Sold can be redeemed for Quote", async () => {
+  it("Sold can be redeemed for Quote", async () => {
     const quantity = 1000 * 10 ** baseMintDecimals;
 
     const proof = getMerkleProof(allowedWallets, keypair.publicKey.toBase58());
@@ -472,11 +472,12 @@ describe.only("sold-issuance", () => {
     txBuilder = new TransactionBuilder();
     txBuilder = txBuilder.add(updateTokenManagerAdmin(umi, {
       tokenManager,
+      admin: umi.identity,
+      // Params
       newMerkleRoot: some(originalMerkleRoot),
       newGateKeepers: null,
       newMintLimitPerSlot: null,
       newRedemptionLimitPerSlot: null,
-      admin: null
     }));
     await txBuilder.sendAndConfirm(umi);
 
@@ -858,5 +859,170 @@ describe.only("sold-issuance", () => {
     const stakePoolAcc = await safeFetchPoolManager(umi, poolManager);
 
     assert.equal(stakePoolAcc.annualYieldRate, 2500, "Annual yield rate should be updated to 25.00%");
+  });
+
+  it("should initiate and accept pool owner update", async () => {
+    const newAdmin = umi.eddsa.generateKeypair();
+
+    await umi.rpc.airdrop(newAdmin.publicKey, createAmount(100_000 * 10 ** 9, "SOL", 9), {
+      commitment: "finalized",
+    });
+
+    // Initiate update of pool owner
+    let txBuilder = new TransactionBuilder();
+    txBuilder = txBuilder.add(initiateUpdatePoolOwner(umi, {
+      poolManager,
+      newOwner: newAdmin.publicKey,
+      owner: umi.identity
+    }));
+    await txBuilder.sendAndConfirm(umi);
+
+    // Check if the update initiation was successful
+    let poolManagerAcc = await safeFetchPoolManager(umi, poolManager);
+    assert.equal(poolManagerAcc.pendingOwner, newAdmin.publicKey, "Pending owner should be set to new admin");
+
+    // Accept update of pool owner
+    umi.use(keypairIdentity(newAdmin)); // Switch to new admin
+    txBuilder = new TransactionBuilder();
+    txBuilder = txBuilder.add(updatePoolOwner(umi, {
+      poolManager,
+      newOwner: umi.identity
+    }));
+    await txBuilder.sendAndConfirm(umi);
+
+    // Verify the new admin is set
+    poolManagerAcc = await safeFetchPoolManager(umi, poolManager);
+
+    assert.equal(poolManagerAcc.owner, newAdmin.publicKey, "owner should be updated to new owner");
+    assert.equal(poolManagerAcc.pendingOwner, publicKey("11111111111111111111111111111111"), "Pending owner should be set to default pubkey");
+
+    // Change back
+    txBuilder = new TransactionBuilder();
+    txBuilder = txBuilder.add(initiateUpdatePoolOwner(umi, {
+      poolManager,
+      newOwner: fromWeb3JsKeypair(keypair).publicKey,
+      owner: umi.identity
+    }));
+    await txBuilder.sendAndConfirm(umi);
+
+
+    // Accept update back to original admin
+    umi.use(keypairIdentity(fromWeb3JsKeypair(keypair))); // Switch to new admin
+
+    txBuilder = new TransactionBuilder();
+    txBuilder = txBuilder.add(updatePoolOwner(umi, {
+      poolManager,
+      newOwner: umi.identity
+    }));
+    await txBuilder.sendAndConfirm(umi);
+
+    // Verify the admin is set back to original
+    poolManagerAcc = await safeFetchPoolManager(umi, poolManager);
+    assert.equal(poolManagerAcc.admin, keypair.publicKey.toBase58(), "Admin should be reverted back to original admin");
+  });
+
+  it("should initiate and accept manager owner update", async () => {
+    const newAdmin = umi.eddsa.generateKeypair();
+
+    await umi.rpc.airdrop(newAdmin.publicKey, createAmount(100_000 * 10 ** 9, "SOL", 9), {
+      commitment: "finalized",
+    });
+    umi.use(keypairIdentity(fromWeb3JsKeypair(keypair))); // Switch to new admin
+
+    // Initiate update of tokenManager owner
+    let txBuilder = new TransactionBuilder();
+    txBuilder = txBuilder.add(initiateUpdateManagerOwner(umi, {
+      tokenManager,
+      newOwner: newAdmin.publicKey,
+      owner: umi.identity
+    }));
+    await txBuilder.sendAndConfirm(umi);
+
+    // Check if the update initiation was successful
+    let tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
+
+    assert.equal(tokenManagerAcc.pendingOwner, newAdmin.publicKey, "Pending owner should be set to new admin");
+
+    // Accept update of manager owner
+    umi.use(keypairIdentity(newAdmin)); // Switch to new admin
+    txBuilder = new TransactionBuilder();
+    txBuilder = txBuilder.add(updateManagerOwner(umi, {
+      tokenManager,
+      newOwner: umi.identity
+    }));
+    await txBuilder.sendAndConfirm(umi);
+
+    // Verify the new admin is set
+    tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
+    assert.equal(tokenManagerAcc.owner, newAdmin.publicKey, "owner should be updated to new owner");
+    assert.equal(tokenManagerAcc.pendingOwner, publicKey("11111111111111111111111111111111"), "Pending owner should be set to default pubkey");
+
+    // Change back
+    txBuilder = new TransactionBuilder();
+    txBuilder = txBuilder.add(initiateUpdateManagerOwner(umi, {
+      tokenManager,
+      newOwner: fromWeb3JsKeypair(keypair).publicKey,
+      owner: umi.identity
+    }));
+    await txBuilder.sendAndConfirm(umi);
+
+    // Accept update back to original admin
+    umi.use(keypairIdentity(fromWeb3JsKeypair(keypair))); // Switch back to original admin
+    txBuilder = new TransactionBuilder();
+    txBuilder = txBuilder.add(updateManagerOwner(umi, {
+      tokenManager,
+      newOwner: umi.identity
+    }));
+    await txBuilder.sendAndConfirm(umi);
+
+    // Verify the admin is set back to original
+    tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
+    assert.equal(tokenManagerAcc.admin, publicKey(keypair.publicKey), "Admin should be reverted back to original admin");
+  });
+
+  it.only("should update xMint metadata of stake program", async () => {
+    const name = "TEST";
+    const symbol = "TEST"
+    const uri = "https://example.com/new-xmint-info.json"
+
+    let txBuilder = new TransactionBuilder();
+    txBuilder = txBuilder.add(updateXmintMetadata(umi, {
+      poolManager,
+      metadataAccount: xMetadata,
+      name,
+      symbol,
+      uri,
+      owner: umi.identity
+    }));
+
+    await txBuilder.sendAndConfirm(umi, { send: { skipPreflight: true } });
+
+    const xMintMetadata = await safeFetchMetadata(umi, xMetadata);
+    assert.equal(xMintMetadata.name, name, "Name should be updated");
+    assert.equal(xMintMetadata.symbol, symbol, "Symbol should be updated");
+    assert.equal(xMintMetadata.uri, uri, "Uri should be updated");
+  });
+
+  it.only("should update base mint metadata of issuance program", async () => {
+    const name = "TEST";
+    const symbol = "TEST"
+    const uri = "https://example.com/new-xmint-info.json"
+
+    let txBuilder = new TransactionBuilder();
+    txBuilder = txBuilder.add(updateMintMetadata(umi, {
+      tokenManager,
+      metadataAccount: baseMetadata,
+      name,
+      symbol,
+      uri,
+      owner: umi.identity
+    }));
+
+    await txBuilder.sendAndConfirm(umi, { send: { skipPreflight: true } });
+
+    const mintMetadata = await safeFetchMetadata(umi, baseMetadata);
+    assert.equal(mintMetadata.name, name, "Name should be updated");
+    assert.equal(mintMetadata.symbol, symbol, "Symbol should be updated");
+    assert.equal(mintMetadata.uri, uri, "Uri should be updated");
   });
 });

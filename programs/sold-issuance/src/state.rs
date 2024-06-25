@@ -1,12 +1,13 @@
 use anchor_lang::prelude::*;
 
-pub const TOKEN_MANAGER_SIZE: usize = 8 + 4 + (32 * 11) + (8 * 11) + 2 + (1 * 4);
+pub const TOKEN_MANAGER_SIZE: usize = 8 + 4 + (32 * 12) + (8 * 11) + 2 + (1 * 4);
 
 #[account]
 pub struct TokenManager {
     pub bump: u8, // 1
     // Authorities
     pub owner: Pubkey,             // 32
+    pub pending_owner: Pubkey,     // 32
     pub admin: Pubkey,             // 32
     pub minter: Pubkey,            // 32
     pub gate_keepers: Vec<Pubkey>, // 4 +  32 * 5

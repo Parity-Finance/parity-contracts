@@ -4,7 +4,6 @@ use crate::{SoldIssuanceError, TokenManager};
 
 #[derive(AnchorSerialize, AnchorDeserialize, Debug, Clone)]
 pub struct UpdateTokenManagerOwnerParams {
-    pub new_owner: Option<Pubkey>,
     pub new_admin: Option<Pubkey>,
     pub new_minter: Option<Pubkey>,
     pub emergency_fund_basis_points: Option<u16>,
@@ -30,9 +29,6 @@ pub fn handler(
 ) -> Result<()> {
     let token_manager = &mut ctx.accounts.token_manager;
 
-    if let Some(new_owner) = params.new_owner {
-        token_manager.owner = new_owner;
-    }
     if let Some(new_admin) = params.new_admin {
         token_manager.admin = new_admin;
     }

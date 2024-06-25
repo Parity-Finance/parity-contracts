@@ -33,7 +33,7 @@ pub fn handler(
     let pool_manager = &ctx.accounts.pool_manager;
 
     let bump = pool_manager.bump;
-    let signer_seeds: &[&[&[u8]]] = &[&[b"token-manager", &[bump]]];
+    let signer_seeds: &[&[&[u8]]] = &[&[b"pool-manager", &[bump]]];
 
     let data = DataV2 {
         name,

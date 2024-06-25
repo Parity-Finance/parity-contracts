@@ -12,42 +12,42 @@ use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::pubkey::Pubkey;
 
 /// Accounts.
-pub struct UpdateTokenManagerOwner {
-    pub token_manager: solana_program::pubkey::Pubkey,
+pub struct InitiateUpdatePoolOwner {
+    pub pool_manager: solana_program::pubkey::Pubkey,
 
     pub owner: solana_program::pubkey::Pubkey,
 }
 
-impl UpdateTokenManagerOwner {
+impl InitiateUpdatePoolOwner {
     pub fn instruction(
         &self,
-        args: UpdateTokenManagerOwnerInstructionArgs,
+        args: InitiateUpdatePoolOwnerInstructionArgs,
     ) -> solana_program::instruction::Instruction {
         self.instruction_with_remaining_accounts(args, &[])
     }
     #[allow(clippy::vec_init_then_push)]
     pub fn instruction_with_remaining_accounts(
         &self,
-        args: UpdateTokenManagerOwnerInstructionArgs,
+        args: InitiateUpdatePoolOwnerInstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
         let mut accounts = Vec::with_capacity(2 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.token_manager,
+            self.pool_manager,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.owner, true,
         ));
         accounts.extend_from_slice(remaining_accounts);
-        let mut data = UpdateTokenManagerOwnerInstructionData::new()
+        let mut data = InitiateUpdatePoolOwnerInstructionData::new()
             .try_to_vec()
             .unwrap();
         let mut args = args.try_to_vec().unwrap();
         data.append(&mut args);
 
         solana_program::instruction::Instruction {
-            program_id: crate::SOLD_ISSUANCE_ID,
+            program_id: crate::SOLD_STAKING_ID,
             accounts,
             data,
         }
@@ -56,14 +56,14 @@ impl UpdateTokenManagerOwner {
 
 #[cfg_attr(not(feature = "anchor"), derive(BorshSerialize, BorshDeserialize))]
 #[cfg_attr(feature = "anchor", derive(AnchorSerialize, AnchorDeserialize))]
-pub struct UpdateTokenManagerOwnerInstructionData {
+pub struct InitiateUpdatePoolOwnerInstructionData {
     discriminator: [u8; 8],
 }
 
-impl UpdateTokenManagerOwnerInstructionData {
+impl InitiateUpdatePoolOwnerInstructionData {
     pub fn new() -> Self {
         Self {
-            discriminator: [31, 16, 91, 211, 211, 16, 93, 144],
+            discriminator: [42, 53, 110, 22, 7, 25, 204, 151],
         }
     }
 }
@@ -72,39 +72,31 @@ impl UpdateTokenManagerOwnerInstructionData {
 #[cfg_attr(feature = "anchor", derive(AnchorSerialize, AnchorDeserialize))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct UpdateTokenManagerOwnerInstructionArgs {
-    pub new_admin: Option<Pubkey>,
-    pub new_minter: Option<Pubkey>,
-    pub emergency_fund_basis_points: Option<u16>,
-    pub new_withdraw_time_lock: Option<i64>,
-    pub new_withdraw_execution_window: Option<i64>,
+pub struct InitiateUpdatePoolOwnerInstructionArgs {
+    pub new_owner: Pubkey,
 }
 
-/// Instruction builder for `UpdateTokenManagerOwner`.
+/// Instruction builder for `InitiateUpdatePoolOwner`.
 ///
 /// ### Accounts:
 ///
-///   0. `[writable]` token_manager
+///   0. `[writable]` pool_manager
 ///   1. `[signer]` owner
 #[derive(Default)]
-pub struct UpdateTokenManagerOwnerBuilder {
-    token_manager: Option<solana_program::pubkey::Pubkey>,
+pub struct InitiateUpdatePoolOwnerBuilder {
+    pool_manager: Option<solana_program::pubkey::Pubkey>,
     owner: Option<solana_program::pubkey::Pubkey>,
-    new_admin: Option<Pubkey>,
-    new_minter: Option<Pubkey>,
-    emergency_fund_basis_points: Option<u16>,
-    new_withdraw_time_lock: Option<i64>,
-    new_withdraw_execution_window: Option<i64>,
+    new_owner: Option<Pubkey>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
-impl UpdateTokenManagerOwnerBuilder {
+impl InitiateUpdatePoolOwnerBuilder {
     pub fn new() -> Self {
         Self::default()
     }
     #[inline(always)]
-    pub fn token_manager(&mut self, token_manager: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.token_manager = Some(token_manager);
+    pub fn pool_manager(&mut self, pool_manager: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.pool_manager = Some(pool_manager);
         self
     }
     #[inline(always)]
@@ -112,37 +104,9 @@ impl UpdateTokenManagerOwnerBuilder {
         self.owner = Some(owner);
         self
     }
-    /// `[optional argument]`
     #[inline(always)]
-    pub fn new_admin(&mut self, new_admin: Pubkey) -> &mut Self {
-        self.new_admin = Some(new_admin);
-        self
-    }
-    /// `[optional argument]`
-    #[inline(always)]
-    pub fn new_minter(&mut self, new_minter: Pubkey) -> &mut Self {
-        self.new_minter = Some(new_minter);
-        self
-    }
-    /// `[optional argument]`
-    #[inline(always)]
-    pub fn emergency_fund_basis_points(&mut self, emergency_fund_basis_points: u16) -> &mut Self {
-        self.emergency_fund_basis_points = Some(emergency_fund_basis_points);
-        self
-    }
-    /// `[optional argument]`
-    #[inline(always)]
-    pub fn new_withdraw_time_lock(&mut self, new_withdraw_time_lock: i64) -> &mut Self {
-        self.new_withdraw_time_lock = Some(new_withdraw_time_lock);
-        self
-    }
-    /// `[optional argument]`
-    #[inline(always)]
-    pub fn new_withdraw_execution_window(
-        &mut self,
-        new_withdraw_execution_window: i64,
-    ) -> &mut Self {
-        self.new_withdraw_execution_window = Some(new_withdraw_execution_window);
+    pub fn new_owner(&mut self, new_owner: Pubkey) -> &mut Self {
+        self.new_owner = Some(new_owner);
         self
     }
     /// Add an aditional account to the instruction.
@@ -165,50 +129,46 @@ impl UpdateTokenManagerOwnerBuilder {
     }
     #[allow(clippy::clone_on_copy)]
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
-        let accounts = UpdateTokenManagerOwner {
-            token_manager: self.token_manager.expect("token_manager is not set"),
+        let accounts = InitiateUpdatePoolOwner {
+            pool_manager: self.pool_manager.expect("pool_manager is not set"),
             owner: self.owner.expect("owner is not set"),
         };
-        let args = UpdateTokenManagerOwnerInstructionArgs {
-            new_admin: self.new_admin.clone(),
-            new_minter: self.new_minter.clone(),
-            emergency_fund_basis_points: self.emergency_fund_basis_points.clone(),
-            new_withdraw_time_lock: self.new_withdraw_time_lock.clone(),
-            new_withdraw_execution_window: self.new_withdraw_execution_window.clone(),
+        let args = InitiateUpdatePoolOwnerInstructionArgs {
+            new_owner: self.new_owner.clone().expect("new_owner is not set"),
         };
 
         accounts.instruction_with_remaining_accounts(args, &self.__remaining_accounts)
     }
 }
 
-/// `update_token_manager_owner` CPI accounts.
-pub struct UpdateTokenManagerOwnerCpiAccounts<'a, 'b> {
-    pub token_manager: &'b solana_program::account_info::AccountInfo<'a>,
+/// `initiate_update_pool_owner` CPI accounts.
+pub struct InitiateUpdatePoolOwnerCpiAccounts<'a, 'b> {
+    pub pool_manager: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub owner: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
-/// `update_token_manager_owner` CPI instruction.
-pub struct UpdateTokenManagerOwnerCpi<'a, 'b> {
+/// `initiate_update_pool_owner` CPI instruction.
+pub struct InitiateUpdatePoolOwnerCpi<'a, 'b> {
     /// The program to invoke.
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub token_manager: &'b solana_program::account_info::AccountInfo<'a>,
+    pub pool_manager: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub owner: &'b solana_program::account_info::AccountInfo<'a>,
     /// The arguments for the instruction.
-    pub __args: UpdateTokenManagerOwnerInstructionArgs,
+    pub __args: InitiateUpdatePoolOwnerInstructionArgs,
 }
 
-impl<'a, 'b> UpdateTokenManagerOwnerCpi<'a, 'b> {
+impl<'a, 'b> InitiateUpdatePoolOwnerCpi<'a, 'b> {
     pub fn new(
         program: &'b solana_program::account_info::AccountInfo<'a>,
-        accounts: UpdateTokenManagerOwnerCpiAccounts<'a, 'b>,
-        args: UpdateTokenManagerOwnerInstructionArgs,
+        accounts: InitiateUpdatePoolOwnerCpiAccounts<'a, 'b>,
+        args: InitiateUpdatePoolOwnerInstructionArgs,
     ) -> Self {
         Self {
             __program: program,
-            token_manager: accounts.token_manager,
+            pool_manager: accounts.pool_manager,
             owner: accounts.owner,
             __args: args,
         }
@@ -248,7 +208,7 @@ impl<'a, 'b> UpdateTokenManagerOwnerCpi<'a, 'b> {
     ) -> solana_program::entrypoint::ProgramResult {
         let mut accounts = Vec::with_capacity(2 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.token_manager.key,
+            *self.pool_manager.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -262,20 +222,20 @@ impl<'a, 'b> UpdateTokenManagerOwnerCpi<'a, 'b> {
                 is_writable: remaining_account.2,
             })
         });
-        let mut data = UpdateTokenManagerOwnerInstructionData::new()
+        let mut data = InitiateUpdatePoolOwnerInstructionData::new()
             .try_to_vec()
             .unwrap();
         let mut args = self.__args.try_to_vec().unwrap();
         data.append(&mut args);
 
         let instruction = solana_program::instruction::Instruction {
-            program_id: crate::SOLD_ISSUANCE_ID,
+            program_id: crate::SOLD_STAKING_ID,
             accounts,
             data,
         };
         let mut account_infos = Vec::with_capacity(2 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
-        account_infos.push(self.token_manager.clone());
+        account_infos.push(self.pool_manager.clone());
         account_infos.push(self.owner.clone());
         remaining_accounts
             .iter()
@@ -289,37 +249,33 @@ impl<'a, 'b> UpdateTokenManagerOwnerCpi<'a, 'b> {
     }
 }
 
-/// Instruction builder for `UpdateTokenManagerOwner` via CPI.
+/// Instruction builder for `InitiateUpdatePoolOwner` via CPI.
 ///
 /// ### Accounts:
 ///
-///   0. `[writable]` token_manager
+///   0. `[writable]` pool_manager
 ///   1. `[signer]` owner
-pub struct UpdateTokenManagerOwnerCpiBuilder<'a, 'b> {
-    instruction: Box<UpdateTokenManagerOwnerCpiBuilderInstruction<'a, 'b>>,
+pub struct InitiateUpdatePoolOwnerCpiBuilder<'a, 'b> {
+    instruction: Box<InitiateUpdatePoolOwnerCpiBuilderInstruction<'a, 'b>>,
 }
 
-impl<'a, 'b> UpdateTokenManagerOwnerCpiBuilder<'a, 'b> {
+impl<'a, 'b> InitiateUpdatePoolOwnerCpiBuilder<'a, 'b> {
     pub fn new(program: &'b solana_program::account_info::AccountInfo<'a>) -> Self {
-        let instruction = Box::new(UpdateTokenManagerOwnerCpiBuilderInstruction {
+        let instruction = Box::new(InitiateUpdatePoolOwnerCpiBuilderInstruction {
             __program: program,
-            token_manager: None,
+            pool_manager: None,
             owner: None,
-            new_admin: None,
-            new_minter: None,
-            emergency_fund_basis_points: None,
-            new_withdraw_time_lock: None,
-            new_withdraw_execution_window: None,
+            new_owner: None,
             __remaining_accounts: Vec::new(),
         });
         Self { instruction }
     }
     #[inline(always)]
-    pub fn token_manager(
+    pub fn pool_manager(
         &mut self,
-        token_manager: &'b solana_program::account_info::AccountInfo<'a>,
+        pool_manager: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.token_manager = Some(token_manager);
+        self.instruction.pool_manager = Some(pool_manager);
         self
     }
     #[inline(always)]
@@ -327,37 +283,9 @@ impl<'a, 'b> UpdateTokenManagerOwnerCpiBuilder<'a, 'b> {
         self.instruction.owner = Some(owner);
         self
     }
-    /// `[optional argument]`
     #[inline(always)]
-    pub fn new_admin(&mut self, new_admin: Pubkey) -> &mut Self {
-        self.instruction.new_admin = Some(new_admin);
-        self
-    }
-    /// `[optional argument]`
-    #[inline(always)]
-    pub fn new_minter(&mut self, new_minter: Pubkey) -> &mut Self {
-        self.instruction.new_minter = Some(new_minter);
-        self
-    }
-    /// `[optional argument]`
-    #[inline(always)]
-    pub fn emergency_fund_basis_points(&mut self, emergency_fund_basis_points: u16) -> &mut Self {
-        self.instruction.emergency_fund_basis_points = Some(emergency_fund_basis_points);
-        self
-    }
-    /// `[optional argument]`
-    #[inline(always)]
-    pub fn new_withdraw_time_lock(&mut self, new_withdraw_time_lock: i64) -> &mut Self {
-        self.instruction.new_withdraw_time_lock = Some(new_withdraw_time_lock);
-        self
-    }
-    /// `[optional argument]`
-    #[inline(always)]
-    pub fn new_withdraw_execution_window(
-        &mut self,
-        new_withdraw_execution_window: i64,
-    ) -> &mut Self {
-        self.instruction.new_withdraw_execution_window = Some(new_withdraw_execution_window);
+    pub fn new_owner(&mut self, new_owner: Pubkey) -> &mut Self {
+        self.instruction.new_owner = Some(new_owner);
         self
     }
     /// Add an additional account to the instruction.
@@ -401,20 +329,20 @@ impl<'a, 'b> UpdateTokenManagerOwnerCpiBuilder<'a, 'b> {
         &self,
         signers_seeds: &[&[&[u8]]],
     ) -> solana_program::entrypoint::ProgramResult {
-        let args = UpdateTokenManagerOwnerInstructionArgs {
-            new_admin: self.instruction.new_admin.clone(),
-            new_minter: self.instruction.new_minter.clone(),
-            emergency_fund_basis_points: self.instruction.emergency_fund_basis_points.clone(),
-            new_withdraw_time_lock: self.instruction.new_withdraw_time_lock.clone(),
-            new_withdraw_execution_window: self.instruction.new_withdraw_execution_window.clone(),
+        let args = InitiateUpdatePoolOwnerInstructionArgs {
+            new_owner: self
+                .instruction
+                .new_owner
+                .clone()
+                .expect("new_owner is not set"),
         };
-        let instruction = UpdateTokenManagerOwnerCpi {
+        let instruction = InitiateUpdatePoolOwnerCpi {
             __program: self.instruction.__program,
 
-            token_manager: self
+            pool_manager: self
                 .instruction
-                .token_manager
-                .expect("token_manager is not set"),
+                .pool_manager
+                .expect("pool_manager is not set"),
 
             owner: self.instruction.owner.expect("owner is not set"),
             __args: args,
@@ -426,15 +354,11 @@ impl<'a, 'b> UpdateTokenManagerOwnerCpiBuilder<'a, 'b> {
     }
 }
 
-struct UpdateTokenManagerOwnerCpiBuilderInstruction<'a, 'b> {
+struct InitiateUpdatePoolOwnerCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
-    token_manager: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    pool_manager: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     owner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    new_admin: Option<Pubkey>,
-    new_minter: Option<Pubkey>,
-    emergency_fund_basis_points: Option<u16>,
-    new_withdraw_time_lock: Option<i64>,
-    new_withdraw_execution_window: Option<i64>,
+    new_owner: Option<Pubkey>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(
         &'b solana_program::account_info::AccountInfo<'a>,

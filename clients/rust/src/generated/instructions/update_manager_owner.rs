@@ -11,15 +11,13 @@ use anchor_lang::prelude::{AnchorDeserialize, AnchorSerialize};
 use borsh::{BorshDeserialize, BorshSerialize};
 
 /// Accounts.
-pub struct CloseTokenManager {
+pub struct UpdateManagerOwner {
     pub token_manager: solana_program::pubkey::Pubkey,
 
-    pub owner: solana_program::pubkey::Pubkey,
-
-    pub system_program: solana_program::pubkey::Pubkey,
+    pub new_owner: solana_program::pubkey::Pubkey,
 }
 
-impl CloseTokenManager {
+impl UpdateManagerOwner {
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
         self.instruction_with_remaining_accounts(&[])
     }
@@ -28,20 +26,17 @@ impl CloseTokenManager {
         &self,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(3 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(2 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.token_manager,
             false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new(
-            self.owner, true,
-        ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.system_program,
-            false,
+            self.new_owner,
+            true,
         ));
         accounts.extend_from_slice(remaining_accounts);
-        let data = CloseTokenManagerInstructionData::new()
+        let data = UpdateManagerOwnerInstructionData::new()
             .try_to_vec()
             .unwrap();
 
@@ -55,34 +50,32 @@ impl CloseTokenManager {
 
 #[cfg_attr(not(feature = "anchor"), derive(BorshSerialize, BorshDeserialize))]
 #[cfg_attr(feature = "anchor", derive(AnchorSerialize, AnchorDeserialize))]
-pub struct CloseTokenManagerInstructionData {
+pub struct UpdateManagerOwnerInstructionData {
     discriminator: [u8; 8],
 }
 
-impl CloseTokenManagerInstructionData {
+impl UpdateManagerOwnerInstructionData {
     pub fn new() -> Self {
         Self {
-            discriminator: [129, 93, 164, 22, 152, 220, 186, 74],
+            discriminator: [222, 39, 178, 32, 216, 177, 170, 117],
         }
     }
 }
 
-/// Instruction builder for `CloseTokenManager`.
+/// Instruction builder for `UpdateManagerOwner`.
 ///
 /// ### Accounts:
 ///
 ///   0. `[writable]` token_manager
-///   1. `[writable, signer]` owner
-///   2. `[optional]` system_program (default to `11111111111111111111111111111111`)
+///   1. `[signer]` new_owner
 #[derive(Default)]
-pub struct CloseTokenManagerBuilder {
+pub struct UpdateManagerOwnerBuilder {
     token_manager: Option<solana_program::pubkey::Pubkey>,
-    owner: Option<solana_program::pubkey::Pubkey>,
-    system_program: Option<solana_program::pubkey::Pubkey>,
+    new_owner: Option<solana_program::pubkey::Pubkey>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
-impl CloseTokenManagerBuilder {
+impl UpdateManagerOwnerBuilder {
     pub fn new() -> Self {
         Self::default()
     }
@@ -92,14 +85,8 @@ impl CloseTokenManagerBuilder {
         self
     }
     #[inline(always)]
-    pub fn owner(&mut self, owner: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.owner = Some(owner);
-        self
-    }
-    /// `[optional account, default to '11111111111111111111111111111111']`
-    #[inline(always)]
-    pub fn system_program(&mut self, system_program: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.system_program = Some(system_program);
+    pub fn new_owner(&mut self, new_owner: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.new_owner = Some(new_owner);
         self
     }
     /// Add an aditional account to the instruction.
@@ -122,49 +109,41 @@ impl CloseTokenManagerBuilder {
     }
     #[allow(clippy::clone_on_copy)]
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
-        let accounts = CloseTokenManager {
+        let accounts = UpdateManagerOwner {
             token_manager: self.token_manager.expect("token_manager is not set"),
-            owner: self.owner.expect("owner is not set"),
-            system_program: self
-                .system_program
-                .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
+            new_owner: self.new_owner.expect("new_owner is not set"),
         };
 
         accounts.instruction_with_remaining_accounts(&self.__remaining_accounts)
     }
 }
 
-/// `close_token_manager` CPI accounts.
-pub struct CloseTokenManagerCpiAccounts<'a, 'b> {
+/// `update_manager_owner` CPI accounts.
+pub struct UpdateManagerOwnerCpiAccounts<'a, 'b> {
     pub token_manager: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub owner: &'b solana_program::account_info::AccountInfo<'a>,
-
-    pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
+    pub new_owner: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
-/// `close_token_manager` CPI instruction.
-pub struct CloseTokenManagerCpi<'a, 'b> {
+/// `update_manager_owner` CPI instruction.
+pub struct UpdateManagerOwnerCpi<'a, 'b> {
     /// The program to invoke.
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub token_manager: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub owner: &'b solana_program::account_info::AccountInfo<'a>,
-
-    pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
+    pub new_owner: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
-impl<'a, 'b> CloseTokenManagerCpi<'a, 'b> {
+impl<'a, 'b> UpdateManagerOwnerCpi<'a, 'b> {
     pub fn new(
         program: &'b solana_program::account_info::AccountInfo<'a>,
-        accounts: CloseTokenManagerCpiAccounts<'a, 'b>,
+        accounts: UpdateManagerOwnerCpiAccounts<'a, 'b>,
     ) -> Self {
         Self {
             __program: program,
             token_manager: accounts.token_manager,
-            owner: accounts.owner,
-            system_program: accounts.system_program,
+            new_owner: accounts.new_owner,
         }
     }
     #[inline(always)]
@@ -200,18 +179,14 @@ impl<'a, 'b> CloseTokenManagerCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(3 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(2 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.token_manager.key,
             false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.owner.key,
-            true,
-        ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.system_program.key,
-            false,
+            *self.new_owner.key,
+            true,
         ));
         remaining_accounts.iter().for_each(|remaining_account| {
             accounts.push(solana_program::instruction::AccountMeta {
@@ -220,7 +195,7 @@ impl<'a, 'b> CloseTokenManagerCpi<'a, 'b> {
                 is_writable: remaining_account.2,
             })
         });
-        let data = CloseTokenManagerInstructionData::new()
+        let data = UpdateManagerOwnerInstructionData::new()
             .try_to_vec()
             .unwrap();
 
@@ -229,11 +204,10 @@ impl<'a, 'b> CloseTokenManagerCpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(3 + 1 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(2 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.token_manager.clone());
-        account_infos.push(self.owner.clone());
-        account_infos.push(self.system_program.clone());
+        account_infos.push(self.new_owner.clone());
         remaining_accounts
             .iter()
             .for_each(|remaining_account| account_infos.push(remaining_account.0.clone()));
@@ -246,24 +220,22 @@ impl<'a, 'b> CloseTokenManagerCpi<'a, 'b> {
     }
 }
 
-/// Instruction builder for `CloseTokenManager` via CPI.
+/// Instruction builder for `UpdateManagerOwner` via CPI.
 ///
 /// ### Accounts:
 ///
 ///   0. `[writable]` token_manager
-///   1. `[writable, signer]` owner
-///   2. `[]` system_program
-pub struct CloseTokenManagerCpiBuilder<'a, 'b> {
-    instruction: Box<CloseTokenManagerCpiBuilderInstruction<'a, 'b>>,
+///   1. `[signer]` new_owner
+pub struct UpdateManagerOwnerCpiBuilder<'a, 'b> {
+    instruction: Box<UpdateManagerOwnerCpiBuilderInstruction<'a, 'b>>,
 }
 
-impl<'a, 'b> CloseTokenManagerCpiBuilder<'a, 'b> {
+impl<'a, 'b> UpdateManagerOwnerCpiBuilder<'a, 'b> {
     pub fn new(program: &'b solana_program::account_info::AccountInfo<'a>) -> Self {
-        let instruction = Box::new(CloseTokenManagerCpiBuilderInstruction {
+        let instruction = Box::new(UpdateManagerOwnerCpiBuilderInstruction {
             __program: program,
             token_manager: None,
-            owner: None,
-            system_program: None,
+            new_owner: None,
             __remaining_accounts: Vec::new(),
         });
         Self { instruction }
@@ -277,16 +249,11 @@ impl<'a, 'b> CloseTokenManagerCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn owner(&mut self, owner: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
-        self.instruction.owner = Some(owner);
-        self
-    }
-    #[inline(always)]
-    pub fn system_program(
+    pub fn new_owner(
         &mut self,
-        system_program: &'b solana_program::account_info::AccountInfo<'a>,
+        new_owner: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.system_program = Some(system_program);
+        self.instruction.new_owner = Some(new_owner);
         self
     }
     /// Add an additional account to the instruction.
@@ -330,7 +297,7 @@ impl<'a, 'b> CloseTokenManagerCpiBuilder<'a, 'b> {
         &self,
         signers_seeds: &[&[&[u8]]],
     ) -> solana_program::entrypoint::ProgramResult {
-        let instruction = CloseTokenManagerCpi {
+        let instruction = UpdateManagerOwnerCpi {
             __program: self.instruction.__program,
 
             token_manager: self
@@ -338,12 +305,7 @@ impl<'a, 'b> CloseTokenManagerCpiBuilder<'a, 'b> {
                 .token_manager
                 .expect("token_manager is not set"),
 
-            owner: self.instruction.owner.expect("owner is not set"),
-
-            system_program: self
-                .instruction
-                .system_program
-                .expect("system_program is not set"),
+            new_owner: self.instruction.new_owner.expect("new_owner is not set"),
         };
         instruction.invoke_signed_with_remaining_accounts(
             signers_seeds,
@@ -352,11 +314,10 @@ impl<'a, 'b> CloseTokenManagerCpiBuilder<'a, 'b> {
     }
 }
 
-struct CloseTokenManagerCpiBuilderInstruction<'a, 'b> {
+struct UpdateManagerOwnerCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     token_manager: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    owner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    new_owner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(
         &'b solana_program::account_info::AccountInfo<'a>,

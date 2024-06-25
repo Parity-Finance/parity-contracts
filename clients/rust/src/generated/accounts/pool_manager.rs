@@ -27,6 +27,11 @@ pub struct PoolManager {
         feature = "serde",
         serde(with = "serde_with::As::<serde_with::DisplayFromStr>")
     )]
+    pub pending_owner: Pubkey,
+    #[cfg_attr(
+        feature = "serde",
+        serde(with = "serde_with::As::<serde_with::DisplayFromStr>")
+    )]
     pub admin: Pubkey,
     #[cfg_attr(
         feature = "serde",
@@ -50,7 +55,7 @@ pub struct PoolManager {
 }
 
 impl PoolManager {
-    pub const LEN: usize = 195;
+    pub const LEN: usize = 227;
 
     /// Prefix values used to generate a PDA for this account.
     ///

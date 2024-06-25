@@ -11,15 +11,13 @@ use anchor_lang::prelude::{AnchorDeserialize, AnchorSerialize};
 use borsh::{BorshDeserialize, BorshSerialize};
 
 /// Accounts.
-pub struct ClosePoolManager {
+pub struct UpdatePoolOwner {
     pub pool_manager: solana_program::pubkey::Pubkey,
 
-    pub owner: solana_program::pubkey::Pubkey,
-
-    pub system_program: solana_program::pubkey::Pubkey,
+    pub new_owner: solana_program::pubkey::Pubkey,
 }
 
-impl ClosePoolManager {
+impl UpdatePoolOwner {
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
         self.instruction_with_remaining_accounts(&[])
     }
@@ -28,20 +26,17 @@ impl ClosePoolManager {
         &self,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(3 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(2 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.pool_manager,
             false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new(
-            self.owner, true,
-        ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.system_program,
-            false,
+            self.new_owner,
+            true,
         ));
         accounts.extend_from_slice(remaining_accounts);
-        let data = ClosePoolManagerInstructionData::new().try_to_vec().unwrap();
+        let data = UpdatePoolOwnerInstructionData::new().try_to_vec().unwrap();
 
         solana_program::instruction::Instruction {
             program_id: crate::SOLD_STAKING_ID,
@@ -53,34 +48,32 @@ impl ClosePoolManager {
 
 #[cfg_attr(not(feature = "anchor"), derive(BorshSerialize, BorshDeserialize))]
 #[cfg_attr(feature = "anchor", derive(AnchorSerialize, AnchorDeserialize))]
-pub struct ClosePoolManagerInstructionData {
+pub struct UpdatePoolOwnerInstructionData {
     discriminator: [u8; 8],
 }
 
-impl ClosePoolManagerInstructionData {
+impl UpdatePoolOwnerInstructionData {
     pub fn new() -> Self {
         Self {
-            discriminator: [147, 222, 197, 77, 66, 219, 247, 107],
+            discriminator: [111, 245, 139, 189, 40, 173, 111, 123],
         }
     }
 }
 
-/// Instruction builder for `ClosePoolManager`.
+/// Instruction builder for `UpdatePoolOwner`.
 ///
 /// ### Accounts:
 ///
 ///   0. `[writable]` pool_manager
-///   1. `[writable, signer]` owner
-///   2. `[optional]` system_program (default to `11111111111111111111111111111111`)
+///   1. `[signer]` new_owner
 #[derive(Default)]
-pub struct ClosePoolManagerBuilder {
+pub struct UpdatePoolOwnerBuilder {
     pool_manager: Option<solana_program::pubkey::Pubkey>,
-    owner: Option<solana_program::pubkey::Pubkey>,
-    system_program: Option<solana_program::pubkey::Pubkey>,
+    new_owner: Option<solana_program::pubkey::Pubkey>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
-impl ClosePoolManagerBuilder {
+impl UpdatePoolOwnerBuilder {
     pub fn new() -> Self {
         Self::default()
     }
@@ -90,14 +83,8 @@ impl ClosePoolManagerBuilder {
         self
     }
     #[inline(always)]
-    pub fn owner(&mut self, owner: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.owner = Some(owner);
-        self
-    }
-    /// `[optional account, default to '11111111111111111111111111111111']`
-    #[inline(always)]
-    pub fn system_program(&mut self, system_program: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.system_program = Some(system_program);
+    pub fn new_owner(&mut self, new_owner: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.new_owner = Some(new_owner);
         self
     }
     /// Add an aditional account to the instruction.
@@ -120,49 +107,41 @@ impl ClosePoolManagerBuilder {
     }
     #[allow(clippy::clone_on_copy)]
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
-        let accounts = ClosePoolManager {
+        let accounts = UpdatePoolOwner {
             pool_manager: self.pool_manager.expect("pool_manager is not set"),
-            owner: self.owner.expect("owner is not set"),
-            system_program: self
-                .system_program
-                .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
+            new_owner: self.new_owner.expect("new_owner is not set"),
         };
 
         accounts.instruction_with_remaining_accounts(&self.__remaining_accounts)
     }
 }
 
-/// `close_pool_manager` CPI accounts.
-pub struct ClosePoolManagerCpiAccounts<'a, 'b> {
+/// `update_pool_owner` CPI accounts.
+pub struct UpdatePoolOwnerCpiAccounts<'a, 'b> {
     pub pool_manager: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub owner: &'b solana_program::account_info::AccountInfo<'a>,
-
-    pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
+    pub new_owner: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
-/// `close_pool_manager` CPI instruction.
-pub struct ClosePoolManagerCpi<'a, 'b> {
+/// `update_pool_owner` CPI instruction.
+pub struct UpdatePoolOwnerCpi<'a, 'b> {
     /// The program to invoke.
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub pool_manager: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub owner: &'b solana_program::account_info::AccountInfo<'a>,
-
-    pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
+    pub new_owner: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
-impl<'a, 'b> ClosePoolManagerCpi<'a, 'b> {
+impl<'a, 'b> UpdatePoolOwnerCpi<'a, 'b> {
     pub fn new(
         program: &'b solana_program::account_info::AccountInfo<'a>,
-        accounts: ClosePoolManagerCpiAccounts<'a, 'b>,
+        accounts: UpdatePoolOwnerCpiAccounts<'a, 'b>,
     ) -> Self {
         Self {
             __program: program,
             pool_manager: accounts.pool_manager,
-            owner: accounts.owner,
-            system_program: accounts.system_program,
+            new_owner: accounts.new_owner,
         }
     }
     #[inline(always)]
@@ -198,18 +177,14 @@ impl<'a, 'b> ClosePoolManagerCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(3 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(2 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.pool_manager.key,
             false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.owner.key,
-            true,
-        ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.system_program.key,
-            false,
+            *self.new_owner.key,
+            true,
         ));
         remaining_accounts.iter().for_each(|remaining_account| {
             accounts.push(solana_program::instruction::AccountMeta {
@@ -218,18 +193,17 @@ impl<'a, 'b> ClosePoolManagerCpi<'a, 'b> {
                 is_writable: remaining_account.2,
             })
         });
-        let data = ClosePoolManagerInstructionData::new().try_to_vec().unwrap();
+        let data = UpdatePoolOwnerInstructionData::new().try_to_vec().unwrap();
 
         let instruction = solana_program::instruction::Instruction {
             program_id: crate::SOLD_STAKING_ID,
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(3 + 1 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(2 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.pool_manager.clone());
-        account_infos.push(self.owner.clone());
-        account_infos.push(self.system_program.clone());
+        account_infos.push(self.new_owner.clone());
         remaining_accounts
             .iter()
             .for_each(|remaining_account| account_infos.push(remaining_account.0.clone()));
@@ -242,24 +216,22 @@ impl<'a, 'b> ClosePoolManagerCpi<'a, 'b> {
     }
 }
 
-/// Instruction builder for `ClosePoolManager` via CPI.
+/// Instruction builder for `UpdatePoolOwner` via CPI.
 ///
 /// ### Accounts:
 ///
 ///   0. `[writable]` pool_manager
-///   1. `[writable, signer]` owner
-///   2. `[]` system_program
-pub struct ClosePoolManagerCpiBuilder<'a, 'b> {
-    instruction: Box<ClosePoolManagerCpiBuilderInstruction<'a, 'b>>,
+///   1. `[signer]` new_owner
+pub struct UpdatePoolOwnerCpiBuilder<'a, 'b> {
+    instruction: Box<UpdatePoolOwnerCpiBuilderInstruction<'a, 'b>>,
 }
 
-impl<'a, 'b> ClosePoolManagerCpiBuilder<'a, 'b> {
+impl<'a, 'b> UpdatePoolOwnerCpiBuilder<'a, 'b> {
     pub fn new(program: &'b solana_program::account_info::AccountInfo<'a>) -> Self {
-        let instruction = Box::new(ClosePoolManagerCpiBuilderInstruction {
+        let instruction = Box::new(UpdatePoolOwnerCpiBuilderInstruction {
             __program: program,
             pool_manager: None,
-            owner: None,
-            system_program: None,
+            new_owner: None,
             __remaining_accounts: Vec::new(),
         });
         Self { instruction }
@@ -273,16 +245,11 @@ impl<'a, 'b> ClosePoolManagerCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn owner(&mut self, owner: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
-        self.instruction.owner = Some(owner);
-        self
-    }
-    #[inline(always)]
-    pub fn system_program(
+    pub fn new_owner(
         &mut self,
-        system_program: &'b solana_program::account_info::AccountInfo<'a>,
+        new_owner: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.system_program = Some(system_program);
+        self.instruction.new_owner = Some(new_owner);
         self
     }
     /// Add an additional account to the instruction.
@@ -326,7 +293,7 @@ impl<'a, 'b> ClosePoolManagerCpiBuilder<'a, 'b> {
         &self,
         signers_seeds: &[&[&[u8]]],
     ) -> solana_program::entrypoint::ProgramResult {
-        let instruction = ClosePoolManagerCpi {
+        let instruction = UpdatePoolOwnerCpi {
             __program: self.instruction.__program,
 
             pool_manager: self
@@ -334,12 +301,7 @@ impl<'a, 'b> ClosePoolManagerCpiBuilder<'a, 'b> {
                 .pool_manager
                 .expect("pool_manager is not set"),
 
-            owner: self.instruction.owner.expect("owner is not set"),
-
-            system_program: self
-                .instruction
-                .system_program
-                .expect("system_program is not set"),
+            new_owner: self.instruction.new_owner.expect("new_owner is not set"),
         };
         instruction.invoke_signed_with_remaining_accounts(
             signers_seeds,
@@ -348,11 +310,10 @@ impl<'a, 'b> ClosePoolManagerCpiBuilder<'a, 'b> {
     }
 }
 
-struct ClosePoolManagerCpiBuilderInstruction<'a, 'b> {
+struct UpdatePoolOwnerCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     pool_manager: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    owner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    new_owner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(
         &'b solana_program::account_info::AccountInfo<'a>,

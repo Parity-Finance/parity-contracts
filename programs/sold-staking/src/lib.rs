@@ -8,7 +8,7 @@ pub use error::*;
 pub use instructions::*;
 pub use state::*;
 
-declare_id!("EUo32ZPAZkwX1dYmHQMiT8XPCnTPiYWrAvukW3WdDgHA");
+declare_id!("BmyPBNiuBnKrjcHPmGDkgmiYNgQA2s6ygKNR38CXSaxW");
 
 #[program]
 pub mod sold_staking {
@@ -52,7 +52,14 @@ pub mod sold_staking {
         update_xmint_metadata::handler(ctx, name, symbol, uri)
     }
 
-    pub fn close_pool_manager(ctx: Context<ClosePoolManager>) -> Result<()> {
-        close_pool_manager::handler(ctx)
+    pub fn update_pool_owner(ctx: Context<UpdatePoolOwner>) -> Result<()> {
+        update_pool_owner::handler(ctx)
+    }
+
+    pub fn initiate_update_pool_owner(
+        ctx: Context<InitiateUpdatePoolOwner>,
+        new_owner: Pubkey,
+    ) -> Result<()> {
+        initiate_update_pool_owner::handler(ctx, new_owner)
     }
 }

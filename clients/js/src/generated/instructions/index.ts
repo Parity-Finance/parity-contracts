@@ -6,12 +6,12 @@
  * @see https://github.com/metaplex-foundation/kinobi
  */
 
-export * from './closePoolManager';
-export * from './closeTokenManager';
 export * from './depositFunds';
 export * from './initializePoolManager';
 export * from './initializeTokenManager';
 export * from './initializeWithdrawFunds';
+export * from './initiateUpdateManagerOwner';
+export * from './initiateUpdatePoolOwner';
 export * from './mint';
 export * from './mintAdmin';
 export * from './redeem';
@@ -19,8 +19,10 @@ export * from './stake';
 export * from './toggleActive';
 export * from './unstake';
 export * from './updateAnnualYield';
+export * from './updateManagerOwner';
 export * from './updateMintMetadata';
 export * from './updatePoolManager';
+export * from './updatePoolOwner';
 export * from './updateTokenManagerAdmin';
 export * from './updateTokenManagerOwner';
 export * from './updateXmintMetadata';

@@ -134,7 +134,7 @@ export function initializeTokenManager(
   // Program ID.
   const programId = context.programs.getPublicKey(
     'soldIssuance',
-    '5rEgzyEQ6mQEYEetybHXuuvojbKi2mpKXP1fKsVJXJYo'
+    '6JfYz5itjCP6jjaxqX8KQizXYcRtzmSsHJdbiLBeqvEH'
   );
 
   // Accounts.

@@ -40,6 +40,7 @@ export type TokenManagerAccountData = {
   discriminator: Array<number>;
   bump: number;
   owner: PublicKey;
+  pendingOwner: PublicKey;
   admin: PublicKey;
   minter: PublicKey;
   gateKeepers: Array<PublicKey>;
@@ -67,6 +68,7 @@ export type TokenManagerAccountData = {
 export type TokenManagerAccountDataArgs = {
   bump: number;
   owner: PublicKey;
+  pendingOwner: PublicKey;
   admin: PublicKey;
   minter: PublicKey;
   gateKeepers: Array<PublicKey>;
@@ -105,6 +107,7 @@ export function getTokenManagerAccountDataSerializer(): Serializer<
         ['discriminator', array(u8(), { size: 8 })],
         ['bump', u8()],
         ['owner', publicKeySerializer()],
+        ['pendingOwner', publicKeySerializer()],
         ['admin', publicKeySerializer()],
         ['minter', publicKeySerializer()],
         ['gateKeepers', array(publicKeySerializer())],
@@ -200,13 +203,14 @@ export function getTokenManagerGpaBuilder(
 ) {
   const programId = context.programs.getPublicKey(
     'soldIssuance',
-    '5rEgzyEQ6mQEYEetybHXuuvojbKi2mpKXP1fKsVJXJYo'
+    '6JfYz5itjCP6jjaxqX8KQizXYcRtzmSsHJdbiLBeqvEH'
   );
   return gpaBuilder(context, programId)
     .registerFields<{
       discriminator: Array<number>;
       bump: number;
       owner: PublicKey;
+      pendingOwner: PublicKey;
       admin: PublicKey;
       minter: PublicKey;
       gateKeepers: Array<PublicKey>;
@@ -233,9 +237,10 @@ export function getTokenManagerGpaBuilder(
       discriminator: [0, array(u8(), { size: 8 })],
       bump: [8, u8()],
       owner: [9, publicKeySerializer()],
-      admin: [41, publicKeySerializer()],
-      minter: [73, publicKeySerializer()],
-      gateKeepers: [105, array(publicKeySerializer())],
+      pendingOwner: [41, publicKeySerializer()],
+      admin: [73, publicKeySerializer()],
+      minter: [105, publicKeySerializer()],
+      gateKeepers: [137, array(publicKeySerializer())],
       merkleRoot: [null, bytes({ size: 32 })],
       mint: [null, publicKeySerializer()],
       mintDecimals: [null, u8()],
@@ -267,7 +272,7 @@ export function findTokenManagerPda(
 ): Pda {
   const programId = context.programs.getPublicKey(
     'soldIssuance',
-    '5rEgzyEQ6mQEYEetybHXuuvojbKi2mpKXP1fKsVJXJYo'
+    '6JfYz5itjCP6jjaxqX8KQizXYcRtzmSsHJdbiLBeqvEH'
   );
   return context.eddsa.findPda(programId, [
     string({ size: 'variable' }).serialize('token-manager'),

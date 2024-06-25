@@ -18,6 +18,7 @@ import {
   Serializer,
   array,
   mapSerializer,
+  publicKey as publicKeySerializer,
   struct,
   u8,
 } from '@metaplex-foundation/umi/serializers';
@@ -28,49 +29,58 @@ import {
 } from '../shared';
 
 // Accounts.
-export type CloseTokenManagerInstructionAccounts = {
+export type InitiateUpdateManagerOwnerInstructionAccounts = {
   tokenManager: PublicKey | Pda;
   owner: Signer;
-  systemProgram?: PublicKey | Pda;
 };
 
 // Data.
-export type CloseTokenManagerInstructionData = { discriminator: Array<number> };
+export type InitiateUpdateManagerOwnerInstructionData = {
+  discriminator: Array<number>;
+  newOwner: PublicKey;
+};
 
-export type CloseTokenManagerInstructionDataArgs = {};
+export type InitiateUpdateManagerOwnerInstructionDataArgs = {
+  newOwner: PublicKey;
+};
 
-export function getCloseTokenManagerInstructionDataSerializer(): Serializer<
-  CloseTokenManagerInstructionDataArgs,
-  CloseTokenManagerInstructionData
+export function getInitiateUpdateManagerOwnerInstructionDataSerializer(): Serializer<
+  InitiateUpdateManagerOwnerInstructionDataArgs,
+  InitiateUpdateManagerOwnerInstructionData
 > {
   return mapSerializer<
-    CloseTokenManagerInstructionDataArgs,
+    InitiateUpdateManagerOwnerInstructionDataArgs,
     any,
-    CloseTokenManagerInstructionData
+    InitiateUpdateManagerOwnerInstructionData
   >(
-    struct<CloseTokenManagerInstructionData>(
-      [['discriminator', array(u8(), { size: 8 })]],
-      { description: 'CloseTokenManagerInstructionData' }
+    struct<InitiateUpdateManagerOwnerInstructionData>(
+      [
+        ['discriminator', array(u8(), { size: 8 })],
+        ['newOwner', publicKeySerializer()],
+      ],
+      { description: 'InitiateUpdateManagerOwnerInstructionData' }
     ),
-    (value) => ({
-      ...value,
-      discriminator: [129, 93, 164, 22, 152, 220, 186, 74],
-    })
+    (value) => ({ ...value, discriminator: [5, 2, 223, 246, 50, 226, 98, 78] })
   ) as Serializer<
-    CloseTokenManagerInstructionDataArgs,
-    CloseTokenManagerInstructionData
+    InitiateUpdateManagerOwnerInstructionDataArgs,
+    InitiateUpdateManagerOwnerInstructionData
   >;
 }
 
+// Args.
+export type InitiateUpdateManagerOwnerInstructionArgs =
+  InitiateUpdateManagerOwnerInstructionDataArgs;
+
 // Instruction.
-export function closeTokenManager(
+export function initiateUpdateManagerOwner(
   context: Pick<Context, 'programs'>,
-  input: CloseTokenManagerInstructionAccounts
+  input: InitiateUpdateManagerOwnerInstructionAccounts &
+    InitiateUpdateManagerOwnerInstructionArgs
 ): TransactionBuilder {
   // Program ID.
   const programId = context.programs.getPublicKey(
     'soldIssuance',
-    '5rEgzyEQ6mQEYEetybHXuuvojbKi2mpKXP1fKsVJXJYo'
+    '6JfYz5itjCP6jjaxqX8KQizXYcRtzmSsHJdbiLBeqvEH'
   );
 
   // Accounts.
@@ -82,24 +92,13 @@ export function closeTokenManager(
     },
     owner: {
       index: 1,
-      isWritable: true as boolean,
-      value: input.owner ?? null,
-    },
-    systemProgram: {
-      index: 2,
       isWritable: false as boolean,
-      value: input.systemProgram ?? null,
+      value: input.owner ?? null,
     },
   } satisfies ResolvedAccountsWithIndices;
 
-  // Default values.
-  if (!resolvedAccounts.systemProgram.value) {
-    resolvedAccounts.systemProgram.value = context.programs.getPublicKey(
-      'splSystem',
-      '11111111111111111111111111111111'
-    );
-    resolvedAccounts.systemProgram.isWritable = false;
-  }
+  // Arguments.
+  const resolvedArgs: InitiateUpdateManagerOwnerInstructionArgs = { ...input };
 
   // Accounts in order.
   const orderedAccounts: ResolvedAccount[] = Object.values(
@@ -114,7 +113,10 @@ export function closeTokenManager(
   );
 
   // Data.
-  const data = getCloseTokenManagerInstructionDataSerializer().serialize({});
+  const data =
+    getInitiateUpdateManagerOwnerInstructionDataSerializer().serialize(
+      resolvedArgs as InitiateUpdateManagerOwnerInstructionDataArgs
+    );
 
   // Bytes Created On Chain.
   const bytesCreatedOnChain = 0;

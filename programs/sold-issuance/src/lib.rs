@@ -8,7 +8,7 @@ pub use error::*;
 pub use instructions::*;
 pub use state::*;
 
-declare_id!("5rEgzyEQ6mQEYEetybHXuuvojbKi2mpKXP1fKsVJXJYo");
+declare_id!("6JfYz5itjCP6jjaxqX8KQizXYcRtzmSsHJdbiLBeqvEH");
 
 #[program]
 pub mod sold_issuance {
@@ -75,7 +75,14 @@ pub mod sold_issuance {
         update_mint_metadata::handler(ctx, name, symbol, uri)
     }
 
-    pub fn close_token_manager(ctx: Context<CloseTokenManager>) -> Result<()> {
-        close_token_manager::handler(ctx)
+    pub fn update_manager_owner(ctx: Context<UpdateManagerOwner>) -> Result<()> {
+        update_manager_owner::handler(ctx)
+    }
+
+    pub fn initiate_update_manager_owner(
+        ctx: Context<InitiateUpdateManagerOwner>,
+        new_owner: Pubkey,
+    ) -> Result<()> {
+        initiate_update_manager_owner::handler(ctx, new_owner)
     }
 }

@@ -42,7 +42,6 @@ export type UpdateTokenManagerOwnerInstructionAccounts = {
 // Data.
 export type UpdateTokenManagerOwnerInstructionData = {
   discriminator: Array<number>;
-  newOwner: Option<PublicKey>;
   newAdmin: Option<PublicKey>;
   newMinter: Option<PublicKey>;
   emergencyFundBasisPoints: Option<number>;
@@ -51,7 +50,6 @@ export type UpdateTokenManagerOwnerInstructionData = {
 };
 
 export type UpdateTokenManagerOwnerInstructionDataArgs = {
-  newOwner: OptionOrNullable<PublicKey>;
   newAdmin: OptionOrNullable<PublicKey>;
   newMinter: OptionOrNullable<PublicKey>;
   emergencyFundBasisPoints: OptionOrNullable<number>;
@@ -71,7 +69,6 @@ export function getUpdateTokenManagerOwnerInstructionDataSerializer(): Serialize
     struct<UpdateTokenManagerOwnerInstructionData>(
       [
         ['discriminator', array(u8(), { size: 8 })],
-        ['newOwner', option(publicKeySerializer())],
         ['newAdmin', option(publicKeySerializer())],
         ['newMinter', option(publicKeySerializer())],
         ['emergencyFundBasisPoints', option(u16())],
@@ -103,7 +100,7 @@ export function updateTokenManagerOwner(
   // Program ID.
   const programId = context.programs.getPublicKey(
     'soldIssuance',
-    '5rEgzyEQ6mQEYEetybHXuuvojbKi2mpKXP1fKsVJXJYo'
+    '6JfYz5itjCP6jjaxqX8KQizXYcRtzmSsHJdbiLBeqvEH'
   );
 
   // Accounts.
