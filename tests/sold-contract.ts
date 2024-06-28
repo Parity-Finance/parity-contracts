@@ -995,7 +995,7 @@ describe.only("sold-issuance", () => {
       owner: umi.identity
     }));
 
-    await txBuilder.sendAndConfirm(umi, { send: { skipPreflight: true } });
+    await txBuilder.sendAndConfirm(umi);
 
     const xMintMetadata = await safeFetchMetadata(umi, xMetadata);
     assert.equal(xMintMetadata.name, name, "Name should be updated");
@@ -1018,7 +1018,7 @@ describe.only("sold-issuance", () => {
       owner: umi.identity
     }));
 
-    await txBuilder.sendAndConfirm(umi, { send: { skipPreflight: true } });
+    await txBuilder.sendAndConfirm(umi);
 
     const mintMetadata = await safeFetchMetadata(umi, baseMetadata);
     assert.equal(mintMetadata.name, name, "Name should be updated");

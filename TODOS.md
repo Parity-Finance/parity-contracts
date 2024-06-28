@@ -29,6 +29,7 @@ Authorities same as Ethena
 ~~Adjust yield update function~~
 ~~Create update pool_manager instruction gated for owner~~
 ~~Pause functionality check for gatekeeper or admin~~
+implement safe math library
 
 Tests
 - ~~Pause Test~~
