@@ -32,6 +32,7 @@ import {
 // Accounts.
 export type DepositFundsInstructionAccounts = {
   tokenManager: PublicKey | Pda;
+  mint: PublicKey | Pda;
   quoteMint: PublicKey | Pda;
   authorityQuoteMintAta: PublicKey | Pda;
   vault: PublicKey | Pda;
@@ -94,39 +95,40 @@ export function depositFunds(
       isWritable: true as boolean,
       value: input.tokenManager ?? null,
     },
+    mint: { index: 1, isWritable: false as boolean, value: input.mint ?? null },
     quoteMint: {
-      index: 1,
+      index: 2,
       isWritable: false as boolean,
       value: input.quoteMint ?? null,
     },
     authorityQuoteMintAta: {
-      index: 2,
+      index: 3,
       isWritable: true as boolean,
       value: input.authorityQuoteMintAta ?? null,
     },
     vault: {
-      index: 3,
+      index: 4,
       isWritable: true as boolean,
       value: input.vault ?? null,
     },
     admin: {
-      index: 4,
+      index: 5,
       isWritable: true as boolean,
       value: input.admin ?? null,
     },
-    rent: { index: 5, isWritable: false as boolean, value: input.rent ?? null },
+    rent: { index: 6, isWritable: false as boolean, value: input.rent ?? null },
     systemProgram: {
-      index: 6,
+      index: 7,
       isWritable: false as boolean,
       value: input.systemProgram ?? null,
     },
     tokenProgram: {
-      index: 7,
+      index: 8,
       isWritable: false as boolean,
       value: input.tokenProgram ?? null,
     },
     associatedTokenProgram: {
-      index: 8,
+      index: 9,
       isWritable: false as boolean,
       value: input.associatedTokenProgram ?? null,
     },

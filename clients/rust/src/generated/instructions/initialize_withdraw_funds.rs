@@ -14,6 +14,8 @@ use borsh::{BorshDeserialize, BorshSerialize};
 pub struct InitializeWithdrawFunds {
     pub token_manager: solana_program::pubkey::Pubkey,
 
+    pub mint: solana_program::pubkey::Pubkey,
+
     pub admin: solana_program::pubkey::Pubkey,
 }
 
@@ -30,10 +32,13 @@ impl InitializeWithdrawFunds {
         args: InitializeWithdrawFundsInstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(2 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(3 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.token_manager,
             false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            self.mint, false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.admin, true,
@@ -80,10 +85,12 @@ pub struct InitializeWithdrawFundsInstructionArgs {
 /// ### Accounts:
 ///
 ///   0. `[writable]` token_manager
-///   1. `[writable, signer]` admin
+///   1. `[]` mint
+///   2. `[writable, signer]` admin
 #[derive(Default)]
 pub struct InitializeWithdrawFundsBuilder {
     token_manager: Option<solana_program::pubkey::Pubkey>,
+    mint: Option<solana_program::pubkey::Pubkey>,
     admin: Option<solana_program::pubkey::Pubkey>,
     quantity: Option<u64>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
@@ -96,6 +103,11 @@ impl InitializeWithdrawFundsBuilder {
     #[inline(always)]
     pub fn token_manager(&mut self, token_manager: solana_program::pubkey::Pubkey) -> &mut Self {
         self.token_manager = Some(token_manager);
+        self
+    }
+    #[inline(always)]
+    pub fn mint(&mut self, mint: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.mint = Some(mint);
         self
     }
     #[inline(always)]
@@ -130,6 +142,7 @@ impl InitializeWithdrawFundsBuilder {
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
         let accounts = InitializeWithdrawFunds {
             token_manager: self.token_manager.expect("token_manager is not set"),
+            mint: self.mint.expect("mint is not set"),
             admin: self.admin.expect("admin is not set"),
         };
         let args = InitializeWithdrawFundsInstructionArgs {
@@ -144,6 +157,8 @@ impl InitializeWithdrawFundsBuilder {
 pub struct InitializeWithdrawFundsCpiAccounts<'a, 'b> {
     pub token_manager: &'b solana_program::account_info::AccountInfo<'a>,
 
+    pub mint: &'b solana_program::account_info::AccountInfo<'a>,
+
     pub admin: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
@@ -153,6 +168,8 @@ pub struct InitializeWithdrawFundsCpi<'a, 'b> {
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub token_manager: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub mint: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub admin: &'b solana_program::account_info::AccountInfo<'a>,
     /// The arguments for the instruction.
@@ -168,6 +185,7 @@ impl<'a, 'b> InitializeWithdrawFundsCpi<'a, 'b> {
         Self {
             __program: program,
             token_manager: accounts.token_manager,
+            mint: accounts.mint,
             admin: accounts.admin,
             __args: args,
         }
@@ -205,9 +223,13 @@ impl<'a, 'b> InitializeWithdrawFundsCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(2 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(3 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.token_manager.key,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            *self.mint.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
@@ -232,9 +254,10 @@ impl<'a, 'b> InitializeWithdrawFundsCpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(2 + 1 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(3 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.token_manager.clone());
+        account_infos.push(self.mint.clone());
         account_infos.push(self.admin.clone());
         remaining_accounts
             .iter()
@@ -253,7 +276,8 @@ impl<'a, 'b> InitializeWithdrawFundsCpi<'a, 'b> {
 /// ### Accounts:
 ///
 ///   0. `[writable]` token_manager
-///   1. `[writable, signer]` admin
+///   1. `[]` mint
+///   2. `[writable, signer]` admin
 pub struct InitializeWithdrawFundsCpiBuilder<'a, 'b> {
     instruction: Box<InitializeWithdrawFundsCpiBuilderInstruction<'a, 'b>>,
 }
@@ -263,6 +287,7 @@ impl<'a, 'b> InitializeWithdrawFundsCpiBuilder<'a, 'b> {
         let instruction = Box::new(InitializeWithdrawFundsCpiBuilderInstruction {
             __program: program,
             token_manager: None,
+            mint: None,
             admin: None,
             quantity: None,
             __remaining_accounts: Vec::new(),
@@ -275,6 +300,11 @@ impl<'a, 'b> InitializeWithdrawFundsCpiBuilder<'a, 'b> {
         token_manager: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.token_manager = Some(token_manager);
+        self
+    }
+    #[inline(always)]
+    pub fn mint(&mut self, mint: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
+        self.instruction.mint = Some(mint);
         self
     }
     #[inline(always)]
@@ -343,6 +373,8 @@ impl<'a, 'b> InitializeWithdrawFundsCpiBuilder<'a, 'b> {
                 .token_manager
                 .expect("token_manager is not set"),
 
+            mint: self.instruction.mint.expect("mint is not set"),
+
             admin: self.instruction.admin.expect("admin is not set"),
             __args: args,
         };
@@ -356,6 +388,7 @@ impl<'a, 'b> InitializeWithdrawFundsCpiBuilder<'a, 'b> {
 struct InitializeWithdrawFundsCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     token_manager: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     admin: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     quantity: Option<u64>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.

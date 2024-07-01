@@ -41,7 +41,7 @@ impl MintAdmin {
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
         let mut accounts = Vec::with_capacity(7 + remaining_accounts.len());
-        accounts.push(solana_program::instruction::AccountMeta::new(
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.token_manager,
             false,
         ));
@@ -107,7 +107,7 @@ pub struct MintAdminInstructionArgs {
 ///
 /// ### Accounts:
 ///
-///   0. `[writable]` token_manager
+///   0. `[]` token_manager
 ///   1. `[writable]` mint
 ///   2. `[writable]` minter_mint_ata
 ///   3. `[signer]` minter
@@ -313,7 +313,7 @@ impl<'a, 'b> MintAdminCpi<'a, 'b> {
         )],
     ) -> solana_program::entrypoint::ProgramResult {
         let mut accounts = Vec::with_capacity(7 + remaining_accounts.len());
-        accounts.push(solana_program::instruction::AccountMeta::new(
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.token_manager.key,
             false,
         ));
@@ -382,7 +382,7 @@ impl<'a, 'b> MintAdminCpi<'a, 'b> {
 ///
 /// ### Accounts:
 ///
-///   0. `[writable]` token_manager
+///   0. `[]` token_manager
 ///   1. `[writable]` mint
 ///   2. `[writable]` minter_mint_ata
 ///   3. `[signer]` minter

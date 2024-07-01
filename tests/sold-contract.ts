@@ -1,6 +1,6 @@
 import { keypairIdentity, Pda, PublicKey, publicKey, TransactionBuilder, createAmount, some } from "@metaplex-foundation/umi";
 import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
-import { createAssociatedToken, createSplAssociatedTokenProgram, createSplTokenProgram, findAssociatedTokenPda, safeFetchToken, SPL_ASSOCIATED_TOKEN_PROGRAM_ID } from "@metaplex-foundation/mpl-toolbox"
+import { createAssociatedToken, createSplAssociatedTokenProgram, createSplTokenProgram, findAssociatedTokenPda, safeFetchMint, safeFetchToken, SPL_ASSOCIATED_TOKEN_PROGRAM_ID } from "@metaplex-foundation/mpl-toolbox"
 import { Connection, Keypair, PublicKey as Web3JsPublicKey } from "@solana/web3.js";
 import { createSoldIssuanceProgram, findTokenManagerPda, initializeTokenManager, SOLD_ISSUANCE_PROGRAM_ID, mint, redeem, safeFetchTokenManager, getMerkleRoot, getMerkleProof, toggleActive, updatePoolManager, depositFunds, withdrawFunds, initializePoolManager, SOLD_STAKING_PROGRAM_ID, calculateExchangeRate, stake, unstake, updateAnnualYield, findPoolManagerPda, updateTokenManagerAdmin, safeFetchPoolManager, initializeWithdrawFunds, initiateUpdatePoolOwner, updatePoolOwner, updateManagerOwner, initiateUpdateManagerOwner, updateXmintMetadata, updateMintMetadata } from "../clients/js/src"
 import { ASSOCIATED_TOKEN_PROGRAM_ID, createMint, getOrCreateAssociatedTokenAccount, mintTo, TOKEN_PROGRAM_ID } from "@solana/spl-token";
@@ -41,8 +41,7 @@ describe.only("sold-issuance", () => {
   const exchangeRate = 1 * 10 ** quoteMintDecimals; // Exchange rate is exactly how many quoteMint you will get for 1 baseMint. That's why quote mint decimals have to be considered
   const exchangeRateDecimals = quoteMintDecimals
 
-  const mintLimitPerSlot = 5000 * 10 ** baseMintDecimals;
-  const redemptionLimitPerSlot = 5000 * 10 ** baseMintDecimals;
+  const limitPerSlot = 100000 * 10 ** baseMintDecimals;
 
   const withdrawExecutionWindow = 3600;
   const withdrawTimeLock = 3600;
@@ -114,7 +113,7 @@ describe.only("sold-issuance", () => {
     }
   })
 
-  it.only("Token manager is initialized!", async () => {
+  it("Token manager is initialized!", async () => {
     const merkleRoot = getMerkleRoot(allowedWallets);
 
     let txBuilder = new TransactionBuilder();
@@ -137,8 +136,7 @@ describe.only("sold-issuance", () => {
       admin: umi.identity.publicKey,
       minter: poolManager,
       gateKeepers: [],
-      mintLimitPerSlot,
-      redemptionLimitPerSlot,
+      limitPerSlot,
       withdrawExecutionWindow,
       withdrawTimeLock
     }))
@@ -146,6 +144,7 @@ describe.only("sold-issuance", () => {
     await txBuilder.sendAndConfirm(umi);
 
     const tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
+    const baseMintAcc = await safeFetchMint(umi, baseMint);
 
     const expectedMerkleRoot = merkleRoot.length === 0 ?
       new Array(32).fill(0) :
@@ -163,11 +162,11 @@ describe.only("sold-issuance", () => {
     assert.equal(tokenManagerAcc.exchangeRate, BigInt(exchangeRate), "Token manager's exchange rate should match the provided exchange rate");
     assert.equal(tokenManagerAcc.emergencyFundBasisPoints, emergencyFundBasisPoints, "Token manager's emergency fund basis points should match the provided value");
     assert.equal(tokenManagerAcc.active, true, "Token manager should be active");
-    assert.equal(tokenManagerAcc.totalSupply, 0, "Token manager's total supply should be zero");
+    assert.equal(baseMintAcc.supply, 0, "Token manager's total supply should be zero");
     assert.equal(tokenManagerAcc.totalCollateral, 0, "Token manager's total collateral should be zero");
   });
 
-  it.only("Stake Pool is initialized!", async () => {
+  it("Stake Pool is initialized!", async () => {
     let txBuilder = new TransactionBuilder();
 
     txBuilder = txBuilder.add(initializePoolManager(umi, {
@@ -216,6 +215,8 @@ describe.only("sold-issuance", () => {
 
     const _tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
     const _vaultAcc = await safeFetchToken(umi, vaultIssuance);
+    const _baseMintAcc = await safeFetchMint(umi, baseMint);
+
 
     txBuilder = txBuilder.add(mint(umi, {
       tokenManager,
@@ -230,10 +231,11 @@ describe.only("sold-issuance", () => {
     }))
 
     const res = await txBuilder.sendAndConfirm(umi, { send: { skipPreflight: false } });
-    console.log(bs58.encode(res.signature));
+    // console.log(bs58.encode(res.signature));
 
     const tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
     const vaultAcc = await safeFetchToken(umi, vaultIssuance);
+    const baseMintAcc = await safeFetchMint(umi, baseMint);
 
     const expectedMintAmount = BigInt(quantity);
     const powerDifference = quoteMintDecimals - baseMintDecimals;
@@ -251,7 +253,7 @@ describe.only("sold-issuance", () => {
     // Calculate the expected quote amount
     const expectedQuoteAmount = adjustedQuantity * BigInt(exchangeRate) / BigInt(10 ** exchangeRateDecimals);
 
-    assert.equal(tokenManagerAcc.totalSupply, _tokenManagerAcc.totalSupply + expectedMintAmount, "Total supply should be correct");
+    assert.equal(baseMintAcc.supply, _baseMintAcc.supply + expectedMintAmount, "Total supply should be correct");
     assert.equal(tokenManagerAcc.totalCollateral, _tokenManagerAcc.totalCollateral + expectedQuoteAmount, "Total collateral should be correct");
     assert.equal(vaultAcc.amount, _vaultAcc.amount + expectedQuoteAmount, "Vault amount should be correct");
   })
@@ -273,6 +275,7 @@ describe.only("sold-issuance", () => {
 
     const _tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
     const _vaultAcc = await safeFetchToken(umi, vaultIssuance);
+    const _baseMintAcc = await safeFetchMint(umi, baseMint);
 
     txBuilder = txBuilder.add(redeem(umi, {
       tokenManager,
@@ -286,18 +289,18 @@ describe.only("sold-issuance", () => {
       proof
     }))
 
-    await txBuilder.sendAndConfirm(umi, { send: { skipPreflight: false } });
-
     const res = await txBuilder.sendAndConfirm(umi, { send: { skipPreflight: false } });
-    console.log(bs58.encode(res.signature));
+    // console.log(bs58.encode(res.signature));
 
     const tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
     const vaultAcc = await safeFetchToken(umi, vaultIssuance);
+    const baseMintAcc = await safeFetchMint(umi, baseMint);
 
     const expectedMintAmount = BigInt(quantity);
+
     const expectedQuoteAmount = (BigInt(quantity) / BigInt(10 ** baseMintDecimals) * BigInt(exchangeRate) / BigInt(10 ** exchangeRateDecimals)) * BigInt(10 ** quoteMintDecimals);
 
-    assert.equal(tokenManagerAcc.totalSupply, _tokenManagerAcc.totalSupply - expectedMintAmount, "Total supply should be correct");
+    assert.equal(baseMintAcc.supply, _baseMintAcc.supply - expectedMintAmount, "Total supply should be correct");
     assert.equal(tokenManagerAcc.totalCollateral, _tokenManagerAcc.totalCollateral - expectedQuoteAmount, "Total collateral should be correct");
     assert.equal(vaultAcc.amount, _vaultAcc.amount - expectedQuoteAmount, "Vault amount should be correct");
   });
@@ -408,9 +411,8 @@ describe.only("sold-issuance", () => {
       tokenManager,
       newMerkleRoot: some(newMerkleRoot),
       newGateKeepers: null,
-      newMintLimitPerSlot: null,
-      newRedemptionLimitPerSlot: null,
-      admin: null
+      newLimitPerSlot: null,
+      admin: umi.identity
     }));
     await txBuilder.sendAndConfirm(umi);
 
@@ -476,8 +478,7 @@ describe.only("sold-issuance", () => {
       // Params
       newMerkleRoot: some(originalMerkleRoot),
       newGateKeepers: null,
-      newMintLimitPerSlot: null,
-      newRedemptionLimitPerSlot: null,
+      newLimitPerSlot: null,
     }));
     await txBuilder.sendAndConfirm(umi);
 
@@ -566,6 +567,7 @@ describe.only("sold-issuance", () => {
     txBuilder = new TransactionBuilder();
     txBuilder = txBuilder.add(initializeWithdrawFunds(umi, {
       tokenManager,
+      mint: baseMint,
       quantity,
       admin: umi.identity
     }));
@@ -590,6 +592,7 @@ describe.only("sold-issuance", () => {
     txBuilder = txBuilder.add(initializeWithdrawFunds(umi, {
       tokenManager,
       quantity,
+      mint: baseMint,
       admin: umi.identity
     }));
 
@@ -613,6 +616,7 @@ describe.only("sold-issuance", () => {
     txBuilder = txBuilder.add(initializeWithdrawFunds(umi, {
       tokenManager,
       quantity,
+      mint: baseMint,
       admin: umi.identity
     }));
 
@@ -620,6 +624,7 @@ describe.only("sold-issuance", () => {
 
     let tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
     let vaultAcc = await safeFetchToken(umi, vaultIssuance);
+    let baseMintAcc = await safeFetchMint(umi, baseMint);
 
     assert.equal(tokenManagerAcc.pendingWithdrawalAmount, quantity, "Pending withdrawal amount should have changed")
 
@@ -659,13 +664,14 @@ describe.only("sold-issuance", () => {
 
     tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
     vaultAcc = await safeFetchToken(umi, vaultIssuance);
+    baseMintAcc = await safeFetchMint(umi, baseMint);
     let expectedChange = BigInt(quantity);
 
     // assert.equal(tokenManagerAcc.totalCollateral, _tokenManagerAcc.totalCollateral - expectedChange, "TokenManager totalCollateral should be equal to the initial totalCollateral minus withdrawed amount");
     // assert.equal(vaultAcc.amount, _vaultAcc.amount - expectedChange, "Vault balance should be equal to the initial vaultIssuance minus withdrawed amount");
 
     // Deposit excessive
-    quantity = Number(((tokenManagerAcc.totalSupply / BigInt(10 ** baseMintDecimals)) * BigInt(exchangeRate) / BigInt(10 ** exchangeRateDecimals)) - (tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals))) * 10 ** quoteMintDecimals + 1;
+    quantity = Number(((baseMintAcc.supply / BigInt(10 ** baseMintDecimals)) * BigInt(exchangeRate) / BigInt(10 ** exchangeRateDecimals)) - (tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals))) * 10 ** quoteMintDecimals + 1;
     // console.log("Quantity to Deposit not allowed: ", quantity);
     // console.log("TotalSupply: ", Number(tokenManagerAcc.totalSupply / BigInt(10 ** baseMintDecimals)));
     // console.log("TotalCollateral: ", Number(tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals)));
@@ -673,6 +679,7 @@ describe.only("sold-issuance", () => {
     txBuilder = new TransactionBuilder();
     txBuilder = txBuilder.add(depositFunds(umi, {
       tokenManager,
+      mint: baseMint,
       quoteMint: quoteMint,
       vault: vaultIssuance,
       authorityQuoteMintAta: userQuote,
@@ -695,7 +702,7 @@ describe.only("sold-issuance", () => {
     _tokenManagerAcc = tokenManagerAcc;
     _vaultAcc = vaultAcc;
 
-    quantity = Number(((tokenManagerAcc.totalSupply / BigInt(10 ** baseMintDecimals)) * BigInt(exchangeRate) / BigInt(10 ** exchangeRateDecimals)) - (tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals))) * 10 ** quoteMintDecimals;
+    quantity = Number(((baseMintAcc.supply / BigInt(10 ** baseMintDecimals)) * BigInt(exchangeRate) / BigInt(10 ** exchangeRateDecimals)) - (tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals))) * 10 ** quoteMintDecimals;
     // console.log("Quantity deposit allowed: ", quantity);
     // console.log("TotalSupply: ", Number(tokenManagerAcc.totalSupply / BigInt(10 ** baseMintDecimals)));
     // console.log("TotalCollateral: ", Number(tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals)));
@@ -703,6 +710,7 @@ describe.only("sold-issuance", () => {
     txBuilder = new TransactionBuilder();
     txBuilder = txBuilder.add(depositFunds(umi, {
       tokenManager,
+      mint: baseMint,
       quoteMint: quoteMint,
       vault: vaultIssuance,
       authorityQuoteMintAta: userQuote,
@@ -980,7 +988,7 @@ describe.only("sold-issuance", () => {
     assert.equal(tokenManagerAcc.admin, publicKey(keypair.publicKey), "Admin should be reverted back to original admin");
   });
 
-  it.only("should update xMint metadata of stake program", async () => {
+  it("should update xMint metadata of stake program", async () => {
     const name = "TEST";
     const symbol = "TEST"
     const uri = "https://example.com/new-xmint-info.json"
@@ -1003,7 +1011,7 @@ describe.only("sold-issuance", () => {
     assert.equal(xMintMetadata.uri, uri, "Uri should be updated");
   });
 
-  it.only("should update base mint metadata of issuance program", async () => {
+  it("should update base mint metadata of issuance program", async () => {
     const name = "TEST";
     const symbol = "TEST"
     const uri = "https://example.com/new-xmint-info.json"

@@ -1,8 +1,5 @@
 use anchor_lang::prelude::*;
-// use anchor_spl::{
-//     associated_token::AssociatedToken,
-//     token::{transfer_checked, Mint, Token, TokenAccount, TransferChecked},
-// };
+use anchor_spl::token::Mint;
 
 use crate::{SoldIssuanceError, TokenManager};
 
@@ -10,6 +7,12 @@ use crate::{SoldIssuanceError, TokenManager};
 pub struct InitializeWithdrawFunds<'info> {
     #[account(mut, seeds = [b"token-manager"], bump)]
     pub token_manager: Account<'info, TokenManager>,
+    #[account(
+        mint::authority = token_manager,
+        mint::decimals = token_manager.mint_decimals,
+        address = token_manager.mint,
+    )]
+    pub mint: Account<'info, Mint>,
     // Other
     #[account(mut, address = token_manager.admin @ SoldIssuanceError::InvalidAdmin)]
     pub admin: Signer<'info>,
@@ -17,6 +20,7 @@ pub struct InitializeWithdrawFunds<'info> {
 
 pub fn handler(ctx: Context<InitializeWithdrawFunds>, quantity: u64) -> Result<()> {
     let token_manager = &mut ctx.accounts.token_manager;
+    let mint = &mut ctx.accounts.mint;
 
     let quote_amount = quantity;
 
@@ -25,8 +29,8 @@ pub fn handler(ctx: Context<InitializeWithdrawFunds>, quantity: u64) -> Result<(
     }
 
     // Check if withdrawal amount exceeds threshold of the total collateral
-    let min_required_collateral = token_manager
-        .total_supply
+    let min_required_collateral = mint
+        .supply
         .checked_div(10u64.pow(token_manager.mint_decimals.into()))
         .ok_or(SoldIssuanceError::CalculationOverflow)?
         .checked_mul(token_manager.exchange_rate)

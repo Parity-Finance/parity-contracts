@@ -134,8 +134,7 @@ pub struct InitializeTokenManagerInstructionArgs {
     pub admin: Pubkey,
     pub minter: Pubkey,
     pub gate_keepers: Vec<Pubkey>,
-    pub mint_limit_per_slot: u64,
-    pub redemption_limit_per_slot: u64,
+    pub limit_per_slot: u64,
     pub withdraw_time_lock: i64,
     pub withdraw_execution_window: i64,
 }
@@ -178,8 +177,7 @@ pub struct InitializeTokenManagerBuilder {
     admin: Option<Pubkey>,
     minter: Option<Pubkey>,
     gate_keepers: Option<Vec<Pubkey>>,
-    mint_limit_per_slot: Option<u64>,
-    redemption_limit_per_slot: Option<u64>,
+    limit_per_slot: Option<u64>,
     withdraw_time_lock: Option<i64>,
     withdraw_execution_window: Option<i64>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
@@ -305,13 +303,8 @@ impl InitializeTokenManagerBuilder {
         self
     }
     #[inline(always)]
-    pub fn mint_limit_per_slot(&mut self, mint_limit_per_slot: u64) -> &mut Self {
-        self.mint_limit_per_slot = Some(mint_limit_per_slot);
-        self
-    }
-    #[inline(always)]
-    pub fn redemption_limit_per_slot(&mut self, redemption_limit_per_slot: u64) -> &mut Self {
-        self.redemption_limit_per_slot = Some(redemption_limit_per_slot);
+    pub fn limit_per_slot(&mut self, limit_per_slot: u64) -> &mut Self {
+        self.limit_per_slot = Some(limit_per_slot);
         self
     }
     #[inline(always)]
@@ -385,14 +378,10 @@ impl InitializeTokenManagerBuilder {
             admin: self.admin.clone().expect("admin is not set"),
             minter: self.minter.clone().expect("minter is not set"),
             gate_keepers: self.gate_keepers.clone().expect("gate_keepers is not set"),
-            mint_limit_per_slot: self
-                .mint_limit_per_slot
+            limit_per_slot: self
+                .limit_per_slot
                 .clone()
-                .expect("mint_limit_per_slot is not set"),
-            redemption_limit_per_slot: self
-                .redemption_limit_per_slot
-                .clone()
-                .expect("redemption_limit_per_slot is not set"),
+                .expect("limit_per_slot is not set"),
             withdraw_time_lock: self
                 .withdraw_time_lock
                 .clone()
@@ -649,8 +638,7 @@ impl<'a, 'b> InitializeTokenManagerCpiBuilder<'a, 'b> {
             admin: None,
             minter: None,
             gate_keepers: None,
-            mint_limit_per_slot: None,
-            redemption_limit_per_slot: None,
+            limit_per_slot: None,
             withdraw_time_lock: None,
             withdraw_execution_window: None,
             __remaining_accounts: Vec::new(),
@@ -784,13 +772,8 @@ impl<'a, 'b> InitializeTokenManagerCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn mint_limit_per_slot(&mut self, mint_limit_per_slot: u64) -> &mut Self {
-        self.instruction.mint_limit_per_slot = Some(mint_limit_per_slot);
-        self
-    }
-    #[inline(always)]
-    pub fn redemption_limit_per_slot(&mut self, redemption_limit_per_slot: u64) -> &mut Self {
-        self.instruction.redemption_limit_per_slot = Some(redemption_limit_per_slot);
+    pub fn limit_per_slot(&mut self, limit_per_slot: u64) -> &mut Self {
+        self.instruction.limit_per_slot = Some(limit_per_slot);
         self
     }
     #[inline(always)]
@@ -875,16 +858,11 @@ impl<'a, 'b> InitializeTokenManagerCpiBuilder<'a, 'b> {
                 .gate_keepers
                 .clone()
                 .expect("gate_keepers is not set"),
-            mint_limit_per_slot: self
+            limit_per_slot: self
                 .instruction
-                .mint_limit_per_slot
+                .limit_per_slot
                 .clone()
-                .expect("mint_limit_per_slot is not set"),
-            redemption_limit_per_slot: self
-                .instruction
-                .redemption_limit_per_slot
-                .clone()
-                .expect("redemption_limit_per_slot is not set"),
+                .expect("limit_per_slot is not set"),
             withdraw_time_lock: self
                 .instruction
                 .withdraw_time_lock
@@ -967,8 +945,7 @@ struct InitializeTokenManagerCpiBuilderInstruction<'a, 'b> {
     admin: Option<Pubkey>,
     minter: Option<Pubkey>,
     gate_keepers: Option<Vec<Pubkey>>,
-    mint_limit_per_slot: Option<u64>,
-    redemption_limit_per_slot: Option<u64>,
+    limit_per_slot: Option<u64>,
     withdraw_time_lock: Option<i64>,
     withdraw_execution_window: Option<i64>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.

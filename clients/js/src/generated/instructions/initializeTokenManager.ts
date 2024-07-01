@@ -62,8 +62,7 @@ export type InitializeTokenManagerInstructionData = {
   admin: PublicKey;
   minter: PublicKey;
   gateKeepers: Array<PublicKey>;
-  mintLimitPerSlot: bigint;
-  redemptionLimitPerSlot: bigint;
+  limitPerSlot: bigint;
   withdrawTimeLock: bigint;
   withdrawExecutionWindow: bigint;
 };
@@ -79,8 +78,7 @@ export type InitializeTokenManagerInstructionDataArgs = {
   admin: PublicKey;
   minter: PublicKey;
   gateKeepers: Array<PublicKey>;
-  mintLimitPerSlot: number | bigint;
-  redemptionLimitPerSlot: number | bigint;
+  limitPerSlot: number | bigint;
   withdrawTimeLock: number | bigint;
   withdrawExecutionWindow: number | bigint;
 };
@@ -107,8 +105,7 @@ export function getInitializeTokenManagerInstructionDataSerializer(): Serializer
         ['admin', publicKeySerializer()],
         ['minter', publicKeySerializer()],
         ['gateKeepers', array(publicKeySerializer())],
-        ['mintLimitPerSlot', u64()],
-        ['redemptionLimitPerSlot', u64()],
+        ['limitPerSlot', u64()],
         ['withdrawTimeLock', i64()],
         ['withdrawExecutionWindow', i64()],
       ],

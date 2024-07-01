@@ -21,8 +21,7 @@ pub struct InitializeTokenManagerParams {
     pub admin: Pubkey,
     pub minter: Pubkey,
     pub gate_keepers: Vec<Pubkey>,
-    pub mint_limit_per_slot: u64,
-    pub redemption_limit_per_slot: u64,
+    pub limit_per_slot: u64,
     pub withdraw_time_lock: i64,
     pub withdraw_execution_window: i64,
 }
@@ -125,7 +124,6 @@ pub fn handler(
     token_manager.quote_mint_decimals = ctx.accounts.quote_mint.decimals;
     token_manager.exchange_rate = params.exchange_rate;
     // Other
-    token_manager.total_supply = 0;
     token_manager.total_collateral = 0;
     token_manager.emergency_fund_basis_points = params.emergency_fund_basis_points;
     token_manager.active = true;
@@ -134,10 +132,8 @@ pub fn handler(
     let clock = Clock::get()?;
     let current_slot = clock.slot;
     token_manager.current_slot = current_slot;
-    token_manager.current_slot_mint_volume = 0;
-    token_manager.current_slot_redemption_volume = 0;
-    token_manager.mint_limit_per_slot = params.mint_limit_per_slot;
-    token_manager.redemption_limit_per_slot = params.redemption_limit_per_slot;
+    token_manager.current_slot_volume = 0;
+    token_manager.limit_per_slot = params.limit_per_slot;
 
     token_manager.pending_withdrawal_amount = 0;
     token_manager.withdrawal_initiation_time = 0;

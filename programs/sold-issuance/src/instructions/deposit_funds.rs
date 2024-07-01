@@ -10,6 +10,12 @@ use crate::{SoldIssuanceError, TokenManager};
 pub struct DepositFunds<'info> {
     #[account(mut, seeds = [b"token-manager"], bump)]
     pub token_manager: Account<'info, TokenManager>,
+    #[account(
+        mint::authority = token_manager,
+        mint::decimals = token_manager.mint_decimals,
+        address = token_manager.mint,
+    )]
+    pub mint: Account<'info, Mint>,
     //  Quote Mint
     #[account(
         address = token_manager.quote_mint @ SoldIssuanceError::InvalidQuoteMintAddress
@@ -40,9 +46,7 @@ pub struct DepositFunds<'info> {
 pub fn handler(ctx: Context<DepositFunds>, quantity: u64) -> Result<()> {
     let token_manager = &mut ctx.accounts.token_manager;
     let quote_mint = &ctx.accounts.quote_mint;
-
-    // Check done in accounts struct
-    // let _authority = &ctx.accounts.authority;
+    let mint = &ctx.accounts.mint;
 
     let quote_amount = quantity;
 
@@ -51,8 +55,8 @@ pub fn handler(ctx: Context<DepositFunds>, quantity: u64) -> Result<()> {
         .total_collateral
         .checked_add(quote_amount)
         .ok_or(SoldIssuanceError::CalculationOverflow)?;
-    let max_collateral = token_manager
-        .total_supply
+    let max_collateral = mint
+        .supply
         .checked_div(10u64.pow(token_manager.mint_decimals.into()))
         .ok_or(SoldIssuanceError::CalculationOverflow)?
         .checked_mul(token_manager.exchange_rate)

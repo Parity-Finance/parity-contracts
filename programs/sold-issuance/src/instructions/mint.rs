@@ -1,10 +1,9 @@
+use crate::{SoldIssuanceError, TokenManager};
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
     token::{mint_to, transfer_checked, Mint, MintTo, Token, TokenAccount, TransferChecked},
 };
-
-use crate::{verify_merkle_proof, SoldIssuanceError, TokenManager};
 
 #[derive(Accounts)]
 pub struct MintTokens<'info> {
@@ -62,30 +61,13 @@ pub fn handler(ctx: Context<MintTokens>, quantity: u64, proof: Vec<[u8; 32]>) ->
         return err!(SoldIssuanceError::MintAndRedemptionsPaused);
     }
 
-    let empty_merkle_root = [0u8; 32];
-    let merkle_root = &token_manager.merkle_root;
-
-    if merkle_root == &empty_merkle_root {
-        // If the Merkle root is from an empty array, allow all
-    } else {
-        // Allow List Check
-        let leaf = solana_program::keccak::hashv(&[payer.key().to_string().as_bytes()]);
-        // Proceed with normal verification
-        if !verify_merkle_proof(proof, merkle_root, &leaf.0) {
-            return err!(SoldIssuanceError::AddressNotFoundInAllowedList);
-        }
-    }
+    // Allow List check
+    let leaf: solana_program::keccak::Hash =
+        solana_program::keccak::hashv(&[payer.key().to_string().as_bytes()]);
+    token_manager.verify_merkle_proof(proof, &leaf.0)?;
 
     // Block Limit check
-    let current_slot = Clock::get()?.slot;
-    if token_manager.current_slot == current_slot {
-        if token_manager.current_slot_mint_volume + quantity > token_manager.mint_limit_per_slot {
-            return err!(SoldIssuanceError::SlotLimitExceeded);
-        }
-    } else {
-        token_manager.current_slot = current_slot;
-        token_manager.current_slot_mint_volume = 0;
-    }
+    token_manager.check_block_limit(quantity)?;
 
     // Minting
     let bump = token_manager.bump; // Corrected to be a slice of a slice of a byte slice
@@ -107,28 +89,9 @@ pub fn handler(ctx: Context<MintTokens>, quantity: u64, proof: Vec<[u8; 32]>) ->
         mint_amount,
     )?;
 
-    let mint_decimals = token_manager.mint_decimals as i32;
-    let quote_mint_decimals = token_manager.quote_mint_decimals as i32;
-    let decimal_difference = (mint_decimals - quote_mint_decimals).abs() as u32;
-
-    let normalized_quantity = if mint_decimals > quote_mint_decimals {
-        quantity
-            .checked_div(10u64.pow(decimal_difference))
-            .ok_or(SoldIssuanceError::CalculationOverflow)?
-    } else if mint_decimals < quote_mint_decimals {
-        quantity
-            .checked_mul(10u64.pow(decimal_difference))
-            .ok_or(SoldIssuanceError::CalculationOverflow)?
-    } else {
-        quantity
-    };
-
-    let quote_amount = normalized_quantity
-        .checked_div(10u64.pow(token_manager.mint_decimals.into()))
-        .ok_or(SoldIssuanceError::CalculationOverflow)?
-        .checked_mul(token_manager.exchange_rate)
-        .ok_or(SoldIssuanceError::CalculationOverflow)?;
-
+    let normalized_quantity = token_manager.calculate_normalized_quantity(quantity)?;
+    msg!("Normalized quantity: {}", normalized_quantity);
+    let quote_amount = token_manager.calculate_quote_amount(normalized_quantity)?;
     msg!("Quote amount: {}", quote_amount);
 
     transfer_checked(
@@ -146,16 +109,12 @@ pub fn handler(ctx: Context<MintTokens>, quantity: u64, proof: Vec<[u8; 32]>) ->
     )?;
 
     // Update token_manager
-    token_manager.total_supply = token_manager
-        .total_supply
-        .checked_add(mint_amount)
-        .ok_or(SoldIssuanceError::CalculationOverflow)?;
     token_manager.total_collateral = token_manager
         .total_collateral
         .checked_add(quote_amount)
         .ok_or(SoldIssuanceError::CalculationOverflow)?;
-    token_manager.current_slot_mint_volume = token_manager
-        .current_slot_mint_volume
+    token_manager.current_slot_volume = token_manager
+        .current_slot_volume
         .checked_add(mint_amount)
         .ok_or(SoldIssuanceError::CalculationOverflow)?;
 

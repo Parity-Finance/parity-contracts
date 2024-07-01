@@ -88,7 +88,7 @@ export function mintAdmin(
   const resolvedAccounts = {
     tokenManager: {
       index: 0,
-      isWritable: true as boolean,
+      isWritable: false as boolean,
       value: input.tokenManager ?? null,
     },
     mint: { index: 1, isWritable: true as boolean, value: input.mint ?? null },

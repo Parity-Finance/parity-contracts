@@ -50,18 +50,15 @@ export type TokenManagerAccountData = {
   quoteMint: PublicKey;
   quoteMintDecimals: number;
   exchangeRate: bigint;
-  mintLimitPerSlot: bigint;
-  redemptionLimitPerSlot: bigint;
+  limitPerSlot: bigint;
   currentSlot: bigint;
-  currentSlotMintVolume: bigint;
-  currentSlotRedemptionVolume: bigint;
+  currentSlotVolume: bigint;
   active: boolean;
   emergencyFundBasisPoints: number;
   pendingWithdrawalAmount: bigint;
   withdrawalInitiationTime: bigint;
   withdrawTimeLock: bigint;
   withdrawExecutionWindow: bigint;
-  totalSupply: bigint;
   totalCollateral: bigint;
 };
 
@@ -78,18 +75,15 @@ export type TokenManagerAccountDataArgs = {
   quoteMint: PublicKey;
   quoteMintDecimals: number;
   exchangeRate: number | bigint;
-  mintLimitPerSlot: number | bigint;
-  redemptionLimitPerSlot: number | bigint;
+  limitPerSlot: number | bigint;
   currentSlot: number | bigint;
-  currentSlotMintVolume: number | bigint;
-  currentSlotRedemptionVolume: number | bigint;
+  currentSlotVolume: number | bigint;
   active: boolean;
   emergencyFundBasisPoints: number;
   pendingWithdrawalAmount: number | bigint;
   withdrawalInitiationTime: number | bigint;
   withdrawTimeLock: number | bigint;
   withdrawExecutionWindow: number | bigint;
-  totalSupply: number | bigint;
   totalCollateral: number | bigint;
 };
 
@@ -117,18 +111,15 @@ export function getTokenManagerAccountDataSerializer(): Serializer<
         ['quoteMint', publicKeySerializer()],
         ['quoteMintDecimals', u8()],
         ['exchangeRate', u64()],
-        ['mintLimitPerSlot', u64()],
-        ['redemptionLimitPerSlot', u64()],
+        ['limitPerSlot', u64()],
         ['currentSlot', u64()],
-        ['currentSlotMintVolume', u64()],
-        ['currentSlotRedemptionVolume', u64()],
+        ['currentSlotVolume', u64()],
         ['active', bool()],
         ['emergencyFundBasisPoints', u16()],
         ['pendingWithdrawalAmount', u64()],
         ['withdrawalInitiationTime', i64()],
         ['withdrawTimeLock', i64()],
         ['withdrawExecutionWindow', i64()],
-        ['totalSupply', u64()],
         ['totalCollateral', u64()],
       ],
       { description: 'TokenManagerAccountData' }
@@ -220,18 +211,15 @@ export function getTokenManagerGpaBuilder(
       quoteMint: PublicKey;
       quoteMintDecimals: number;
       exchangeRate: number | bigint;
-      mintLimitPerSlot: number | bigint;
-      redemptionLimitPerSlot: number | bigint;
+      limitPerSlot: number | bigint;
       currentSlot: number | bigint;
-      currentSlotMintVolume: number | bigint;
-      currentSlotRedemptionVolume: number | bigint;
+      currentSlotVolume: number | bigint;
       active: boolean;
       emergencyFundBasisPoints: number;
       pendingWithdrawalAmount: number | bigint;
       withdrawalInitiationTime: number | bigint;
       withdrawTimeLock: number | bigint;
       withdrawExecutionWindow: number | bigint;
-      totalSupply: number | bigint;
       totalCollateral: number | bigint;
     }>({
       discriminator: [0, array(u8(), { size: 8 })],
@@ -247,18 +235,15 @@ export function getTokenManagerGpaBuilder(
       quoteMint: [null, publicKeySerializer()],
       quoteMintDecimals: [null, u8()],
       exchangeRate: [null, u64()],
-      mintLimitPerSlot: [null, u64()],
-      redemptionLimitPerSlot: [null, u64()],
+      limitPerSlot: [null, u64()],
       currentSlot: [null, u64()],
-      currentSlotMintVolume: [null, u64()],
-      currentSlotRedemptionVolume: [null, u64()],
+      currentSlotVolume: [null, u64()],
       active: [null, bool()],
       emergencyFundBasisPoints: [null, u16()],
       pendingWithdrawalAmount: [null, u64()],
       withdrawalInitiationTime: [null, i64()],
       withdrawTimeLock: [null, i64()],
       withdrawExecutionWindow: [null, i64()],
-      totalSupply: [null, u64()],
       totalCollateral: [null, u64()],
     })
     .deserializeUsing<TokenManager>((account) =>

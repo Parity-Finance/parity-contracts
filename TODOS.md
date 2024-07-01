@@ -15,9 +15,9 @@ Setup CI/CD Pipeline for testing and deployment
 Different Circuit Breaks
 Refactor to token2022
 (Unstake timelock)
-Settings timelock
+~~Settings timelock~~
 ~~Withdraw timelock~~
-Update Owner two step function
+~~Update Owner two step function~~
 Use signed numbers to ensure no overflow or underflow
 
 Different Authority Types
@@ -42,7 +42,7 @@ Tests
 - ~~Test to update owner~~
 - Authority Tests
 - Extensive yield rate tests
-- Test for Max amount per block
+- Test for Max amount per slot
 - ~~Test for update metadata~~
 
 ---

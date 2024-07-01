@@ -290,6 +290,11 @@
           "isSigner": false
         },
         {
+          "name": "mint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
           "name": "admin",
           "isMut": true,
           "isSigner": true
@@ -362,6 +367,11 @@
           "isSigner": false
         },
         {
+          "name": "mint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
           "name": "quoteMint",
           "isMut": false,
           "isSigner": false
@@ -414,7 +424,7 @@
       "accounts": [
         {
           "name": "tokenManager",
-          "isMut": true,
+          "isMut": false,
           "isSigner": false
         },
         {
@@ -604,11 +614,7 @@
             "type": "u64"
           },
           {
-            "name": "mintLimitPerSlot",
-            "type": "u64"
-          },
-          {
-            "name": "redemptionLimitPerSlot",
+            "name": "limitPerSlot",
             "type": "u64"
           },
           {
@@ -616,11 +622,7 @@
             "type": "u64"
           },
           {
-            "name": "currentSlotMintVolume",
-            "type": "u64"
-          },
-          {
-            "name": "currentSlotRedemptionVolume",
+            "name": "currentSlotVolume",
             "type": "u64"
           },
           {
@@ -646,10 +648,6 @@
           {
             "name": "withdrawExecutionWindow",
             "type": "i64"
-          },
-          {
-            "name": "totalSupply",
-            "type": "u64"
           },
           {
             "name": "totalCollateral",
@@ -713,11 +711,7 @@
             }
           },
           {
-            "name": "mintLimitPerSlot",
-            "type": "u64"
-          },
-          {
-            "name": "redemptionLimitPerSlot",
+            "name": "limitPerSlot",
             "type": "u64"
           },
           {
@@ -756,13 +750,7 @@
             }
           },
           {
-            "name": "newMintLimitPerSlot",
-            "type": {
-              "option": "u64"
-            }
-          },
-          {
-            "name": "newRedemptionLimitPerSlot",
+            "name": "newLimitPerSlot",
             "type": {
               "option": "u64"
             }

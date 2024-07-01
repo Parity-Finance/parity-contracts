@@ -44,15 +44,13 @@ export type UpdateTokenManagerAdminInstructionData = {
   discriminator: Array<number>;
   newMerkleRoot: Option<Uint8Array>;
   newGateKeepers: Option<Array<PublicKey>>;
-  newMintLimitPerSlot: Option<bigint>;
-  newRedemptionLimitPerSlot: Option<bigint>;
+  newLimitPerSlot: Option<bigint>;
 };
 
 export type UpdateTokenManagerAdminInstructionDataArgs = {
   newMerkleRoot: OptionOrNullable<Uint8Array>;
   newGateKeepers: OptionOrNullable<Array<PublicKey>>;
-  newMintLimitPerSlot: OptionOrNullable<number | bigint>;
-  newRedemptionLimitPerSlot: OptionOrNullable<number | bigint>;
+  newLimitPerSlot: OptionOrNullable<number | bigint>;
 };
 
 export function getUpdateTokenManagerAdminInstructionDataSerializer(): Serializer<
@@ -69,8 +67,7 @@ export function getUpdateTokenManagerAdminInstructionDataSerializer(): Serialize
         ['discriminator', array(u8(), { size: 8 })],
         ['newMerkleRoot', option(bytes({ size: 32 }))],
         ['newGateKeepers', option(array(publicKeySerializer()))],
-        ['newMintLimitPerSlot', option(u64())],
-        ['newRedemptionLimitPerSlot', option(u64())],
+        ['newLimitPerSlot', option(u64())],
       ],
       { description: 'UpdateTokenManagerAdminInstructionData' }
     ),

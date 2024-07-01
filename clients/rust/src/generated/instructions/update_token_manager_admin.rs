@@ -75,8 +75,7 @@ impl UpdateTokenManagerAdminInstructionData {
 pub struct UpdateTokenManagerAdminInstructionArgs {
     pub new_merkle_root: Option<[u8; 32]>,
     pub new_gate_keepers: Option<Vec<Pubkey>>,
-    pub new_mint_limit_per_slot: Option<u64>,
-    pub new_redemption_limit_per_slot: Option<u64>,
+    pub new_limit_per_slot: Option<u64>,
 }
 
 /// Instruction builder for `UpdateTokenManagerAdmin`.
@@ -91,8 +90,7 @@ pub struct UpdateTokenManagerAdminBuilder {
     admin: Option<solana_program::pubkey::Pubkey>,
     new_merkle_root: Option<[u8; 32]>,
     new_gate_keepers: Option<Vec<Pubkey>>,
-    new_mint_limit_per_slot: Option<u64>,
-    new_redemption_limit_per_slot: Option<u64>,
+    new_limit_per_slot: Option<u64>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
@@ -124,17 +122,8 @@ impl UpdateTokenManagerAdminBuilder {
     }
     /// `[optional argument]`
     #[inline(always)]
-    pub fn new_mint_limit_per_slot(&mut self, new_mint_limit_per_slot: u64) -> &mut Self {
-        self.new_mint_limit_per_slot = Some(new_mint_limit_per_slot);
-        self
-    }
-    /// `[optional argument]`
-    #[inline(always)]
-    pub fn new_redemption_limit_per_slot(
-        &mut self,
-        new_redemption_limit_per_slot: u64,
-    ) -> &mut Self {
-        self.new_redemption_limit_per_slot = Some(new_redemption_limit_per_slot);
+    pub fn new_limit_per_slot(&mut self, new_limit_per_slot: u64) -> &mut Self {
+        self.new_limit_per_slot = Some(new_limit_per_slot);
         self
     }
     /// Add an aditional account to the instruction.
@@ -164,8 +153,7 @@ impl UpdateTokenManagerAdminBuilder {
         let args = UpdateTokenManagerAdminInstructionArgs {
             new_merkle_root: self.new_merkle_root.clone(),
             new_gate_keepers: self.new_gate_keepers.clone(),
-            new_mint_limit_per_slot: self.new_mint_limit_per_slot.clone(),
-            new_redemption_limit_per_slot: self.new_redemption_limit_per_slot.clone(),
+            new_limit_per_slot: self.new_limit_per_slot.clone(),
         };
 
         accounts.instruction_with_remaining_accounts(args, &self.__remaining_accounts)
@@ -298,8 +286,7 @@ impl<'a, 'b> UpdateTokenManagerAdminCpiBuilder<'a, 'b> {
             admin: None,
             new_merkle_root: None,
             new_gate_keepers: None,
-            new_mint_limit_per_slot: None,
-            new_redemption_limit_per_slot: None,
+            new_limit_per_slot: None,
             __remaining_accounts: Vec::new(),
         });
         Self { instruction }
@@ -331,17 +318,8 @@ impl<'a, 'b> UpdateTokenManagerAdminCpiBuilder<'a, 'b> {
     }
     /// `[optional argument]`
     #[inline(always)]
-    pub fn new_mint_limit_per_slot(&mut self, new_mint_limit_per_slot: u64) -> &mut Self {
-        self.instruction.new_mint_limit_per_slot = Some(new_mint_limit_per_slot);
-        self
-    }
-    /// `[optional argument]`
-    #[inline(always)]
-    pub fn new_redemption_limit_per_slot(
-        &mut self,
-        new_redemption_limit_per_slot: u64,
-    ) -> &mut Self {
-        self.instruction.new_redemption_limit_per_slot = Some(new_redemption_limit_per_slot);
+    pub fn new_limit_per_slot(&mut self, new_limit_per_slot: u64) -> &mut Self {
+        self.instruction.new_limit_per_slot = Some(new_limit_per_slot);
         self
     }
     /// Add an additional account to the instruction.
@@ -388,8 +366,7 @@ impl<'a, 'b> UpdateTokenManagerAdminCpiBuilder<'a, 'b> {
         let args = UpdateTokenManagerAdminInstructionArgs {
             new_merkle_root: self.instruction.new_merkle_root.clone(),
             new_gate_keepers: self.instruction.new_gate_keepers.clone(),
-            new_mint_limit_per_slot: self.instruction.new_mint_limit_per_slot.clone(),
-            new_redemption_limit_per_slot: self.instruction.new_redemption_limit_per_slot.clone(),
+            new_limit_per_slot: self.instruction.new_limit_per_slot.clone(),
         };
         let instruction = UpdateTokenManagerAdminCpi {
             __program: self.instruction.__program,
@@ -415,8 +392,7 @@ struct UpdateTokenManagerAdminCpiBuilderInstruction<'a, 'b> {
     admin: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     new_merkle_root: Option<[u8; 32]>,
     new_gate_keepers: Option<Vec<Pubkey>>,
-    new_mint_limit_per_slot: Option<u64>,
-    new_redemption_limit_per_slot: Option<u64>,
+    new_limit_per_slot: Option<u64>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(
         &'b solana_program::account_info::AccountInfo<'a>,

@@ -8,7 +8,7 @@ use crate::{SoldIssuanceError, TokenManager};
 
 #[derive(Accounts)]
 pub struct MintAdminTokens<'info> {
-    #[account(mut, seeds = [b"token-manager"], bump)]
+    #[account(seeds = [b"token-manager"], bump)]
     pub token_manager: Account<'info, TokenManager>,
     #[account(
         mut,
@@ -55,12 +55,5 @@ pub fn handler(ctx: Context<MintAdminTokens>, quantity: u64) -> Result<()> {
         ),
         mint_amount,
     )?;
-
-    // Update token_manager
-    token_manager.total_supply = token_manager
-        .total_supply
-        .checked_add(mint_amount)
-        .ok_or(SoldIssuanceError::CalculationOverflow)?;
-
     Ok(())
 }
