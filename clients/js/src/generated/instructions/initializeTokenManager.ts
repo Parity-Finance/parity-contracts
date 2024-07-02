@@ -61,7 +61,6 @@ export type InitializeTokenManagerInstructionData = {
   merkleRoot: Uint8Array;
   admin: PublicKey;
   minter: PublicKey;
-  gateKeepers: Array<PublicKey>;
   limitPerSlot: bigint;
   withdrawTimeLock: bigint;
   withdrawExecutionWindow: bigint;
@@ -77,7 +76,6 @@ export type InitializeTokenManagerInstructionDataArgs = {
   merkleRoot: Uint8Array;
   admin: PublicKey;
   minter: PublicKey;
-  gateKeepers: Array<PublicKey>;
   limitPerSlot: number | bigint;
   withdrawTimeLock: number | bigint;
   withdrawExecutionWindow: number | bigint;
@@ -104,7 +102,6 @@ export function getInitializeTokenManagerInstructionDataSerializer(): Serializer
         ['merkleRoot', bytes({ size: 32 })],
         ['admin', publicKeySerializer()],
         ['minter', publicKeySerializer()],
-        ['gateKeepers', array(publicKeySerializer())],
         ['limitPerSlot', u64()],
         ['withdrawTimeLock', i64()],
         ['withdrawExecutionWindow', i64()],

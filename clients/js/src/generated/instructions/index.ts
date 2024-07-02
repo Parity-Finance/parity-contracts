@@ -6,6 +6,7 @@
  * @see https://github.com/metaplex-foundation/kinobi
  */
 
+export * from './addGatekeeper';
 export * from './depositFunds';
 export * from './initializePoolManager';
 export * from './initializeTokenManager';
@@ -15,6 +16,7 @@ export * from './initiateUpdatePoolOwner';
 export * from './mint';
 export * from './mintAdmin';
 export * from './redeem';
+export * from './removeGatekeeper';
 export * from './stake';
 export * from './toggleActive';
 export * from './unstake';

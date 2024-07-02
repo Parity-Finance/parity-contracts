@@ -2,7 +2,7 @@ import { keypairIdentity, Pda, PublicKey, publicKey, TransactionBuilder, createA
 import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
 import { createAssociatedToken, createSplAssociatedTokenProgram, createSplTokenProgram, findAssociatedTokenPda, safeFetchMint, safeFetchToken, SPL_ASSOCIATED_TOKEN_PROGRAM_ID } from "@metaplex-foundation/mpl-toolbox"
 import { Connection, Keypair, PublicKey as Web3JsPublicKey } from "@solana/web3.js";
-import { createSoldIssuanceProgram, findTokenManagerPda, initializeTokenManager, SOLD_ISSUANCE_PROGRAM_ID, mint, redeem, safeFetchTokenManager, getMerkleRoot, getMerkleProof, toggleActive, updatePoolManager, depositFunds, withdrawFunds, initializePoolManager, SOLD_STAKING_PROGRAM_ID, calculateExchangeRate, stake, unstake, updateAnnualYield, findPoolManagerPda, updateTokenManagerAdmin, safeFetchPoolManager, initializeWithdrawFunds, initiateUpdatePoolOwner, updatePoolOwner, updateManagerOwner, initiateUpdateManagerOwner, updateXmintMetadata, updateMintMetadata } from "../clients/js/src"
+import { createSoldIssuanceProgram, findTokenManagerPda, initializeTokenManager, SOLD_ISSUANCE_PROGRAM_ID, mint, redeem, safeFetchTokenManager, getMerkleRoot, getMerkleProof, toggleActive, updatePoolManager, depositFunds, withdrawFunds, initializePoolManager, SOLD_STAKING_PROGRAM_ID, calculateExchangeRate, stake, unstake, updateAnnualYield, findPoolManagerPda, updateTokenManagerAdmin, safeFetchPoolManager, initializeWithdrawFunds, initiateUpdatePoolOwner, updatePoolOwner, updateManagerOwner, initiateUpdateManagerOwner, updateXmintMetadata, updateMintMetadata, addGatekeeper, safeFetchGatekeeper, removeGatekeeper, findGatekeeperPda } from "../clients/js/src"
 import { ASSOCIATED_TOKEN_PROGRAM_ID, createMint, getOrCreateAssociatedTokenAccount, mintTo, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { fromWeb3JsKeypair, fromWeb3JsPublicKey, toWeb3JsKeypair } from "@metaplex-foundation/umi-web3js-adapters";
 import { findMetadataPda, safeFetchMetadata } from "@metaplex-foundation/mpl-token-metadata";
@@ -113,7 +113,7 @@ describe.only("sold-issuance", () => {
     }
   })
 
-  it("Token manager is initialized!", async () => {
+  it.only("Token manager is initialized!", async () => {
     const merkleRoot = getMerkleRoot(allowedWallets);
 
     let txBuilder = new TransactionBuilder();
@@ -135,7 +135,6 @@ describe.only("sold-issuance", () => {
       merkleRoot,
       admin: umi.identity.publicKey,
       minter: poolManager,
-      gateKeepers: [],
       limitPerSlot,
       withdrawExecutionWindow,
       withdrawTimeLock
@@ -166,7 +165,7 @@ describe.only("sold-issuance", () => {
     assert.equal(tokenManagerAcc.totalCollateral, 0, "Token manager's total collateral should be zero");
   });
 
-  it("Stake Pool is initialized!", async () => {
+  it.only("Stake Pool is initialized!", async () => {
     let txBuilder = new TransactionBuilder();
 
     txBuilder = txBuilder.add(initializePoolManager(umi, {
@@ -305,6 +304,73 @@ describe.only("sold-issuance", () => {
     assert.equal(vaultAcc.amount, _vaultAcc.amount - expectedQuoteAmount, "Vault amount should be correct");
   });
 
+  it.only("should add and remove a gatekeeper and check unpause permissions", async () => {
+    const newGatekeeper = umi.eddsa.generateKeypair();
+
+    await umi.rpc.airdrop(newGatekeeper.publicKey, createAmount(100_000 * 10 ** 9, "SOL", 9), { commitment: "finalized" })
+
+    const gatekeeper = findGatekeeperPda(umi, { wallet: newGatekeeper.publicKey });
+
+    // Add the new gatekeeper
+    let txBuilder = new TransactionBuilder();
+    txBuilder = txBuilder.add(addGatekeeper(umi, {
+      tokenManager,
+      newGatekeeper: newGatekeeper.publicKey,
+      admin: umi.identity,
+      gatekeeper
+    }));
+    await txBuilder.sendAndConfirm(umi);
+
+    // Verify the gatekeeper was added
+    let gatekeeperAcc = await safeFetchGatekeeper(umi, gatekeeper);
+    assert.equal(gatekeeperAcc.wallet, newGatekeeper.publicKey, "Gatekeeper should be added");
+
+    // Pause the token manager with new gatekeeper
+    umi = umi.use(keypairIdentity(newGatekeeper));
+    txBuilder = new TransactionBuilder();
+    txBuilder = txBuilder.add(toggleActive(umi, { tokenManager, gatekeeper, active: false }));
+    await txBuilder.sendAndConfirm(umi);
+
+    let tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
+    assert.strictEqual(tokenManagerAcc.active, false);
+
+    // Attempt to unpause the token manager as the new gatekeeper
+    umi.use(keypairIdentity(fromWeb3JsKeypair(keypair))); // Switch back to admin
+    txBuilder = new TransactionBuilder();
+    txBuilder = txBuilder.add(toggleActive(umi, { tokenManager, active: true }));
+    await txBuilder.sendAndConfirm(umi);
+
+    tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
+    assert.strictEqual(tokenManagerAcc.active, true, "Token manager should be unpaused by gatekeeper");
+
+    // Remove the gatekeeper
+    txBuilder = new TransactionBuilder();
+    txBuilder = txBuilder.add(removeGatekeeper(umi, {
+      tokenManager,
+      gatekeeper,
+      admin: umi.identity,
+    }));
+    await txBuilder.sendAndConfirm(umi);
+
+    // Verify the gatekeeper was removed
+    const gatekeeperAccAfterRemoval = await safeFetchGatekeeper(umi, gatekeeper);
+    assert.strictEqual(gatekeeperAccAfterRemoval, null, "Expected gatekeeper account to be null");
+
+    // Attempt to unpause the token manager as the removed gatekeeper
+    umi = umi.use(keypairIdentity(newGatekeeper));
+    txBuilder = new TransactionBuilder();
+    txBuilder = txBuilder.add(toggleActive(umi, { tokenManager, active: false }));
+    await assert.rejects(
+      async () => {
+        await txBuilder.sendAndConfirm(umi);
+      },
+      (err) => {
+        return (err as Error).message.includes("InvalidToggleActiveAuthority");
+      },
+      "Expected unpause to fail as the gatekeeper was removed"
+    );
+  });
+
   it("should prevent minting when paused", async () => {
     // Pause the token manager
     let txBuilder = new TransactionBuilder();
@@ -410,7 +476,6 @@ describe.only("sold-issuance", () => {
     txBuilder = txBuilder.add(updateTokenManagerAdmin(umi, {
       tokenManager,
       newMerkleRoot: some(newMerkleRoot),
-      newGateKeepers: null,
       newLimitPerSlot: null,
       admin: umi.identity
     }));
@@ -477,7 +542,6 @@ describe.only("sold-issuance", () => {
       admin: umi.identity,
       // Params
       newMerkleRoot: some(originalMerkleRoot),
-      newGateKeepers: null,
       newLimitPerSlot: null,
     }));
     await txBuilder.sendAndConfirm(umi);

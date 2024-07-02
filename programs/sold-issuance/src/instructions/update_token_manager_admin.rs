@@ -5,7 +5,6 @@ use crate::{SoldIssuanceError, TokenManager};
 #[derive(AnchorSerialize, AnchorDeserialize, Debug, Clone)]
 pub struct UpdateTokenManagerAdminParams {
     pub new_merkle_root: Option<[u8; 32]>,
-    pub new_gate_keepers: Option<Vec<Pubkey>>,
     pub new_limit_per_slot: Option<u64>,
 }
 
@@ -29,9 +28,6 @@ pub fn handler(
 
     if let Some(new_merkle_root) = params.new_merkle_root {
         token_manager.merkle_root = new_merkle_root;
-    }
-    if let Some(new_gate_keepers) = params.new_gate_keepers {
-        token_manager.gate_keepers = new_gate_keepers;
     }
     if let Some(new_limit_per_slot) = params.new_limit_per_slot {
         token_manager.limit_per_slot = new_limit_per_slot;

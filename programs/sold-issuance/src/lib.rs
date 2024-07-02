@@ -85,4 +85,12 @@ pub mod sold_issuance {
     ) -> Result<()> {
         initiate_update_manager_owner::handler(ctx, new_owner)
     }
+
+    pub fn add_gatekeeper(ctx: Context<AddGatekeeper>, new_gatekeeper: Pubkey) -> Result<()> {
+        add_gatekeeper::handler(ctx, new_gatekeeper)
+    }
+
+    pub fn remove_gatekeeper(_ctx: Context<RemoveGatekeeper>) -> Result<()> {
+        Ok(())
+    }
 }

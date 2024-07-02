@@ -1,4 +1,4 @@
-use crate::{SoldIssuanceError, TokenManager};
+use crate::{Gatekeeper, SoldIssuanceError, TokenManager};
 use anchor_lang::prelude::*;
 
 #[derive(Accounts)]
@@ -10,6 +10,11 @@ pub struct ToggleActive<'info> {
     )]
     pub token_manager: Account<'info, TokenManager>,
     pub authority: Signer<'info>,
+    #[account(
+        seeds = [b"gatekeeper", authority.key().as_ref()],
+        bump,
+    )]
+    pub gatekeeper: Option<Account<'info, Gatekeeper>>,
 }
 
 pub fn handler(ctx: Context<ToggleActive>, active: bool) -> Result<()> {
@@ -31,10 +36,7 @@ pub fn handler(ctx: Context<ToggleActive>, active: bool) -> Result<()> {
     } else {
         // If deactivating, authority can be either the admin or a gatekeeper
         let is_admin = token_manager.admin == authority.key();
-        let is_gate_keeper = token_manager
-            .gate_keepers
-            .iter()
-            .any(|&k| k == authority.key());
+        let is_gate_keeper = ctx.accounts.gatekeeper.is_some();
         require!(
             is_admin || is_gate_keeper,
             SoldIssuanceError::InvalidToggleActiveAuthority

@@ -226,6 +226,12 @@
           "name": "authority",
           "isMut": false,
           "isSigner": true
+        },
+        {
+          "name": "gatekeeper",
+          "isMut": false,
+          "isSigner": false,
+          "isOptional": true
         }
       ],
       "args": [
@@ -555,6 +561,58 @@
           "type": "publicKey"
         }
       ]
+    },
+    {
+      "name": "addGatekeeper",
+      "accounts": [
+        {
+          "name": "tokenManager",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "gatekeeper",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "admin",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "newGatekeeper",
+          "type": "publicKey"
+        }
+      ]
+    },
+    {
+      "name": "removeGatekeeper",
+      "accounts": [
+        {
+          "name": "tokenManager",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "gatekeeper",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "admin",
+          "isMut": false,
+          "isSigner": true
+        }
+      ],
+      "args": []
     }
   ],
   "accounts": [
@@ -582,12 +640,6 @@
           {
             "name": "minter",
             "type": "publicKey"
-          },
-          {
-            "name": "gateKeepers",
-            "type": {
-              "vec": "publicKey"
-            }
           },
           {
             "name": "merkleRoot",
@@ -660,6 +712,18 @@
           }
         ]
       }
+    },
+    {
+      "name": "Gatekeeper",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "wallet",
+            "type": "publicKey"
+          }
+        ]
+      }
     }
   ],
   "types": [
@@ -710,12 +774,6 @@
             "type": "publicKey"
           },
           {
-            "name": "gateKeepers",
-            "type": {
-              "vec": "publicKey"
-            }
-          },
-          {
             "name": "limitPerSlot",
             "type": "u64"
           },
@@ -743,14 +801,6 @@
                   "u8",
                   32
                 ]
-              }
-            }
-          },
-          {
-            "name": "newGateKeepers",
-            "type": {
-              "option": {
-                "vec": "publicKey"
               }
             }
           },

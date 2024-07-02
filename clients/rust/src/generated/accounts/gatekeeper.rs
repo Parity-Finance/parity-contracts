@@ -15,77 +15,39 @@ use solana_program::pubkey::Pubkey;
 #[cfg_attr(not(feature = "anchor"), derive(BorshSerialize, BorshDeserialize))]
 #[cfg_attr(feature = "anchor", derive(AnchorSerialize, AnchorDeserialize))]
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct TokenManager {
+pub struct Gatekeeper {
     pub discriminator: [u8; 8],
-    pub bump: u8,
     #[cfg_attr(
         feature = "serde",
         serde(with = "serde_with::As::<serde_with::DisplayFromStr>")
     )]
-    pub owner: Pubkey,
-    #[cfg_attr(
-        feature = "serde",
-        serde(with = "serde_with::As::<serde_with::DisplayFromStr>")
-    )]
-    pub pending_owner: Pubkey,
-    #[cfg_attr(
-        feature = "serde",
-        serde(with = "serde_with::As::<serde_with::DisplayFromStr>")
-    )]
-    pub admin: Pubkey,
-    #[cfg_attr(
-        feature = "serde",
-        serde(with = "serde_with::As::<serde_with::DisplayFromStr>")
-    )]
-    pub minter: Pubkey,
-    pub merkle_root: [u8; 32],
-    #[cfg_attr(
-        feature = "serde",
-        serde(with = "serde_with::As::<serde_with::DisplayFromStr>")
-    )]
-    pub mint: Pubkey,
-    pub mint_decimals: u8,
-    #[cfg_attr(
-        feature = "serde",
-        serde(with = "serde_with::As::<serde_with::DisplayFromStr>")
-    )]
-    pub quote_mint: Pubkey,
-    pub quote_mint_decimals: u8,
-    pub exchange_rate: u64,
-    pub limit_per_slot: u64,
-    pub current_slot: u64,
-    pub current_slot_volume: u64,
-    pub active: bool,
-    pub emergency_fund_basis_points: u16,
-    pub pending_withdrawal_amount: u64,
-    pub withdrawal_initiation_time: i64,
-    pub withdraw_time_lock: i64,
-    pub withdraw_execution_window: i64,
-    pub total_collateral: u64,
+    pub wallet: Pubkey,
 }
 
-impl TokenManager {
-    pub const LEN: usize = 310;
+impl Gatekeeper {
+    pub const LEN: usize = 40;
 
     /// Prefix values used to generate a PDA for this account.
     ///
     /// Values are positional and appear in the following order:
     ///
-    ///   0. `TokenManager::PREFIX`
-    pub const PREFIX: &'static [u8] = "token-manager".as_bytes();
+    ///   0. `Gatekeeper::PREFIX`
+    ///   1. wallet (`Pubkey`)
+    pub const PREFIX: &'static [u8] = "gatekeeper".as_bytes();
 
     pub fn create_pda(
+        wallet: Pubkey,
         bump: u8,
     ) -> Result<solana_program::pubkey::Pubkey, solana_program::pubkey::PubkeyError> {
         solana_program::pubkey::Pubkey::create_program_address(
-            &["token-manager".as_bytes(), &[bump]],
+            &["gatekeeper".as_bytes(), wallet.as_ref(), &[bump]],
             &crate::SOLD_ISSUANCE_ID,
         )
     }
 
-    pub fn find_pda() -> (solana_program::pubkey::Pubkey, u8) {
+    pub fn find_pda(wallet: &Pubkey) -> (solana_program::pubkey::Pubkey, u8) {
         solana_program::pubkey::Pubkey::find_program_address(
-            &["token-manager".as_bytes()],
+            &["gatekeeper".as_bytes(), wallet.as_ref()],
             &crate::SOLD_ISSUANCE_ID,
         )
     }
@@ -97,7 +59,7 @@ impl TokenManager {
     }
 }
 
-impl<'a> TryFrom<&solana_program::account_info::AccountInfo<'a>> for TokenManager {
+impl<'a> TryFrom<&solana_program::account_info::AccountInfo<'a>> for Gatekeeper {
     type Error = std::io::Error;
 
     fn try_from(

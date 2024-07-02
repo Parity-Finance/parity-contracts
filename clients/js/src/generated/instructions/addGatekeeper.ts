@@ -8,8 +8,6 @@
 
 import {
   Context,
-  Option,
-  OptionOrNullable,
   Pda,
   PublicKey,
   Signer,
@@ -19,11 +17,9 @@ import {
 import {
   Serializer,
   array,
-  bytes,
   mapSerializer,
-  option,
+  publicKey as publicKeySerializer,
   struct,
-  u64,
   u8,
 } from '@metaplex-foundation/umi/serializers';
 import {
@@ -33,59 +29,54 @@ import {
 } from '../shared';
 
 // Accounts.
-export type UpdateTokenManagerAdminInstructionAccounts = {
+export type AddGatekeeperInstructionAccounts = {
   tokenManager: PublicKey | Pda;
+  gatekeeper: PublicKey | Pda;
   admin: Signer;
+  systemProgram?: PublicKey | Pda;
 };
 
 // Data.
-export type UpdateTokenManagerAdminInstructionData = {
+export type AddGatekeeperInstructionData = {
   discriminator: Array<number>;
-  newMerkleRoot: Option<Uint8Array>;
-  newLimitPerSlot: Option<bigint>;
+  newGatekeeper: PublicKey;
 };
 
-export type UpdateTokenManagerAdminInstructionDataArgs = {
-  newMerkleRoot: OptionOrNullable<Uint8Array>;
-  newLimitPerSlot: OptionOrNullable<number | bigint>;
-};
+export type AddGatekeeperInstructionDataArgs = { newGatekeeper: PublicKey };
 
-export function getUpdateTokenManagerAdminInstructionDataSerializer(): Serializer<
-  UpdateTokenManagerAdminInstructionDataArgs,
-  UpdateTokenManagerAdminInstructionData
+export function getAddGatekeeperInstructionDataSerializer(): Serializer<
+  AddGatekeeperInstructionDataArgs,
+  AddGatekeeperInstructionData
 > {
   return mapSerializer<
-    UpdateTokenManagerAdminInstructionDataArgs,
+    AddGatekeeperInstructionDataArgs,
     any,
-    UpdateTokenManagerAdminInstructionData
+    AddGatekeeperInstructionData
   >(
-    struct<UpdateTokenManagerAdminInstructionData>(
+    struct<AddGatekeeperInstructionData>(
       [
         ['discriminator', array(u8(), { size: 8 })],
-        ['newMerkleRoot', option(bytes({ size: 32 }))],
-        ['newLimitPerSlot', option(u64())],
+        ['newGatekeeper', publicKeySerializer()],
       ],
-      { description: 'UpdateTokenManagerAdminInstructionData' }
+      { description: 'AddGatekeeperInstructionData' }
     ),
     (value) => ({
       ...value,
-      discriminator: [17, 160, 88, 219, 48, 101, 22, 96],
+      discriminator: [207, 206, 137, 200, 242, 183, 186, 185],
     })
   ) as Serializer<
-    UpdateTokenManagerAdminInstructionDataArgs,
-    UpdateTokenManagerAdminInstructionData
+    AddGatekeeperInstructionDataArgs,
+    AddGatekeeperInstructionData
   >;
 }
 
 // Args.
-export type UpdateTokenManagerAdminInstructionArgs =
-  UpdateTokenManagerAdminInstructionDataArgs;
+export type AddGatekeeperInstructionArgs = AddGatekeeperInstructionDataArgs;
 
 // Instruction.
-export function updateTokenManagerAdmin(
+export function addGatekeeper(
   context: Pick<Context, 'programs'>,
-  input: UpdateTokenManagerAdminInstructionAccounts &
-    UpdateTokenManagerAdminInstructionArgs
+  input: AddGatekeeperInstructionAccounts & AddGatekeeperInstructionArgs
 ): TransactionBuilder {
   // Program ID.
   const programId = context.programs.getPublicKey(
@@ -100,15 +91,34 @@ export function updateTokenManagerAdmin(
       isWritable: true as boolean,
       value: input.tokenManager ?? null,
     },
-    admin: {
+    gatekeeper: {
       index: 1,
-      isWritable: false as boolean,
+      isWritable: true as boolean,
+      value: input.gatekeeper ?? null,
+    },
+    admin: {
+      index: 2,
+      isWritable: true as boolean,
       value: input.admin ?? null,
+    },
+    systemProgram: {
+      index: 3,
+      isWritable: false as boolean,
+      value: input.systemProgram ?? null,
     },
   } satisfies ResolvedAccountsWithIndices;
 
   // Arguments.
-  const resolvedArgs: UpdateTokenManagerAdminInstructionArgs = { ...input };
+  const resolvedArgs: AddGatekeeperInstructionArgs = { ...input };
+
+  // Default values.
+  if (!resolvedAccounts.systemProgram.value) {
+    resolvedAccounts.systemProgram.value = context.programs.getPublicKey(
+      'splSystem',
+      '11111111111111111111111111111111'
+    );
+    resolvedAccounts.systemProgram.isWritable = false;
+  }
 
   // Accounts in order.
   const orderedAccounts: ResolvedAccount[] = Object.values(
@@ -123,8 +133,8 @@ export function updateTokenManagerAdmin(
   );
 
   // Data.
-  const data = getUpdateTokenManagerAdminInstructionDataSerializer().serialize(
-    resolvedArgs as UpdateTokenManagerAdminInstructionDataArgs
+  const data = getAddGatekeeperInstructionDataSerializer().serialize(
+    resolvedArgs as AddGatekeeperInstructionDataArgs
   );
 
   // Bytes Created On Chain.

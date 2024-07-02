@@ -11,39 +11,37 @@ use anchor_lang::prelude::{AnchorDeserialize, AnchorSerialize};
 use borsh::{BorshDeserialize, BorshSerialize};
 
 /// Accounts.
-pub struct UpdateTokenManagerAdmin {
+pub struct RemoveGatekeeper {
     pub token_manager: solana_program::pubkey::Pubkey,
+
+    pub gatekeeper: solana_program::pubkey::Pubkey,
 
     pub admin: solana_program::pubkey::Pubkey,
 }
 
-impl UpdateTokenManagerAdmin {
-    pub fn instruction(
-        &self,
-        args: UpdateTokenManagerAdminInstructionArgs,
-    ) -> solana_program::instruction::Instruction {
-        self.instruction_with_remaining_accounts(args, &[])
+impl RemoveGatekeeper {
+    pub fn instruction(&self) -> solana_program::instruction::Instruction {
+        self.instruction_with_remaining_accounts(&[])
     }
     #[allow(clippy::vec_init_then_push)]
     pub fn instruction_with_remaining_accounts(
         &self,
-        args: UpdateTokenManagerAdminInstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(2 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(3 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.token_manager,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new(
+            self.gatekeeper,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.admin, true,
         ));
         accounts.extend_from_slice(remaining_accounts);
-        let mut data = UpdateTokenManagerAdminInstructionData::new()
-            .try_to_vec()
-            .unwrap();
-        let mut args = args.try_to_vec().unwrap();
-        data.append(&mut args);
+        let data = RemoveGatekeeperInstructionData::new().try_to_vec().unwrap();
 
         solana_program::instruction::Instruction {
             program_id: crate::SOLD_ISSUANCE_ID,
@@ -55,43 +53,34 @@ impl UpdateTokenManagerAdmin {
 
 #[cfg_attr(not(feature = "anchor"), derive(BorshSerialize, BorshDeserialize))]
 #[cfg_attr(feature = "anchor", derive(AnchorSerialize, AnchorDeserialize))]
-pub struct UpdateTokenManagerAdminInstructionData {
+pub struct RemoveGatekeeperInstructionData {
     discriminator: [u8; 8],
 }
 
-impl UpdateTokenManagerAdminInstructionData {
+impl RemoveGatekeeperInstructionData {
     pub fn new() -> Self {
         Self {
-            discriminator: [17, 160, 88, 219, 48, 101, 22, 96],
+            discriminator: [238, 65, 200, 12, 18, 41, 141, 7],
         }
     }
 }
 
-#[cfg_attr(not(feature = "anchor"), derive(BorshSerialize, BorshDeserialize))]
-#[cfg_attr(feature = "anchor", derive(AnchorSerialize, AnchorDeserialize))]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct UpdateTokenManagerAdminInstructionArgs {
-    pub new_merkle_root: Option<[u8; 32]>,
-    pub new_limit_per_slot: Option<u64>,
-}
-
-/// Instruction builder for `UpdateTokenManagerAdmin`.
+/// Instruction builder for `RemoveGatekeeper`.
 ///
 /// ### Accounts:
 ///
 ///   0. `[writable]` token_manager
-///   1. `[signer]` admin
+///   1. `[writable]` gatekeeper
+///   2. `[signer]` admin
 #[derive(Default)]
-pub struct UpdateTokenManagerAdminBuilder {
+pub struct RemoveGatekeeperBuilder {
     token_manager: Option<solana_program::pubkey::Pubkey>,
+    gatekeeper: Option<solana_program::pubkey::Pubkey>,
     admin: Option<solana_program::pubkey::Pubkey>,
-    new_merkle_root: Option<[u8; 32]>,
-    new_limit_per_slot: Option<u64>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
-impl UpdateTokenManagerAdminBuilder {
+impl RemoveGatekeeperBuilder {
     pub fn new() -> Self {
         Self::default()
     }
@@ -101,20 +90,13 @@ impl UpdateTokenManagerAdminBuilder {
         self
     }
     #[inline(always)]
+    pub fn gatekeeper(&mut self, gatekeeper: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.gatekeeper = Some(gatekeeper);
+        self
+    }
+    #[inline(always)]
     pub fn admin(&mut self, admin: solana_program::pubkey::Pubkey) -> &mut Self {
         self.admin = Some(admin);
-        self
-    }
-    /// `[optional argument]`
-    #[inline(always)]
-    pub fn new_merkle_root(&mut self, new_merkle_root: [u8; 32]) -> &mut Self {
-        self.new_merkle_root = Some(new_merkle_root);
-        self
-    }
-    /// `[optional argument]`
-    #[inline(always)]
-    pub fn new_limit_per_slot(&mut self, new_limit_per_slot: u64) -> &mut Self {
-        self.new_limit_per_slot = Some(new_limit_per_slot);
         self
     }
     /// Add an aditional account to the instruction.
@@ -137,49 +119,47 @@ impl UpdateTokenManagerAdminBuilder {
     }
     #[allow(clippy::clone_on_copy)]
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
-        let accounts = UpdateTokenManagerAdmin {
+        let accounts = RemoveGatekeeper {
             token_manager: self.token_manager.expect("token_manager is not set"),
+            gatekeeper: self.gatekeeper.expect("gatekeeper is not set"),
             admin: self.admin.expect("admin is not set"),
         };
-        let args = UpdateTokenManagerAdminInstructionArgs {
-            new_merkle_root: self.new_merkle_root.clone(),
-            new_limit_per_slot: self.new_limit_per_slot.clone(),
-        };
 
-        accounts.instruction_with_remaining_accounts(args, &self.__remaining_accounts)
+        accounts.instruction_with_remaining_accounts(&self.__remaining_accounts)
     }
 }
 
-/// `update_token_manager_admin` CPI accounts.
-pub struct UpdateTokenManagerAdminCpiAccounts<'a, 'b> {
+/// `remove_gatekeeper` CPI accounts.
+pub struct RemoveGatekeeperCpiAccounts<'a, 'b> {
     pub token_manager: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub gatekeeper: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub admin: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
-/// `update_token_manager_admin` CPI instruction.
-pub struct UpdateTokenManagerAdminCpi<'a, 'b> {
+/// `remove_gatekeeper` CPI instruction.
+pub struct RemoveGatekeeperCpi<'a, 'b> {
     /// The program to invoke.
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub token_manager: &'b solana_program::account_info::AccountInfo<'a>,
 
+    pub gatekeeper: &'b solana_program::account_info::AccountInfo<'a>,
+
     pub admin: &'b solana_program::account_info::AccountInfo<'a>,
-    /// The arguments for the instruction.
-    pub __args: UpdateTokenManagerAdminInstructionArgs,
 }
 
-impl<'a, 'b> UpdateTokenManagerAdminCpi<'a, 'b> {
+impl<'a, 'b> RemoveGatekeeperCpi<'a, 'b> {
     pub fn new(
         program: &'b solana_program::account_info::AccountInfo<'a>,
-        accounts: UpdateTokenManagerAdminCpiAccounts<'a, 'b>,
-        args: UpdateTokenManagerAdminInstructionArgs,
+        accounts: RemoveGatekeeperCpiAccounts<'a, 'b>,
     ) -> Self {
         Self {
             __program: program,
             token_manager: accounts.token_manager,
+            gatekeeper: accounts.gatekeeper,
             admin: accounts.admin,
-            __args: args,
         }
     }
     #[inline(always)]
@@ -215,9 +195,13 @@ impl<'a, 'b> UpdateTokenManagerAdminCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(2 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(3 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.token_manager.key,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new(
+            *self.gatekeeper.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -231,20 +215,17 @@ impl<'a, 'b> UpdateTokenManagerAdminCpi<'a, 'b> {
                 is_writable: remaining_account.2,
             })
         });
-        let mut data = UpdateTokenManagerAdminInstructionData::new()
-            .try_to_vec()
-            .unwrap();
-        let mut args = self.__args.try_to_vec().unwrap();
-        data.append(&mut args);
+        let data = RemoveGatekeeperInstructionData::new().try_to_vec().unwrap();
 
         let instruction = solana_program::instruction::Instruction {
             program_id: crate::SOLD_ISSUANCE_ID,
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(2 + 1 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(3 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.token_manager.clone());
+        account_infos.push(self.gatekeeper.clone());
         account_infos.push(self.admin.clone());
         remaining_accounts
             .iter()
@@ -258,24 +239,24 @@ impl<'a, 'b> UpdateTokenManagerAdminCpi<'a, 'b> {
     }
 }
 
-/// Instruction builder for `UpdateTokenManagerAdmin` via CPI.
+/// Instruction builder for `RemoveGatekeeper` via CPI.
 ///
 /// ### Accounts:
 ///
 ///   0. `[writable]` token_manager
-///   1. `[signer]` admin
-pub struct UpdateTokenManagerAdminCpiBuilder<'a, 'b> {
-    instruction: Box<UpdateTokenManagerAdminCpiBuilderInstruction<'a, 'b>>,
+///   1. `[writable]` gatekeeper
+///   2. `[signer]` admin
+pub struct RemoveGatekeeperCpiBuilder<'a, 'b> {
+    instruction: Box<RemoveGatekeeperCpiBuilderInstruction<'a, 'b>>,
 }
 
-impl<'a, 'b> UpdateTokenManagerAdminCpiBuilder<'a, 'b> {
+impl<'a, 'b> RemoveGatekeeperCpiBuilder<'a, 'b> {
     pub fn new(program: &'b solana_program::account_info::AccountInfo<'a>) -> Self {
-        let instruction = Box::new(UpdateTokenManagerAdminCpiBuilderInstruction {
+        let instruction = Box::new(RemoveGatekeeperCpiBuilderInstruction {
             __program: program,
             token_manager: None,
+            gatekeeper: None,
             admin: None,
-            new_merkle_root: None,
-            new_limit_per_slot: None,
             __remaining_accounts: Vec::new(),
         });
         Self { instruction }
@@ -289,20 +270,16 @@ impl<'a, 'b> UpdateTokenManagerAdminCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
+    pub fn gatekeeper(
+        &mut self,
+        gatekeeper: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.gatekeeper = Some(gatekeeper);
+        self
+    }
+    #[inline(always)]
     pub fn admin(&mut self, admin: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
         self.instruction.admin = Some(admin);
-        self
-    }
-    /// `[optional argument]`
-    #[inline(always)]
-    pub fn new_merkle_root(&mut self, new_merkle_root: [u8; 32]) -> &mut Self {
-        self.instruction.new_merkle_root = Some(new_merkle_root);
-        self
-    }
-    /// `[optional argument]`
-    #[inline(always)]
-    pub fn new_limit_per_slot(&mut self, new_limit_per_slot: u64) -> &mut Self {
-        self.instruction.new_limit_per_slot = Some(new_limit_per_slot);
         self
     }
     /// Add an additional account to the instruction.
@@ -346,11 +323,7 @@ impl<'a, 'b> UpdateTokenManagerAdminCpiBuilder<'a, 'b> {
         &self,
         signers_seeds: &[&[&[u8]]],
     ) -> solana_program::entrypoint::ProgramResult {
-        let args = UpdateTokenManagerAdminInstructionArgs {
-            new_merkle_root: self.instruction.new_merkle_root.clone(),
-            new_limit_per_slot: self.instruction.new_limit_per_slot.clone(),
-        };
-        let instruction = UpdateTokenManagerAdminCpi {
+        let instruction = RemoveGatekeeperCpi {
             __program: self.instruction.__program,
 
             token_manager: self
@@ -358,8 +331,9 @@ impl<'a, 'b> UpdateTokenManagerAdminCpiBuilder<'a, 'b> {
                 .token_manager
                 .expect("token_manager is not set"),
 
+            gatekeeper: self.instruction.gatekeeper.expect("gatekeeper is not set"),
+
             admin: self.instruction.admin.expect("admin is not set"),
-            __args: args,
         };
         instruction.invoke_signed_with_remaining_accounts(
             signers_seeds,
@@ -368,12 +342,11 @@ impl<'a, 'b> UpdateTokenManagerAdminCpiBuilder<'a, 'b> {
     }
 }
 
-struct UpdateTokenManagerAdminCpiBuilderInstruction<'a, 'b> {
+struct RemoveGatekeeperCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     token_manager: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    gatekeeper: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     admin: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    new_merkle_root: Option<[u8; 32]>,
-    new_limit_per_slot: Option<u64>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(
         &'b solana_program::account_info::AccountInfo<'a>,

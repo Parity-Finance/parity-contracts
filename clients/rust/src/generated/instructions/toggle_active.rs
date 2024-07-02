@@ -15,6 +15,8 @@ pub struct ToggleActive {
     pub token_manager: solana_program::pubkey::Pubkey,
 
     pub authority: solana_program::pubkey::Pubkey,
+
+    pub gatekeeper: Option<solana_program::pubkey::Pubkey>,
 }
 
 impl ToggleActive {
@@ -30,7 +32,7 @@ impl ToggleActive {
         args: ToggleActiveInstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(2 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(3 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.token_manager,
             false,
@@ -39,6 +41,16 @@ impl ToggleActive {
             self.authority,
             true,
         ));
+        if let Some(gatekeeper) = self.gatekeeper {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                gatekeeper, false,
+            ));
+        } else {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                crate::SOLD_ISSUANCE_ID,
+                false,
+            ));
+        }
         accounts.extend_from_slice(remaining_accounts);
         let mut data = ToggleActiveInstructionData::new().try_to_vec().unwrap();
         let mut args = args.try_to_vec().unwrap();
@@ -80,10 +92,12 @@ pub struct ToggleActiveInstructionArgs {
 ///
 ///   0. `[writable]` token_manager
 ///   1. `[signer]` authority
+///   2. `[optional]` gatekeeper
 #[derive(Default)]
 pub struct ToggleActiveBuilder {
     token_manager: Option<solana_program::pubkey::Pubkey>,
     authority: Option<solana_program::pubkey::Pubkey>,
+    gatekeeper: Option<solana_program::pubkey::Pubkey>,
     active: Option<bool>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
@@ -100,6 +114,12 @@ impl ToggleActiveBuilder {
     #[inline(always)]
     pub fn authority(&mut self, authority: solana_program::pubkey::Pubkey) -> &mut Self {
         self.authority = Some(authority);
+        self
+    }
+    /// `[optional account]`
+    #[inline(always)]
+    pub fn gatekeeper(&mut self, gatekeeper: Option<solana_program::pubkey::Pubkey>) -> &mut Self {
+        self.gatekeeper = gatekeeper;
         self
     }
     #[inline(always)]
@@ -130,6 +150,7 @@ impl ToggleActiveBuilder {
         let accounts = ToggleActive {
             token_manager: self.token_manager.expect("token_manager is not set"),
             authority: self.authority.expect("authority is not set"),
+            gatekeeper: self.gatekeeper,
         };
         let args = ToggleActiveInstructionArgs {
             active: self.active.clone().expect("active is not set"),
@@ -144,6 +165,8 @@ pub struct ToggleActiveCpiAccounts<'a, 'b> {
     pub token_manager: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub authority: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub gatekeeper: Option<&'b solana_program::account_info::AccountInfo<'a>>,
 }
 
 /// `toggle_active` CPI instruction.
@@ -154,6 +177,8 @@ pub struct ToggleActiveCpi<'a, 'b> {
     pub token_manager: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub authority: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub gatekeeper: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     /// The arguments for the instruction.
     pub __args: ToggleActiveInstructionArgs,
 }
@@ -168,6 +193,7 @@ impl<'a, 'b> ToggleActiveCpi<'a, 'b> {
             __program: program,
             token_manager: accounts.token_manager,
             authority: accounts.authority,
+            gatekeeper: accounts.gatekeeper,
             __args: args,
         }
     }
@@ -204,7 +230,7 @@ impl<'a, 'b> ToggleActiveCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(2 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(3 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.token_manager.key,
             false,
@@ -213,6 +239,17 @@ impl<'a, 'b> ToggleActiveCpi<'a, 'b> {
             *self.authority.key,
             true,
         ));
+        if let Some(gatekeeper) = self.gatekeeper {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                *gatekeeper.key,
+                false,
+            ));
+        } else {
+            accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+                crate::SOLD_ISSUANCE_ID,
+                false,
+            ));
+        }
         remaining_accounts.iter().for_each(|remaining_account| {
             accounts.push(solana_program::instruction::AccountMeta {
                 pubkey: *remaining_account.0.key,
@@ -229,10 +266,13 @@ impl<'a, 'b> ToggleActiveCpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(2 + 1 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(3 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.token_manager.clone());
         account_infos.push(self.authority.clone());
+        if let Some(gatekeeper) = self.gatekeeper {
+            account_infos.push(gatekeeper.clone());
+        }
         remaining_accounts
             .iter()
             .for_each(|remaining_account| account_infos.push(remaining_account.0.clone()));
@@ -251,6 +291,7 @@ impl<'a, 'b> ToggleActiveCpi<'a, 'b> {
 ///
 ///   0. `[writable]` token_manager
 ///   1. `[signer]` authority
+///   2. `[optional]` gatekeeper
 pub struct ToggleActiveCpiBuilder<'a, 'b> {
     instruction: Box<ToggleActiveCpiBuilderInstruction<'a, 'b>>,
 }
@@ -261,6 +302,7 @@ impl<'a, 'b> ToggleActiveCpiBuilder<'a, 'b> {
             __program: program,
             token_manager: None,
             authority: None,
+            gatekeeper: None,
             active: None,
             __remaining_accounts: Vec::new(),
         });
@@ -280,6 +322,15 @@ impl<'a, 'b> ToggleActiveCpiBuilder<'a, 'b> {
         authority: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.authority = Some(authority);
+        self
+    }
+    /// `[optional account]`
+    #[inline(always)]
+    pub fn gatekeeper(
+        &mut self,
+        gatekeeper: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    ) -> &mut Self {
+        self.instruction.gatekeeper = gatekeeper;
         self
     }
     #[inline(always)]
@@ -340,6 +391,8 @@ impl<'a, 'b> ToggleActiveCpiBuilder<'a, 'b> {
                 .expect("token_manager is not set"),
 
             authority: self.instruction.authority.expect("authority is not set"),
+
+            gatekeeper: self.instruction.gatekeeper,
             __args: args,
         };
         instruction.invoke_signed_with_remaining_accounts(
@@ -353,6 +406,7 @@ struct ToggleActiveCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     token_manager: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     authority: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    gatekeeper: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     active: Option<bool>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(

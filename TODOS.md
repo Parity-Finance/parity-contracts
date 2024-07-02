@@ -40,10 +40,11 @@ Tests
 - ~~Different exchange_rate tests~~
 - ~~Updated Staking Tests~~
 - ~~Test to update owner~~
+- ~~Test for update metadata~~
+- ~~Gatekeeper test~~
 - Authority Tests
 - Extensive yield rate tests
 - Test for Max amount per slot
-- ~~Test for update metadata~~
 
 ---
 

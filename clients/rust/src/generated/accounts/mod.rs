@@ -5,8 +5,10 @@
 //! [https://github.com/metaplex-foundation/kinobi]
 //!
 
+pub(crate) mod r#gatekeeper;
 pub(crate) mod r#pool_manager;
 pub(crate) mod r#token_manager;
 
+pub use self::r#gatekeeper::*;
 pub use self::r#pool_manager::*;
 pub use self::r#token_manager::*;

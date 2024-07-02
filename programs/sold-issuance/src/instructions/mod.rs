@@ -1,3 +1,4 @@
+pub mod add_gatekeeper;
 pub mod deposit_funds;
 pub mod initialize_token_manager;
 pub mod initialize_withdraw_funds;
@@ -5,6 +6,7 @@ pub mod initiate_update_manager_owner;
 pub mod mint;
 pub mod mint_admin;
 pub mod redeem;
+pub mod remove_gatekeeper;
 pub mod toggle_active;
 pub mod update_manager_owner;
 pub mod update_mint_metadata;
@@ -12,6 +14,7 @@ pub mod update_token_manager_admin;
 pub mod update_token_manager_owner;
 pub mod withdraw_funds;
 
+pub use add_gatekeeper::*;
 pub use deposit_funds::*;
 pub use initialize_token_manager::*;
 pub use initialize_withdraw_funds::*;
@@ -19,6 +22,7 @@ pub use initiate_update_manager_owner::*;
 pub use mint::*;
 pub use mint_admin::*;
 pub use redeem::*;
+pub use remove_gatekeeper::*;
 pub use toggle_active::*;
 pub use update_manager_owner::*;
 pub use update_mint_metadata::*;

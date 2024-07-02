@@ -6,5 +6,6 @@
  * @see https://github.com/metaplex-foundation/kinobi
  */
 
+export * from './gatekeeper';
 export * from './poolManager';
 export * from './tokenManager';

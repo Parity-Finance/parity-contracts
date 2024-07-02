@@ -2,18 +2,17 @@ use anchor_lang::prelude::*;
 
 use crate::SoldIssuanceError;
 
-pub const TOKEN_MANAGER_SIZE: usize = 8 + 4 + (32 * 12) + (8 * 8) + 2 + (1 * 4);
+pub const TOKEN_MANAGER_SIZE: usize = 8 + (32 * 7) + (8 * 9) + 2 + (1 * 4);
 
 #[account]
 pub struct TokenManager {
     pub bump: u8, // 1
     // Authorities
-    pub owner: Pubkey,             // 32
-    pub pending_owner: Pubkey,     // 32
-    pub admin: Pubkey,             // 32
-    pub minter: Pubkey,            // 32
-    pub gate_keepers: Vec<Pubkey>, // 4 +  32 * 5
-    pub merkle_root: [u8; 32],     // 32
+    pub owner: Pubkey,         // 32
+    pub pending_owner: Pubkey, // 32
+    pub admin: Pubkey,         // 32
+    pub minter: Pubkey,        // 32
+    pub merkle_root: [u8; 32], // 32
 
     // Tokens
     pub mint: Pubkey,            // 32
@@ -37,6 +36,11 @@ pub struct TokenManager {
 
     // Other
     pub total_collateral: u64, // 8
+}
+
+#[account]
+pub struct Gatekeeper {
+    pub wallet: Pubkey,
 }
 
 impl TokenManager {
@@ -181,7 +185,6 @@ mod tests {
             pending_owner: Pubkey::default(),
             admin: Pubkey::default(),
             minter: Pubkey::default(),
-            gate_keepers: vec![],
             merkle_root: [0u8; 32],
             mint: Pubkey::default(),
             mint_decimals: 6,

@@ -133,7 +133,6 @@ pub struct InitializeTokenManagerInstructionArgs {
     pub merkle_root: [u8; 32],
     pub admin: Pubkey,
     pub minter: Pubkey,
-    pub gate_keepers: Vec<Pubkey>,
     pub limit_per_slot: u64,
     pub withdraw_time_lock: i64,
     pub withdraw_execution_window: i64,
@@ -176,7 +175,6 @@ pub struct InitializeTokenManagerBuilder {
     merkle_root: Option<[u8; 32]>,
     admin: Option<Pubkey>,
     minter: Option<Pubkey>,
-    gate_keepers: Option<Vec<Pubkey>>,
     limit_per_slot: Option<u64>,
     withdraw_time_lock: Option<i64>,
     withdraw_execution_window: Option<i64>,
@@ -298,11 +296,6 @@ impl InitializeTokenManagerBuilder {
         self
     }
     #[inline(always)]
-    pub fn gate_keepers(&mut self, gate_keepers: Vec<Pubkey>) -> &mut Self {
-        self.gate_keepers = Some(gate_keepers);
-        self
-    }
-    #[inline(always)]
     pub fn limit_per_slot(&mut self, limit_per_slot: u64) -> &mut Self {
         self.limit_per_slot = Some(limit_per_slot);
         self
@@ -377,7 +370,6 @@ impl InitializeTokenManagerBuilder {
             merkle_root: self.merkle_root.clone().expect("merkle_root is not set"),
             admin: self.admin.clone().expect("admin is not set"),
             minter: self.minter.clone().expect("minter is not set"),
-            gate_keepers: self.gate_keepers.clone().expect("gate_keepers is not set"),
             limit_per_slot: self
                 .limit_per_slot
                 .clone()
@@ -637,7 +629,6 @@ impl<'a, 'b> InitializeTokenManagerCpiBuilder<'a, 'b> {
             merkle_root: None,
             admin: None,
             minter: None,
-            gate_keepers: None,
             limit_per_slot: None,
             withdraw_time_lock: None,
             withdraw_execution_window: None,
@@ -767,11 +758,6 @@ impl<'a, 'b> InitializeTokenManagerCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn gate_keepers(&mut self, gate_keepers: Vec<Pubkey>) -> &mut Self {
-        self.instruction.gate_keepers = Some(gate_keepers);
-        self
-    }
-    #[inline(always)]
     pub fn limit_per_slot(&mut self, limit_per_slot: u64) -> &mut Self {
         self.instruction.limit_per_slot = Some(limit_per_slot);
         self
@@ -853,11 +839,6 @@ impl<'a, 'b> InitializeTokenManagerCpiBuilder<'a, 'b> {
                 .expect("merkle_root is not set"),
             admin: self.instruction.admin.clone().expect("admin is not set"),
             minter: self.instruction.minter.clone().expect("minter is not set"),
-            gate_keepers: self
-                .instruction
-                .gate_keepers
-                .clone()
-                .expect("gate_keepers is not set"),
             limit_per_slot: self
                 .instruction
                 .limit_per_slot
@@ -944,7 +925,6 @@ struct InitializeTokenManagerCpiBuilderInstruction<'a, 'b> {
     merkle_root: Option<[u8; 32]>,
     admin: Option<Pubkey>,
     minter: Option<Pubkey>,
-    gate_keepers: Option<Vec<Pubkey>>,
     limit_per_slot: Option<u64>,
     withdraw_time_lock: Option<i64>,
     withdraw_execution_window: Option<i64>,

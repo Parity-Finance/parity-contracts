@@ -32,6 +32,7 @@ import {
 export type ToggleActiveInstructionAccounts = {
   tokenManager: PublicKey | Pda;
   authority?: Signer;
+  gatekeeper?: PublicKey | Pda;
 };
 
 // Data.
@@ -90,6 +91,11 @@ export function toggleActive(
       index: 1,
       isWritable: false as boolean,
       value: input.authority ?? null,
+    },
+    gatekeeper: {
+      index: 2,
+      isWritable: false as boolean,
+      value: input.gatekeeper ?? null,
     },
   } satisfies ResolvedAccountsWithIndices;
 

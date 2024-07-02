@@ -31,6 +31,16 @@ kinobi.update(
         k.constantPdaSeedNodeFromString("pool-manager")
       ],
     },
+    gatekeeper: {
+      seeds: [
+        k.constantPdaSeedNodeFromString("gatekeeper"),
+        k.variablePdaSeedNode(
+          "wallet",
+          k.publicKeyTypeNode(),
+          "The address of the gate_keeper wallet"
+        ),
+      ],
+    },
   })
 );
 

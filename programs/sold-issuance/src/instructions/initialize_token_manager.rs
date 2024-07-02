@@ -20,7 +20,6 @@ pub struct InitializeTokenManagerParams {
     pub merkle_root: [u8; 32],
     pub admin: Pubkey,
     pub minter: Pubkey,
-    pub gate_keepers: Vec<Pubkey>,
     pub limit_per_slot: u64,
     pub withdraw_time_lock: i64,
     pub withdraw_execution_window: i64,
@@ -114,7 +113,6 @@ pub fn handler(
     token_manager.pending_owner = Pubkey::default();
     token_manager.admin = params.admin;
     token_manager.minter = params.minter;
-    token_manager.gate_keepers = params.gate_keepers;
     token_manager.merkle_root = params.merkle_root;
 
     // Token
