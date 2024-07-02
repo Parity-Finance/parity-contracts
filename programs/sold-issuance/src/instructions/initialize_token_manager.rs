@@ -38,7 +38,7 @@ pub struct InitializeTokenManager<'info> {
         seeds = [b"token-manager"],
         bump,
     )]
-    pub token_manager: Account<'info, TokenManager>,
+    pub token_manager: Box<Account<'info, TokenManager>>,
     #[account(
         init,
         payer = owner,

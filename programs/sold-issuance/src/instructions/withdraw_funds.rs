@@ -10,6 +10,8 @@ use crate::{SoldIssuanceError, TokenManager};
 pub struct WithdrawFunds<'info> {
     #[account(mut, seeds = [b"token-manager"], bump)]
     pub token_manager: Account<'info, TokenManager>,
+    #[account(mut, seeds = [b"mint"], bump)]
+    pub mint: Account<'info, Mint>,
     //  Quote Mint
     #[account(
         address = token_manager.quote_mint @ SoldIssuanceError::InvalidQuoteMintAddress
@@ -39,6 +41,7 @@ pub struct WithdrawFunds<'info> {
 
 pub fn handler(ctx: Context<WithdrawFunds>) -> Result<()> {
     let token_manager = &mut ctx.accounts.token_manager;
+    let mint = &ctx.accounts.mint;
     let pending_withdrawal_amount = token_manager.pending_withdrawal_amount;
 
     // Checks
@@ -68,6 +71,14 @@ pub fn handler(ctx: Context<WithdrawFunds>) -> Result<()> {
         return err!(SoldIssuanceError::WithdrawalExpired);
     }
 
+    // Calculate max withdrawable amount
+    let max_withdrawable_amount = token_manager.calculate_max_withdrawable_amount(mint.supply)?;
+
+    if pending_withdrawal_amount > max_withdrawable_amount {
+        msg!("Pending withdrawal amount: {}", pending_withdrawal_amount);
+        msg!("Max withdrawable amount: {}", max_withdrawable_amount)
+    }
+
     // Withdraw
     let bump = token_manager.bump; // Corrected to be a slice of a slice of a byte slice
     let signer_seeds: &[&[&[u8]]] = &[&[b"token-manager", &[bump]]];
@@ -83,14 +94,14 @@ pub fn handler(ctx: Context<WithdrawFunds>) -> Result<()> {
             },
             signer_seeds,
         ),
-        pending_withdrawal_amount,
+        max_withdrawable_amount,
         ctx.accounts.quote_mint.decimals,
     )?;
 
     // Update token_manager
     token_manager.total_collateral = token_manager
         .total_collateral
-        .checked_sub(pending_withdrawal_amount)
+        .checked_sub(max_withdrawable_amount)
         .ok_or(SoldIssuanceError::CalculationOverflow)?;
 
     token_manager.pending_withdrawal_amount = 0;

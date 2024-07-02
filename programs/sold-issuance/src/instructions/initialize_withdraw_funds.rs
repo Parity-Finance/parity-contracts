@@ -28,29 +28,14 @@ pub fn handler(ctx: Context<InitializeWithdrawFunds>, quantity: u64) -> Result<(
         return err!(SoldIssuanceError::ExcessiveWithdrawal);
     }
 
-    // Check if withdrawal amount exceeds threshold of the total collateral
-    let min_required_collateral = mint
-        .supply
-        .checked_div(10u64.pow(token_manager.mint_decimals.into()))
-        .ok_or(SoldIssuanceError::CalculationOverflow)?
-        .checked_mul(token_manager.exchange_rate)
-        .ok_or(SoldIssuanceError::CalculationOverflow)?
-        .checked_div(10u64.pow(token_manager.mint_decimals.into()))
-        .ok_or(SoldIssuanceError::CalculationOverflow)?
-        .checked_mul(token_manager.emergency_fund_basis_points as u64)
-        .ok_or(SoldIssuanceError::CalculationOverflow)?
-        .checked_div(10000)
-        .ok_or(SoldIssuanceError::CalculationOverflow)?
-        .checked_mul(10u64.pow(token_manager.quote_mint_decimals.into()))
-        .ok_or(SoldIssuanceError::CalculationOverflow)?;
+    if quote_amount > token_manager.total_collateral {
+        return Err(SoldIssuanceError::ExcessiveWithdrawal.into());
+    }
 
-    let new_total_collateral = token_manager
-        .total_collateral
-        .checked_sub(quote_amount)
-        .ok_or(SoldIssuanceError::CalculationOverflow)?;
+    let max_withdrawable_amount = token_manager.calculate_max_withdrawable_amount(mint.supply)?;
 
-    if new_total_collateral < min_required_collateral {
-        return err!(SoldIssuanceError::ExcessiveWithdrawal);
+    if quote_amount > max_withdrawable_amount {
+        return Err(SoldIssuanceError::ExcessiveWithdrawal.into());
     }
 
     // Update token_manager

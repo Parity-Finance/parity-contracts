@@ -316,6 +316,11 @@
           "isSigner": false
         },
         {
+          "name": "mint",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "quoteMint",
           "isMut": false,
           "isSigner": false

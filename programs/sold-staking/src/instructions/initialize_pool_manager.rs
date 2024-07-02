@@ -52,7 +52,7 @@ pub struct InitializePoolManager<'info> {
       payer = owner,
       space = POOL_MANAGER_LENGTH,
     )]
-    pub pool_manager: Account<'info, PoolManager>,
+    pub pool_manager: Box<Account<'info, PoolManager>>,
     #[account(
         init,
         payer = owner,

@@ -51,24 +51,7 @@ pub fn handler(ctx: Context<DepositFunds>, quantity: u64) -> Result<()> {
     let quote_amount = quantity;
 
     // Check if deposit exceeds 100% collateral
-    let new_total_collateral = token_manager
-        .total_collateral
-        .checked_add(quote_amount)
-        .ok_or(SoldIssuanceError::CalculationOverflow)?;
-    let max_collateral = mint
-        .supply
-        .checked_div(10u64.pow(token_manager.mint_decimals.into()))
-        .ok_or(SoldIssuanceError::CalculationOverflow)?
-        .checked_mul(token_manager.exchange_rate)
-        .ok_or(SoldIssuanceError::CalculationOverflow)?
-        .checked_div(10u64.pow(token_manager.mint_decimals.into()))
-        .ok_or(SoldIssuanceError::CalculationOverflow)?
-        .checked_mul(10u64.pow(token_manager.quote_mint_decimals.into()))
-        .ok_or(SoldIssuanceError::CalculationOverflow)?;
-
-    if new_total_collateral > max_collateral {
-        return err!(SoldIssuanceError::ExcessiveDeposit);
-    }
+    token_manager.check_excessive_deposit(quote_amount, mint.supply)?;
 
     // Deposit
     transfer_checked(

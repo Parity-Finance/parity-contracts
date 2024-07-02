@@ -14,6 +14,8 @@ use borsh::{BorshDeserialize, BorshSerialize};
 pub struct WithdrawFunds {
     pub token_manager: solana_program::pubkey::Pubkey,
 
+    pub mint: solana_program::pubkey::Pubkey,
+
     pub quote_mint: solana_program::pubkey::Pubkey,
 
     pub authority_quote_mint_ata: solana_program::pubkey::Pubkey,
@@ -40,10 +42,13 @@ impl WithdrawFunds {
         &self,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(9 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(10 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.token_manager,
             false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new(
+            self.mint, false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.quote_mint,
@@ -104,17 +109,19 @@ impl WithdrawFundsInstructionData {
 /// ### Accounts:
 ///
 ///   0. `[writable]` token_manager
-///   1. `[]` quote_mint
-///   2. `[writable]` authority_quote_mint_ata
-///   3. `[writable]` vault
-///   4. `[writable, signer]` admin
-///   5. `[optional]` rent (default to `SysvarRent111111111111111111111111111111111`)
-///   6. `[optional]` system_program (default to `11111111111111111111111111111111`)
-///   7. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
-///   8. `[]` associated_token_program
+///   1. `[writable]` mint
+///   2. `[]` quote_mint
+///   3. `[writable]` authority_quote_mint_ata
+///   4. `[writable]` vault
+///   5. `[writable, signer]` admin
+///   6. `[optional]` rent (default to `SysvarRent111111111111111111111111111111111`)
+///   7. `[optional]` system_program (default to `11111111111111111111111111111111`)
+///   8. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
+///   9. `[]` associated_token_program
 #[derive(Default)]
 pub struct WithdrawFundsBuilder {
     token_manager: Option<solana_program::pubkey::Pubkey>,
+    mint: Option<solana_program::pubkey::Pubkey>,
     quote_mint: Option<solana_program::pubkey::Pubkey>,
     authority_quote_mint_ata: Option<solana_program::pubkey::Pubkey>,
     vault: Option<solana_program::pubkey::Pubkey>,
@@ -133,6 +140,11 @@ impl WithdrawFundsBuilder {
     #[inline(always)]
     pub fn token_manager(&mut self, token_manager: solana_program::pubkey::Pubkey) -> &mut Self {
         self.token_manager = Some(token_manager);
+        self
+    }
+    #[inline(always)]
+    pub fn mint(&mut self, mint: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.mint = Some(mint);
         self
     }
     #[inline(always)]
@@ -206,6 +218,7 @@ impl WithdrawFundsBuilder {
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
         let accounts = WithdrawFunds {
             token_manager: self.token_manager.expect("token_manager is not set"),
+            mint: self.mint.expect("mint is not set"),
             quote_mint: self.quote_mint.expect("quote_mint is not set"),
             authority_quote_mint_ata: self
                 .authority_quote_mint_ata
@@ -234,6 +247,8 @@ impl WithdrawFundsBuilder {
 pub struct WithdrawFundsCpiAccounts<'a, 'b> {
     pub token_manager: &'b solana_program::account_info::AccountInfo<'a>,
 
+    pub mint: &'b solana_program::account_info::AccountInfo<'a>,
+
     pub quote_mint: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub authority_quote_mint_ata: &'b solana_program::account_info::AccountInfo<'a>,
@@ -257,6 +272,8 @@ pub struct WithdrawFundsCpi<'a, 'b> {
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub token_manager: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub mint: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub quote_mint: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -283,6 +300,7 @@ impl<'a, 'b> WithdrawFundsCpi<'a, 'b> {
         Self {
             __program: program,
             token_manager: accounts.token_manager,
+            mint: accounts.mint,
             quote_mint: accounts.quote_mint,
             authority_quote_mint_ata: accounts.authority_quote_mint_ata,
             vault: accounts.vault,
@@ -326,9 +344,13 @@ impl<'a, 'b> WithdrawFundsCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(9 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(10 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.token_manager.key,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new(
+            *self.mint.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -377,9 +399,10 @@ impl<'a, 'b> WithdrawFundsCpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(9 + 1 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(10 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.token_manager.clone());
+        account_infos.push(self.mint.clone());
         account_infos.push(self.quote_mint.clone());
         account_infos.push(self.authority_quote_mint_ata.clone());
         account_infos.push(self.vault.clone());
@@ -405,14 +428,15 @@ impl<'a, 'b> WithdrawFundsCpi<'a, 'b> {
 /// ### Accounts:
 ///
 ///   0. `[writable]` token_manager
-///   1. `[]` quote_mint
-///   2. `[writable]` authority_quote_mint_ata
-///   3. `[writable]` vault
-///   4. `[writable, signer]` admin
-///   5. `[]` rent
-///   6. `[]` system_program
-///   7. `[]` token_program
-///   8. `[]` associated_token_program
+///   1. `[writable]` mint
+///   2. `[]` quote_mint
+///   3. `[writable]` authority_quote_mint_ata
+///   4. `[writable]` vault
+///   5. `[writable, signer]` admin
+///   6. `[]` rent
+///   7. `[]` system_program
+///   8. `[]` token_program
+///   9. `[]` associated_token_program
 pub struct WithdrawFundsCpiBuilder<'a, 'b> {
     instruction: Box<WithdrawFundsCpiBuilderInstruction<'a, 'b>>,
 }
@@ -422,6 +446,7 @@ impl<'a, 'b> WithdrawFundsCpiBuilder<'a, 'b> {
         let instruction = Box::new(WithdrawFundsCpiBuilderInstruction {
             __program: program,
             token_manager: None,
+            mint: None,
             quote_mint: None,
             authority_quote_mint_ata: None,
             vault: None,
@@ -440,6 +465,11 @@ impl<'a, 'b> WithdrawFundsCpiBuilder<'a, 'b> {
         token_manager: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.token_manager = Some(token_manager);
+        self
+    }
+    #[inline(always)]
+    pub fn mint(&mut self, mint: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
+        self.instruction.mint = Some(mint);
         self
     }
     #[inline(always)]
@@ -546,6 +576,8 @@ impl<'a, 'b> WithdrawFundsCpiBuilder<'a, 'b> {
                 .token_manager
                 .expect("token_manager is not set"),
 
+            mint: self.instruction.mint.expect("mint is not set"),
+
             quote_mint: self.instruction.quote_mint.expect("quote_mint is not set"),
 
             authority_quote_mint_ata: self
@@ -584,6 +616,7 @@ impl<'a, 'b> WithdrawFundsCpiBuilder<'a, 'b> {
 struct WithdrawFundsCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     token_manager: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     quote_mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     authority_quote_mint_ata: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     vault: Option<&'b solana_program::account_info::AccountInfo<'a>>,

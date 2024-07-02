@@ -546,6 +546,7 @@ describe.only("sold-issuance", () => {
     let txBuilder = new TransactionBuilder();
     txBuilder = txBuilder.add(withdrawFunds(umi, {
       tokenManager,
+      mint: baseMint,
       quoteMint: quoteMint,
       vault: vaultIssuance,
       authorityQuoteMintAta: userQuote,
@@ -632,6 +633,7 @@ describe.only("sold-issuance", () => {
     txBuilder = new TransactionBuilder();
     txBuilder = txBuilder.add(withdrawFunds(umi, {
       tokenManager,
+      mint: baseMint,
       quoteMint: quoteMint,
       vault: vaultIssuance,
       authorityQuoteMintAta: userQuote,

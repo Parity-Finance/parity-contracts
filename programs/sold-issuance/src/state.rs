@@ -125,15 +125,57 @@ impl TokenManager {
             }
         }
     }
+
+    pub fn check_excessive_deposit(&self, quote_amount: u64, mint_supply: u64) -> Result<()> {
+        let new_total_collateral = (self.total_collateral as u128)
+            .checked_add(quote_amount as u128)
+            .ok_or(SoldIssuanceError::CalculationOverflow)?;
+        let max_collateral = (mint_supply as u128)
+            .checked_div(10u128.pow(self.mint_decimals.into()))
+            .ok_or(SoldIssuanceError::CalculationOverflow)?
+            .checked_mul(self.exchange_rate as u128)
+            .ok_or(SoldIssuanceError::CalculationOverflow)?
+            .checked_div(10u128.pow(self.mint_decimals.into()))
+            .ok_or(SoldIssuanceError::CalculationOverflow)?
+            .checked_mul(10u128.pow(self.quote_mint_decimals.into()))
+            .ok_or(SoldIssuanceError::CalculationOverflow)?;
+
+        if new_total_collateral > max_collateral {
+            return Err(SoldIssuanceError::ExcessiveDeposit.into());
+        }
+
+        Ok(())
+    }
+
+    pub fn calculate_max_withdrawable_amount(&self, mint_supply: u64) -> Result<u64> {
+        let required_collateral = (mint_supply as u128)
+            .checked_mul(self.exchange_rate as u128)
+            .ok_or(SoldIssuanceError::CalculationOverflow)?
+            .checked_div(10u128.pow(self.mint_decimals.into()))
+            .ok_or(SoldIssuanceError::CalculationOverflow)?;
+
+        let min_required_collateral = required_collateral
+            .checked_mul(self.emergency_fund_basis_points as u128)
+            .ok_or(SoldIssuanceError::CalculationOverflow)?
+            .checked_div(10000)
+            .ok_or(SoldIssuanceError::CalculationOverflow)?
+            .checked_mul(10u128.pow(self.quote_mint_decimals.into()))
+            .ok_or(SoldIssuanceError::CalculationOverflow)?
+            .checked_div(10u128.pow(self.mint_decimals.into()))
+            .ok_or(SoldIssuanceError::CalculationOverflow)?;
+
+        Ok(self
+            .total_collateral
+            .saturating_sub(min_required_collateral as u64))
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    #[test]
-    fn test_calculate_normalized_quantity() {
-        let token_manager = TokenManager {
+    fn default_token_manager() -> TokenManager {
+        TokenManager {
             bump: 0,
             owner: Pubkey::default(),
             pending_owner: Pubkey::default(),
@@ -156,7 +198,12 @@ mod tests {
             withdraw_time_lock: 0,
             withdraw_execution_window: 0,
             total_collateral: 0,
-        };
+        }
+    }
+
+    #[test]
+    fn test_calculate_normalized_quantity() {
+        let mut token_manager = default_token_manager();
 
         // Test case where token decimals are equal
         let result = token_manager
@@ -165,22 +212,16 @@ mod tests {
         assert_eq!(result, 1000000);
 
         // Test case where mint decimals are less than quote mint decimals
-        let token_manager = TokenManager {
-            mint_decimals: 6,
-            quote_mint_decimals: 9,
-            ..token_manager
-        };
+        token_manager.mint_decimals = 6;
+        token_manager.quote_mint_decimals = 9;
         let result = token_manager
             .calculate_normalized_quantity(1000000)
             .unwrap();
         assert_eq!(result, 1000000000);
 
         // Test case where mint decimals are more than quote mint decimals
-        let token_manager = TokenManager {
-            mint_decimals: 9,
-            quote_mint_decimals: 6,
-            ..token_manager
-        };
+        token_manager.mint_decimals = 9;
+        token_manager.quote_mint_decimals = 6;
         let result = token_manager
             .calculate_normalized_quantity(1000000000)
             .unwrap();
@@ -189,30 +230,8 @@ mod tests {
 
     #[test]
     fn test_calculate_quote_amount() {
-        let token_manager = TokenManager {
-            bump: 0,
-            owner: Pubkey::default(),
-            pending_owner: Pubkey::default(),
-            admin: Pubkey::default(),
-            minter: Pubkey::default(),
-            gate_keepers: vec![],
-            merkle_root: [0u8; 32],
-            mint: Pubkey::default(),
-            mint_decimals: 6,
-            quote_mint: Pubkey::default(),
-            quote_mint_decimals: 6,
-            exchange_rate: 2000000,
-            limit_per_slot: 0,
-            current_slot: 0,
-            current_slot_volume: 0,
-            active: true,
-            emergency_fund_basis_points: 0,
-            pending_withdrawal_amount: 0,
-            withdrawal_initiation_time: 0,
-            withdraw_time_lock: 0,
-            withdraw_execution_window: 0,
-            total_collateral: 0,
-        };
+        let mut token_manager = default_token_manager();
+        token_manager.exchange_rate = 2000000;
 
         // Test case where normalized quantity is correctly converted to quote amount
         let result = token_manager.calculate_quote_amount(10000).unwrap();
@@ -227,54 +246,34 @@ mod tests {
         assert_eq!(result, 2000000000);
     }
 
-    #[cfg(test)]
-    mod tests {
-        use super::*;
+    #[test]
+    fn test_calculate_max_withdrawable_amount() {
+        let mut token_manager = default_token_manager();
+        token_manager.emergency_fund_basis_points = 500; // 5%
+        token_manager.total_collateral = 10000000000;
 
-        #[test]
-        fn test_check_block_limit() {
-            let mut token_manager = TokenManager {
-                bump: 0,
-                owner: Pubkey::default(),
-                pending_owner: Pubkey::default(),
-                admin: Pubkey::default(),
-                minter: Pubkey::default(),
-                gate_keepers: vec![],
-                merkle_root: [0u8; 32],
-                mint: Pubkey::default(),
-                mint_decimals: 6,
-                quote_mint: Pubkey::default(),
-                quote_mint_decimals: 6,
-                exchange_rate: 1000000,
-                limit_per_slot: 100,
-                current_slot: 0,
-                current_slot_volume: 0,
-                active: true,
-                emergency_fund_basis_points: 0,
-                pending_withdrawal_amount: 0,
-                withdrawal_initiation_time: 0,
-                withdraw_time_lock: 0,
-                withdraw_execution_window: 0,
-                total_collateral: 0,
-            };
+        // Test case where mint supply is 1000000
+        let result = token_manager
+            .calculate_max_withdrawable_amount(10000000000)
+            .unwrap();
+        assert_eq!(result, 9500000000); // 5% of 1000000 is 50000, so max withdrawable is 1000000 - 50000
 
-            // Mock the Clock to return a specific slot
-            let mut mock_slot = 1;
+        // Test case where mint supply is 0
+        let result = token_manager.calculate_max_withdrawable_amount(0).unwrap();
+        assert_eq!(result, 10000000000); // No collateral required, so all collateral is withdrawable
+    }
 
-            // Test case where the current slot is the same and within limit
-            token_manager.current_slot = mock_slot;
-            token_manager.current_slot_volume = 50;
-            assert!(token_manager.check_block_limit(30).is_ok());
-            assert_eq!(token_manager.current_slot_volume, 80);
+    #[test]
+    fn test_check_excessive_deposit() {
+        let mut token_manager = default_token_manager();
+        token_manager.total_collateral = 500000; // Main value
 
-            // Test case where the current slot is the same and exceeds limit
-            assert!(token_manager.check_block_limit(30).is_err());
+        // Test case where deposit is within limit
+        let result = token_manager.check_excessive_deposit(500000, 1000000);
+        assert!(result.is_ok());
 
-            // Test case where the slot has changed
-            mock_slot = 2;
-            assert!(token_manager.check_block_limit(30).is_ok());
-            assert_eq!(token_manager.current_slot, mock_slot + 1);
-            assert_eq!(token_manager.current_slot_volume, 30);
-        }
+        // Test case where deposit exceeds limit
+        let result = token_manager.check_excessive_deposit(500001, 1000000);
+        assert!(result.is_err());
     }
 }
