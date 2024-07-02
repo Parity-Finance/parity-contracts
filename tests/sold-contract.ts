@@ -187,6 +187,7 @@ describe.only("sold-issuance", () => {
     await txBuilder.sendAndConfirm(umi, { send: { skipPreflight: true } });
 
     const stakePoolAcc = await safeFetchPoolManager(umi, poolManager);
+    const xMintAcc = await safeFetchMint(umi, xMint);
 
     assert.equal(stakePoolAcc.baseMint, baseMint[0]);
     assert.equal(stakePoolAcc.baseMintDecimals, baseMintDecimals);
@@ -194,10 +195,10 @@ describe.only("sold-issuance", () => {
     assert.equal(stakePoolAcc.xMintDecimals, xMintDecimals);
     assert.equal(stakePoolAcc.initialExchangeRate, BigInt(initialExchangeRate));
     assert.equal(stakePoolAcc.baseBalance, 0n);
-    assert.equal(stakePoolAcc.xSupply, 0n);
+    assert.equal(xMintAcc.supply, 0n);
   });
 
-  it("Sold can be minted for USDC", async () => {
+  it.only("Sold can be minted for USDC", async () => {
     const quantity = 10000 * 10 ** baseMintDecimals;
 
     const proof = getMerkleProof(allowedWallets, keypair.publicKey.toBase58());
@@ -304,7 +305,7 @@ describe.only("sold-issuance", () => {
     assert.equal(vaultAcc.amount, _vaultAcc.amount - expectedQuoteAmount, "Vault amount should be correct");
   });
 
-  it.only("should add and remove a gatekeeper and check unpause permissions", async () => {
+  it("should add and remove a gatekeeper and check unpause permissions", async () => {
     const newGatekeeper = umi.eddsa.generateKeypair();
 
     await umi.rpc.airdrop(newGatekeeper.publicKey, createAmount(100_000 * 10 ** 9, "SOL", 9), { commitment: "finalized" })
@@ -796,7 +797,7 @@ describe.only("sold-issuance", () => {
   });
 
   // Stake Program
-  it("baseMint can be staked for xMint", async () => {
+  it.only("baseMint can be staked for xMint", async () => {
     const quantity = 1000 * 10 ** baseMintDecimals;
 
     let txBuilder = new TransactionBuilder();
@@ -810,6 +811,7 @@ describe.only("sold-issuance", () => {
     }
 
     const _stakePoolAcc = await safeFetchPoolManager(umi, poolManager);
+    const _xMintAcc = await safeFetchMint(umi, xMint);
     const _vaultAcc = await safeFetchToken(umi, vaultStaking);
 
     txBuilder = txBuilder.add(stake(umi, {
@@ -838,7 +840,7 @@ describe.only("sold-issuance", () => {
     await txBuilder.sendAndConfirm(umi, { send: { skipPreflight: true } });
 
     const stakePoolAcc = await safeFetchPoolManager(umi, poolManager);
-
+    const xMintAcc = await safeFetchMint(umi, xMint);
     const vaultAcc = await safeFetchToken(umi, vaultStaking);
 
     const expectedBaseMintAmount = BigInt(quantity);
@@ -848,10 +850,10 @@ describe.only("sold-issuance", () => {
 
     assert.equal(stakePoolAcc.baseBalance, _stakePoolAcc.baseBalance + expectedBaseMintAmount, "Base Balance is not correct");
     assert.equal(vaultAcc.amount, _vaultAcc.amount + expectedBaseMintAmount, "Vault amount is not correct");
-    chaiAssert.closeTo(Number(stakePoolAcc.xSupply), Number(_stakePoolAcc.xSupply) + Number(expectedxMintAmount), 300000, "xSupply is not correct");
+    chaiAssert.closeTo(Number(xMintAcc.supply), Number(_xMintAcc.supply) + Number(expectedxMintAmount), 300000, "xSupply is not correct");
   })
 
-  it("baseMint can be unstaked by redeeming xMint", async () => {
+  it.only("baseMint can be unstaked by redeeming xMint", async () => {
     // const quantity = 10000 * 10 ** baseMintDecimals;
     let txBuilder = new TransactionBuilder();
 
@@ -864,9 +866,10 @@ describe.only("sold-issuance", () => {
     }
 
     const _stakePoolAcc = await safeFetchPoolManager(umi, poolManager);
+    const _xMintAcc = await safeFetchMint(umi, xMint);
     const _vaultAcc = await safeFetchToken(umi, vaultStaking);
 
-    const quantity = Number(_stakePoolAcc.xSupply);
+    const quantity = Number(_xMintAcc.supply);
     // console.log("Quantity: ", quantity);
 
     txBuilder = txBuilder.add(unstake(umi, {
@@ -898,7 +901,7 @@ describe.only("sold-issuance", () => {
     await txBuilder.sendAndConfirm(umi, { send: { skipPreflight: true } });
 
     const stakePoolAcc = await safeFetchPoolManager(umi, poolManager);
-
+    const xMintAcc = await safeFetchMint(umi, xMint);
     const vaultAcc = await safeFetchToken(umi, vaultStaking);
 
     const expectedBaseMintAmount = BigInt(Math.floor((quantity / exchangeRate) * 10 ** baseMintDecimals));
@@ -909,10 +912,10 @@ describe.only("sold-issuance", () => {
 
     chaiAssert.closeTo(Number(stakePoolAcc.baseBalance), Number(_stakePoolAcc.baseBalance) - Number(expectedBaseMintAmount), 200000, "Base Balance is not correct");
     chaiAssert.closeTo(Number(vaultAcc.amount), Number(_vaultAcc.amount) - Number(expectedBaseMintAmount), 200000, "Vault amount is not correct");
-    chaiAssert.equal(stakePoolAcc.xSupply, _stakePoolAcc.xSupply - expectedxMintAmount, "xSupply is not correct");
+    chaiAssert.equal(xMintAcc.supply, _xMintAcc.supply - expectedxMintAmount, "xSupply is not correct");
   })
 
-  it("should update the annual yield rate of the stake pool", async function () {
+  it.only("should update the annual yield rate of the stake pool", async function () {
     const annualYieldRate = 2500;
 
     let txBuilder = new TransactionBuilder();
@@ -922,6 +925,7 @@ describe.only("sold-issuance", () => {
       admin: umi.identity,
       annualYieldRate,
       tokenManager,
+      xMint,
       soldIssuanceProgram: SOLD_ISSUANCE_PROGRAM_ID,
       associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
       vault: vaultStaking,

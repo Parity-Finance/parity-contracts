@@ -33,6 +33,7 @@ export type UpdateAnnualYieldInstructionAccounts = {
   poolManager: PublicKey | Pda;
   tokenManager: PublicKey | Pda;
   baseMint: PublicKey | Pda;
+  xMint: PublicKey | Pda;
   vault: PublicKey | Pda;
   admin: Signer;
   systemProgram?: PublicKey | Pda;
@@ -109,33 +110,38 @@ export function updateAnnualYield(
       isWritable: true as boolean,
       value: input.baseMint ?? null,
     },
-    vault: {
+    xMint: {
       index: 3,
+      isWritable: false as boolean,
+      value: input.xMint ?? null,
+    },
+    vault: {
+      index: 4,
       isWritable: true as boolean,
       value: input.vault ?? null,
     },
     admin: {
-      index: 4,
+      index: 5,
       isWritable: true as boolean,
       value: input.admin ?? null,
     },
     systemProgram: {
-      index: 5,
+      index: 6,
       isWritable: false as boolean,
       value: input.systemProgram ?? null,
     },
     tokenProgram: {
-      index: 6,
+      index: 7,
       isWritable: false as boolean,
       value: input.tokenProgram ?? null,
     },
     associatedTokenProgram: {
-      index: 7,
+      index: 8,
       isWritable: false as boolean,
       value: input.associatedTokenProgram ?? null,
     },
     soldIssuanceProgram: {
-      index: 8,
+      index: 9,
       isWritable: false as boolean,
       value: input.soldIssuanceProgram ?? null,
     },

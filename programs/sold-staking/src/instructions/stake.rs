@@ -112,10 +112,6 @@ pub fn handler(ctx: Context<Stake>, quantity: u64) -> Result<()> {
         .base_balance
         .checked_add(base_amount)
         .ok_or(SoldStakingError::CalculationOverflow)?;
-    pool_manager.x_supply = pool_manager
-        .x_supply
-        .checked_add(x_amount)
-        .ok_or(SoldStakingError::CalculationOverflow)?;
 
     Ok(())
 }

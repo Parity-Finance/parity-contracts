@@ -18,6 +18,8 @@ pub struct UpdateAnnualYield {
 
     pub base_mint: solana_program::pubkey::Pubkey,
 
+    pub x_mint: solana_program::pubkey::Pubkey,
+
     pub vault: solana_program::pubkey::Pubkey,
 
     pub admin: solana_program::pubkey::Pubkey,
@@ -44,7 +46,7 @@ impl UpdateAnnualYield {
         args: UpdateAnnualYieldInstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(9 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(10 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.pool_manager,
             false,
@@ -55,6 +57,10 @@ impl UpdateAnnualYield {
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.base_mint,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            self.x_mint,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
@@ -123,17 +129,19 @@ pub struct UpdateAnnualYieldInstructionArgs {
 ///   0. `[writable]` pool_manager
 ///   1. `[writable]` token_manager
 ///   2. `[writable]` base_mint
-///   3. `[writable]` vault
-///   4. `[writable, signer]` admin
-///   5. `[optional]` system_program (default to `11111111111111111111111111111111`)
-///   6. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
-///   7. `[]` associated_token_program
-///   8. `[]` sold_issuance_program
+///   3. `[]` x_mint
+///   4. `[writable]` vault
+///   5. `[writable, signer]` admin
+///   6. `[optional]` system_program (default to `11111111111111111111111111111111`)
+///   7. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
+///   8. `[]` associated_token_program
+///   9. `[]` sold_issuance_program
 #[derive(Default)]
 pub struct UpdateAnnualYieldBuilder {
     pool_manager: Option<solana_program::pubkey::Pubkey>,
     token_manager: Option<solana_program::pubkey::Pubkey>,
     base_mint: Option<solana_program::pubkey::Pubkey>,
+    x_mint: Option<solana_program::pubkey::Pubkey>,
     vault: Option<solana_program::pubkey::Pubkey>,
     admin: Option<solana_program::pubkey::Pubkey>,
     system_program: Option<solana_program::pubkey::Pubkey>,
@@ -161,6 +169,11 @@ impl UpdateAnnualYieldBuilder {
     #[inline(always)]
     pub fn base_mint(&mut self, base_mint: solana_program::pubkey::Pubkey) -> &mut Self {
         self.base_mint = Some(base_mint);
+        self
+    }
+    #[inline(always)]
+    pub fn x_mint(&mut self, x_mint: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.x_mint = Some(x_mint);
         self
     }
     #[inline(always)]
@@ -230,6 +243,7 @@ impl UpdateAnnualYieldBuilder {
             pool_manager: self.pool_manager.expect("pool_manager is not set"),
             token_manager: self.token_manager.expect("token_manager is not set"),
             base_mint: self.base_mint.expect("base_mint is not set"),
+            x_mint: self.x_mint.expect("x_mint is not set"),
             vault: self.vault.expect("vault is not set"),
             admin: self.admin.expect("admin is not set"),
             system_program: self
@@ -264,6 +278,8 @@ pub struct UpdateAnnualYieldCpiAccounts<'a, 'b> {
 
     pub base_mint: &'b solana_program::account_info::AccountInfo<'a>,
 
+    pub x_mint: &'b solana_program::account_info::AccountInfo<'a>,
+
     pub vault: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub admin: &'b solana_program::account_info::AccountInfo<'a>,
@@ -287,6 +303,8 @@ pub struct UpdateAnnualYieldCpi<'a, 'b> {
     pub token_manager: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub base_mint: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub x_mint: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub vault: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -314,6 +332,7 @@ impl<'a, 'b> UpdateAnnualYieldCpi<'a, 'b> {
             pool_manager: accounts.pool_manager,
             token_manager: accounts.token_manager,
             base_mint: accounts.base_mint,
+            x_mint: accounts.x_mint,
             vault: accounts.vault,
             admin: accounts.admin,
             system_program: accounts.system_program,
@@ -356,7 +375,7 @@ impl<'a, 'b> UpdateAnnualYieldCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(9 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(10 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.pool_manager.key,
             false,
@@ -367,6 +386,10 @@ impl<'a, 'b> UpdateAnnualYieldCpi<'a, 'b> {
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.base_mint.key,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            *self.x_mint.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
@@ -411,11 +434,12 @@ impl<'a, 'b> UpdateAnnualYieldCpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(9 + 1 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(10 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.pool_manager.clone());
         account_infos.push(self.token_manager.clone());
         account_infos.push(self.base_mint.clone());
+        account_infos.push(self.x_mint.clone());
         account_infos.push(self.vault.clone());
         account_infos.push(self.admin.clone());
         account_infos.push(self.system_program.clone());
@@ -441,12 +465,13 @@ impl<'a, 'b> UpdateAnnualYieldCpi<'a, 'b> {
 ///   0. `[writable]` pool_manager
 ///   1. `[writable]` token_manager
 ///   2. `[writable]` base_mint
-///   3. `[writable]` vault
-///   4. `[writable, signer]` admin
-///   5. `[]` system_program
-///   6. `[]` token_program
-///   7. `[]` associated_token_program
-///   8. `[]` sold_issuance_program
+///   3. `[]` x_mint
+///   4. `[writable]` vault
+///   5. `[writable, signer]` admin
+///   6. `[]` system_program
+///   7. `[]` token_program
+///   8. `[]` associated_token_program
+///   9. `[]` sold_issuance_program
 pub struct UpdateAnnualYieldCpiBuilder<'a, 'b> {
     instruction: Box<UpdateAnnualYieldCpiBuilderInstruction<'a, 'b>>,
 }
@@ -458,6 +483,7 @@ impl<'a, 'b> UpdateAnnualYieldCpiBuilder<'a, 'b> {
             pool_manager: None,
             token_manager: None,
             base_mint: None,
+            x_mint: None,
             vault: None,
             admin: None,
             system_program: None,
@@ -491,6 +517,14 @@ impl<'a, 'b> UpdateAnnualYieldCpiBuilder<'a, 'b> {
         base_mint: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.base_mint = Some(base_mint);
+        self
+    }
+    #[inline(always)]
+    pub fn x_mint(
+        &mut self,
+        x_mint: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.x_mint = Some(x_mint);
         self
     }
     #[inline(always)]
@@ -603,6 +637,8 @@ impl<'a, 'b> UpdateAnnualYieldCpiBuilder<'a, 'b> {
 
             base_mint: self.instruction.base_mint.expect("base_mint is not set"),
 
+            x_mint: self.instruction.x_mint.expect("x_mint is not set"),
+
             vault: self.instruction.vault.expect("vault is not set"),
 
             admin: self.instruction.admin.expect("admin is not set"),
@@ -640,6 +676,7 @@ struct UpdateAnnualYieldCpiBuilderInstruction<'a, 'b> {
     pool_manager: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     token_manager: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     base_mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    x_mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     vault: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     admin: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,

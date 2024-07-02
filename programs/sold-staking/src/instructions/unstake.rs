@@ -63,6 +63,7 @@ pub struct Unstake<'info> {
 
 pub fn handler(ctx: Context<Unstake>, quantity: u64) -> Result<()> {
     let pool_manager = &mut ctx.accounts.pool_manager;
+    let x_mint = &mut ctx.accounts.x_mint;
 
     let current_timestamp = Clock::get()?.unix_timestamp;
     let exchange_rate = pool_manager
@@ -83,7 +84,7 @@ pub fn handler(ctx: Context<Unstake>, quantity: u64) -> Result<()> {
             Burn {
                 authority: ctx.accounts.payer.to_account_info(),
                 from: ctx.accounts.payer_x_mint_ata.to_account_info(),
-                mint: ctx.accounts.x_mint.to_account_info(),
+                mint: x_mint.to_account_info(),
             },
         ),
         x_amount,
@@ -91,7 +92,7 @@ pub fn handler(ctx: Context<Unstake>, quantity: u64) -> Result<()> {
 
     // Mint Base into pool
     let base_decimals = 10u64.pow(pool_manager.base_mint_decimals.into());
-    let x_supply_value = (pool_manager.x_supply as u128)
+    let x_supply_value = (x_mint.supply as u128)
         .checked_mul(base_decimals as u128)
         .ok_or(SoldStakingError::CalculationOverflow)?
         .checked_div(exchange_rate as u128)
@@ -162,10 +163,6 @@ pub fn handler(ctx: Context<Unstake>, quantity: u64) -> Result<()> {
     )?;
 
     // Update token_manager
-    pool_manager.x_supply = pool_manager
-        .x_supply
-        .checked_sub(x_amount)
-        .ok_or(SoldStakingError::CalculationOverflow)?;
     pool_manager.base_balance = pool_manager
         .base_balance
         .checked_sub(base_amount)

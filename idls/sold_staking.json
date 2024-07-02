@@ -224,6 +224,11 @@
           "isSigner": false
         },
         {
+          "name": "xMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
           "name": "vault",
           "isMut": true,
           "isSigner": false
@@ -433,10 +438,6 @@
           },
           {
             "name": "baseBalance",
-            "type": "u64"
-          },
-          {
-            "name": "xSupply",
             "type": "u64"
           }
         ]

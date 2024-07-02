@@ -34,6 +34,12 @@ pub struct UpdateAnnualYield<'info> {
     )]
     pub base_mint: Account<'info, Mint>,
     #[account(
+        mint::authority = pool_manager,
+        mint::decimals = pool_manager.x_mint_decimals,
+        address = pool_manager.x_mint,
+    )]
+    pub x_mint: Account<'info, Mint>,
+    #[account(
         mut,
         associated_token::mint = base_mint,
         associated_token::authority = pool_manager,
@@ -53,6 +59,7 @@ pub fn handler(ctx: Context<UpdateAnnualYield>, params: UpdateYieldParams) -> Re
     }
 
     let pool_manager = &mut ctx.accounts.pool_manager;
+    let x_mint = &mut ctx.accounts.x_mint;
 
     let clock = Clock::get()?;
     let current_timestamp = clock.unix_timestamp;
@@ -69,7 +76,7 @@ pub fn handler(ctx: Context<UpdateAnnualYield>, params: UpdateYieldParams) -> Re
 
     let base_decimals = 10u64.pow(pool_manager.base_mint_decimals.into());
 
-    let x_supply_value = (pool_manager.x_supply as u128)
+    let x_supply_value = (x_mint.supply as u128)
         .checked_mul(base_decimals as u128)
         .ok_or(SoldStakingError::CalculationOverflow)?
         .checked_div(exchange_rate as u128)

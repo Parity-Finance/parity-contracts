@@ -120,7 +120,6 @@ pub fn handler(
     pool_manager.initial_exchange_rate = params.initial_exchange_rate;
     // Other
     pool_manager.base_balance = 0;
-    pool_manager.x_supply = 0;
     pool_manager.annual_yield_rate = 2000;
 
     let clock = Clock::get()?;

@@ -26,7 +26,6 @@ pub struct PoolManager {
 
     // Other
     pub base_balance: u64, // 8 bytes
-    pub x_supply: u64,     // 8 bytes
 }
 
 impl PoolManager {
