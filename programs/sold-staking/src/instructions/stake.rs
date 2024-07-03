@@ -58,19 +58,22 @@ pub struct Stake<'info> {
 pub fn handler(ctx: Context<Stake>, quantity: u64) -> Result<()> {
     let pool_manager = &mut ctx.accounts.pool_manager;
 
-    let current_timestamp = Clock::get()?.unix_timestamp;
-    let exchange_rate = pool_manager
-        .calculate_exchange_rate(current_timestamp)
-        .ok_or(SoldStakingError::CalculationOverflow)?;
+    let current_timestamp: i64 = Clock::get()?.unix_timestamp;
 
-    msg!("Exchange Rate: {}", exchange_rate);
+    let x_amount = pool_manager.calculate_output_amount(quantity, current_timestamp, true)?;
 
-    let base_decimals = 10u64.pow(pool_manager.base_mint_decimals.into());
-    let x_amount = (quantity as u128)
-        .checked_mul(exchange_rate as u128)
-        .ok_or(SoldStakingError::CalculationOverflow)?
-        .checked_div(base_decimals as u128)
-        .ok_or(SoldStakingError::CalculationOverflow)? as u64;
+    // let exchange_rate = pool_manager
+    //     .calculate_exchange_rate(current_timestamp)
+    //     .ok_or(SoldStakingError::CalculationOverflow)?;
+
+    // msg!("Exchange Rate: {}", exchange_rate);
+
+    // let base_decimals = 10u64.pow(pool_manager.base_mint_decimals.into());
+    // let x_amount = (quantity as u128)
+    //     .checked_mul(exchange_rate as u128)
+    //     .ok_or(SoldStakingError::CalculationOverflow)?
+    //     .checked_div(base_decimals as u128)
+    //     .ok_or(SoldStakingError::CalculationOverflow)? as u64;
 
     msg!("X amount: {}", x_amount);
 

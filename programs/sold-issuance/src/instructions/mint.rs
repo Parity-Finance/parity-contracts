@@ -67,7 +67,8 @@ pub fn handler(ctx: Context<MintTokens>, quantity: u64, proof: Vec<[u8; 32]>) ->
     token_manager.verify_merkle_proof(proof, &leaf.0)?;
 
     // Block Limit check
-    token_manager.check_block_limit(quantity)?;
+    let current_slot: u64 = Clock::get()?.slot;
+    token_manager.check_block_limit(quantity, current_slot)?;
 
     // Minting
     let bump = token_manager.bump; // Corrected to be a slice of a slice of a byte slice

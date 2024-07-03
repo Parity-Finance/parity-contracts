@@ -80,10 +80,7 @@ impl TokenManager {
             .map(|result| result as u64)
     }
 
-    pub fn check_block_limit(&mut self, quantity: u64) -> Result<()> {
-        // Get the current slot from the clock
-        let current_slot = Clock::get()?.slot;
-
+    pub fn check_block_limit(&mut self, quantity: u64, current_slot: u64) -> Result<()> {
         // If the current slot matches the stored slot
         if self.current_slot == current_slot {
             // Check if adding the quantity exceeds the mint limit per slot

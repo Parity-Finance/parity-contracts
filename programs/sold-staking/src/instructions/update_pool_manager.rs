@@ -23,9 +23,6 @@ pub struct UpdatePoolManager<'info> {
 pub fn handler(ctx: Context<UpdatePoolManager>, params: UpdatePoolManagerParams) -> Result<()> {
     let pool_manager = &mut ctx.accounts.pool_manager;
 
-    // Check done in accounts struct
-    // let _authority = &ctx.accounts.owner;
-
     if let Some(new_owner) = params.new_owner {
         pool_manager.owner = new_owner;
     }
