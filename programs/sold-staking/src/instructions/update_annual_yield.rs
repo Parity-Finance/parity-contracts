@@ -76,27 +76,6 @@ pub fn handler(ctx: Context<UpdateAnnualYield>, params: UpdateYieldParams) -> Re
 
     let amount_to_mint = pool_manager.calculate_amount_to_mint(x_mint.supply, current_timestamp)?;
 
-    // let base_decimals = 10u64.pow(pool_manager.base_mint_decimals.into());
-
-    // let x_supply_value = (x_mint.supply as u128)
-    //     .checked_mul(base_decimals as u128)
-    //     .ok_or(SoldStakingError::CalculationOverflow)?
-    //     .checked_div(exchange_rate as u128)
-    //     .ok_or(SoldStakingError::CalculationOverflow)?;
-
-    // let base_balance = pool_manager.base_balance as u128;
-
-    // msg!("X Supply Value: {}", x_supply_value);
-    // msg!("Base Balance: {}", base_balance);
-
-    // let amount_to_mint = if x_supply_value > base_balance {
-    //     x_supply_value
-    //         .checked_sub(base_balance)
-    //         .ok_or(SoldStakingError::CalculationOverflow)? as u64
-    // } else {
-    //     0
-    // };
-
     msg!("Amount to mint: {}", amount_to_mint);
 
     if amount_to_mint > 0 {
