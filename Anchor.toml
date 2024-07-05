@@ -3,8 +3,8 @@ seeds = false
 skip-lint = false
 
 [programs.devnet]
-sold_issuance = "6JfYz5itjCP6jjaxqX8KQizXYcRtzmSsHJdbiLBeqvEH"
-sold_staking = "BmyPBNiuBnKrjcHPmGDkgmiYNgQA2s6ygKNR38CXSaxW"
+sold_issuance = "E52KjA58odp3taqmaCuBFdDya3s4TA1ho4tSXoW2igxb"
+sold_staking = "B6rAjGxw89UQCho4fLBGcEne9jadXv2QewPgpQ1SmUnw"
 
 [toolchain]
 anchor_version = "0.29.0"

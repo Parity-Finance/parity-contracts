@@ -85,7 +85,7 @@ export function depositFunds(
   // Program ID.
   const programId = context.programs.getPublicKey(
     'soldIssuance',
-    '6JfYz5itjCP6jjaxqX8KQizXYcRtzmSsHJdbiLBeqvEH'
+    'E52KjA58odp3taqmaCuBFdDya3s4TA1ho4tSXoW2igxb'
   );
 
   // Accounts.

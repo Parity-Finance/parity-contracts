@@ -12,12 +12,12 @@ module.exports = {
     programs: [
       {
         label: "Sold Issuance",
-        programId: "6JfYz5itjCP6jjaxqX8KQizXYcRtzmSsHJdbiLBeqvEH",
+        programId: "E52KjA58odp3taqmaCuBFdDya3s4TA1ho4tSXoW2igxb",
         deployPath: getProgram("sold_issuance.so"),
       },
       {
         label: "Sold Staking",
-        programId: "BmyPBNiuBnKrjcHPmGDkgmiYNgQA2s6ygKNR38CXSaxW",
+        programId: "B6rAjGxw89UQCho4fLBGcEne9jadXv2QewPgpQ1SmUnw",
         deployPath: getProgram("sold_staking.so"),
       },
       // Below are external programs that should be included in the local validator.

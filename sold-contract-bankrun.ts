@@ -81,7 +81,7 @@ describe("sold-issuance", () => {
 
   before(async () => {
     try {
-      const context = await start([{ name: "sold_issuance", programId: new Web3JsPublicKey("6JfYz5itjCP6jjaxqX8KQizXYcRtzmSsHJdbiLBeqvEH") }, { name: "sold_staking", programId: new Web3JsPublicKey("BmyPBNiuBnKrjcHPmGDkgmiYNgQA2s6ygKNR38CXSaxW") }], []);
+      const context = await start([{ name: "sold_issuance", programId: new Web3JsPublicKey("E52KjA58odp3taqmaCuBFdDya3s4TA1ho4tSXoW2igxb") }, { name: "sold_staking", programId: new Web3JsPublicKey("B6rAjGxw89UQCho4fLBGcEne9jadXv2QewPgpQ1SmUnw") }], []);
 
       const { umi: umiWithBankrunPayer, client: bankrunClient } = umiBankrun(context);
       umi = umiWithBankrunPayer
