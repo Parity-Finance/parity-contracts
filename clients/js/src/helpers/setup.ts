@@ -17,8 +17,7 @@ export type SetupOptions = {
     stakingInitialExchangeRate: number,
     emergencyFundBasisPoints: number,
     xMintDecimals: number,
-    mintLimitPerSlot: number,
-    redemptionLimitPerSlot: number,
+    limitPerSlot: number,
     allowList: string[],
     withdrawExecutionWindow: number,
     withdrawTimeLock: number
@@ -67,9 +66,7 @@ export async function setup(umi: Umi, setupOptions: SetupOptions) {
         merkleRoot,
         admin: umi.identity.publicKey,
         minter: poolManager,
-        gateKeepers: [],
-        mintLimitPerSlot: setupOptions.mintLimitPerSlot,
-        redemptionLimitPerSlot: setupOptions.redemptionLimitPerSlot,
+        limitPerSlot: setupOptions.limitPerSlot,
         withdrawExecutionWindow: setupOptions.withdrawExecutionWindow,
         withdrawTimeLock: setupOptions.withdrawTimeLock
     })).add(initializePoolManager(umi, {

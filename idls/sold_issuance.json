@@ -104,6 +104,11 @@
           "isSigner": false
         },
         {
+          "name": "priceUpdate",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
           "name": "payer",
           "isMut": true,
           "isSigner": true
@@ -173,6 +178,11 @@
         {
           "name": "vault",
           "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "priceUpdate",
+          "isMut": false,
           "isSigner": false
         },
         {

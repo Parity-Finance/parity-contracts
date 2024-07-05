@@ -28,8 +28,10 @@
     "@metaplex-foundation/mpl-toolbox": "^0.9.1",
     "@metaplex-foundation/umi": "^0.9.1",
     "@metaplex-foundation/umi-bundle-defaults": "^0.9.1",
+    "@metaplex-foundation/umi-web3js-adapters": "^0.9.1",
     "@noble/hashes": "^1.4.0",
-    "install": "^0.13.0",
+    "@pythnetwork/price-service-client": "^1.9.0",
+    "@pythnetwork/pyth-solana-receiver": "^0.8.0",
     "merkletreejs": "^0.3.11"
   },
   "devDependencies": {

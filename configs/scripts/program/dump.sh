@@ -1,7 +1,7 @@
 #!/bin/bash
 
-EXTERNAL_ID=("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s" "SysExL2WDyJi9aRZrXorrjHJut3JwHQ7R9bTyctbNNG")
-EXTERNAL_SO=("mpl_token_metadata.so" "mpl_system_extras.so")
+EXTERNAL_ID=("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s" "SysExL2WDyJi9aRZrXorrjHJut3JwHQ7R9bTyctbNNG" "rec5EKMGg6MxZYaMdyBfgwp4d5rB9T1VQH5pJv5LtFJ" "pythWSnswVUd12oZpeFP8e9CVaEqJg25g1Vtc2biRsT")
+EXTERNAL_SO=("mpl_token_metadata.so" "mpl_system_extras.so" "pyth_receiver.so" "pyth_push_oracle.so")
 
 # output colours
 RED() { echo $'\e[1;31m'$1$'\e[0m'; }

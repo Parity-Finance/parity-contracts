@@ -2,25 +2,30 @@ import { keypairIdentity, Pda, PublicKey, publicKey, TransactionBuilder, createA
 import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
 import { createAssociatedToken, createSplAssociatedTokenProgram, createSplTokenProgram, findAssociatedTokenPda, safeFetchMint, safeFetchToken, SPL_ASSOCIATED_TOKEN_PROGRAM_ID } from "@metaplex-foundation/mpl-toolbox"
 import { Connection, Keypair, PublicKey as Web3JsPublicKey } from "@solana/web3.js";
-import { createSoldIssuanceProgram, findTokenManagerPda, initializeTokenManager, SOLD_ISSUANCE_PROGRAM_ID, mint, redeem, safeFetchTokenManager, getMerkleRoot, getMerkleProof, toggleActive, updatePoolManager, depositFunds, withdrawFunds, initializePoolManager, SOLD_STAKING_PROGRAM_ID, calculateExchangeRate, stake, unstake, updateAnnualYield, findPoolManagerPda, updateTokenManagerAdmin, safeFetchPoolManager, initializeWithdrawFunds, initiateUpdatePoolOwner, updatePoolOwner, updateManagerOwner, initiateUpdateManagerOwner, updateXmintMetadata, updateMintMetadata, addGatekeeper, safeFetchGatekeeper, removeGatekeeper, findGatekeeperPda } from "../clients/js/src"
+import { createSoldIssuanceProgram, findTokenManagerPda, initializeTokenManager, SOLD_ISSUANCE_PROGRAM_ID, mint, redeem, safeFetchTokenManager, getMerkleRoot, getMerkleProof, toggleActive, updatePoolManager, depositFunds, withdrawFunds, initializePoolManager, SOLD_STAKING_PROGRAM_ID, calculateExchangeRate, stake, unstake, updateAnnualYield, findPoolManagerPda, updateTokenManagerAdmin, safeFetchPoolManager, initializeWithdrawFunds, initiateUpdatePoolOwner, updatePoolOwner, updateManagerOwner, initiateUpdateManagerOwner, updateXmintMetadata, updateMintMetadata, addGatekeeper, safeFetchGatekeeper, removeGatekeeper, findGatekeeperPda, sendMintTx } from "../clients/js/src"
 import { ASSOCIATED_TOKEN_PROGRAM_ID, createMint, getOrCreateAssociatedTokenAccount, mintTo, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { fromWeb3JsKeypair, fromWeb3JsPublicKey, toWeb3JsKeypair } from "@metaplex-foundation/umi-web3js-adapters";
 import { findMetadataPda, safeFetchMetadata } from "@metaplex-foundation/mpl-token-metadata";
 import assert from 'assert';
-import chai, { assert as chaiAssert } from 'chai';
 import { bs58 } from "@coral-xyz/anchor/dist/cjs/utils/bytes";
+// import { PythSolanaReceiver } from "@pythnetwork/pyth-solana-receiver";
+// import { Wallet } from "@coral-xyz/anchor";
+
+const priceUpdate = publicKey("Dpw1EAVrSB1ibxiDQyTAW6Zip3J4Btk2x4SgApQCeFbX")
 
 describe.only("sold-issuance", () => {
   let umi = createUmi("http://localhost:8899");
   umi.programs.add(createSplAssociatedTokenProgram());
   umi.programs.add(createSplTokenProgram());
-  umi.programs.add(createSoldIssuanceProgram())
+  // umi.programs.add(createSoldIssuanceProgram())
 
   const connection = new Connection("http://localhost:8899", { commitment: "finalized" })
 
   const keypair = Keypair.fromSecretKey(
     Uint8Array.from(require("../keys/test-kp.json"))
   );
+
+  // const pythSolanaReceiver = new PythSolanaReceiver({ connection, wallet: new Wallet(keypair) });
 
   umi.use(keypairIdentity(fromWeb3JsKeypair(keypair)))
 
@@ -217,6 +222,18 @@ describe.only("sold-issuance", () => {
     const _vaultAcc = await safeFetchToken(umi, vaultIssuance);
     const _baseMintAcc = await safeFetchMint(umi, baseMint);
 
+    // const res = await sendMintTx(pythSolanaReceiver, umi, {
+    //   tokenManager,
+    //   mint: baseMint,
+    //   quoteMint: quoteMint,
+    //   payerMintAta: userBase,
+    //   payerQuoteMintAta: userQuote,
+    //   vault: vaultIssuance,
+    //   associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
+    //   quantity,
+    //   proof
+    // });
+    // console.log(res);
 
     txBuilder = txBuilder.add(mint(umi, {
       tokenManager,
@@ -225,13 +242,14 @@ describe.only("sold-issuance", () => {
       payerMintAta: userBase,
       payerQuoteMintAta: userQuote,
       vault: vaultIssuance,
+      priceUpdate,
       associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
       quantity,
       proof
     }))
 
     const res = await txBuilder.sendAndConfirm(umi, { send: { skipPreflight: false } });
-    // console.log(bs58.encode(res.signature));
+    console.log(bs58.encode(res.signature));
 
     const tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
     const vaultAcc = await safeFetchToken(umi, vaultIssuance);
@@ -258,849 +276,849 @@ describe.only("sold-issuance", () => {
     assert.equal(vaultAcc.amount, _vaultAcc.amount + expectedQuoteAmount, "Vault amount should be correct");
   })
 
-  it("Sold can be redeemed for Quote", async () => {
-    const quantity = 1000 * 10 ** baseMintDecimals;
-
-    const proof = getMerkleProof(allowedWallets, keypair.publicKey.toBase58());
-
-    let txBuilder = new TransactionBuilder();
-
-    const userQuoteAtaAcc = await safeFetchToken(umi, userQuote)
-
-    if (!userQuoteAtaAcc) {
-      txBuilder = txBuilder.add(createAssociatedToken(umi, {
-        mint: userQuote,
-      }))
-    }
-
-    const _tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
-    const _vaultAcc = await safeFetchToken(umi, vaultIssuance);
-    const _baseMintAcc = await safeFetchMint(umi, baseMint);
-
-    txBuilder = txBuilder.add(redeem(umi, {
-      tokenManager,
-      mint: baseMint,
-      quoteMint: quoteMint,
-      payerMintAta: userBase,
-      payerQuoteMintAta: userQuote,
-      vault: vaultIssuance,
-      associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
-      quantity,
-      proof
-    }))
-
-    const res = await txBuilder.sendAndConfirm(umi, { send: { skipPreflight: false } });
-    // console.log(bs58.encode(res.signature));
-
-    const tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
-    const vaultAcc = await safeFetchToken(umi, vaultIssuance);
-    const baseMintAcc = await safeFetchMint(umi, baseMint);
-
-    const expectedMintAmount = BigInt(quantity);
-
-    const expectedQuoteAmount = (BigInt(quantity) / BigInt(10 ** baseMintDecimals) * BigInt(exchangeRate) / BigInt(10 ** exchangeRateDecimals)) * BigInt(10 ** quoteMintDecimals);
-
-    assert.equal(baseMintAcc.supply, _baseMintAcc.supply - expectedMintAmount, "Total supply should be correct");
-    assert.equal(tokenManagerAcc.totalCollateral, _tokenManagerAcc.totalCollateral - expectedQuoteAmount, "Total collateral should be correct");
-    assert.equal(vaultAcc.amount, _vaultAcc.amount - expectedQuoteAmount, "Vault amount should be correct");
-  });
-
-  it("should add and remove a gatekeeper and check unpause permissions", async () => {
-    const newGatekeeper = umi.eddsa.generateKeypair();
-
-    await umi.rpc.airdrop(newGatekeeper.publicKey, createAmount(100_000 * 10 ** 9, "SOL", 9), { commitment: "finalized" })
-
-    const gatekeeper = findGatekeeperPda(umi, { wallet: newGatekeeper.publicKey });
-
-    // Add the new gatekeeper
-    let txBuilder = new TransactionBuilder();
-    txBuilder = txBuilder.add(addGatekeeper(umi, {
-      tokenManager,
-      newGatekeeper: newGatekeeper.publicKey,
-      admin: umi.identity,
-      gatekeeper
-    }));
-    await txBuilder.sendAndConfirm(umi);
-
-    // Verify the gatekeeper was added
-    let gatekeeperAcc = await safeFetchGatekeeper(umi, gatekeeper);
-    assert.equal(gatekeeperAcc.wallet, newGatekeeper.publicKey, "Gatekeeper should be added");
-
-    // Pause the token manager with new gatekeeper
-    umi = umi.use(keypairIdentity(newGatekeeper));
-    txBuilder = new TransactionBuilder();
-    txBuilder = txBuilder.add(toggleActive(umi, { tokenManager, gatekeeper, active: false }));
-    await txBuilder.sendAndConfirm(umi);
-
-    let tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
-    assert.strictEqual(tokenManagerAcc.active, false);
-
-    // Attempt to unpause the token manager as the new gatekeeper
-    umi.use(keypairIdentity(fromWeb3JsKeypair(keypair))); // Switch back to admin
-    txBuilder = new TransactionBuilder();
-    txBuilder = txBuilder.add(toggleActive(umi, { tokenManager, active: true }));
-    await txBuilder.sendAndConfirm(umi);
-
-    tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
-    assert.strictEqual(tokenManagerAcc.active, true, "Token manager should be unpaused by gatekeeper");
-
-    // Remove the gatekeeper
-    txBuilder = new TransactionBuilder();
-    txBuilder = txBuilder.add(removeGatekeeper(umi, {
-      tokenManager,
-      gatekeeper,
-      admin: umi.identity,
-    }));
-    await txBuilder.sendAndConfirm(umi);
-
-    // Verify the gatekeeper was removed
-    const gatekeeperAccAfterRemoval = await safeFetchGatekeeper(umi, gatekeeper);
-    assert.strictEqual(gatekeeperAccAfterRemoval, null, "Expected gatekeeper account to be null");
-
-    // Attempt to unpause the token manager as the removed gatekeeper
-    umi = umi.use(keypairIdentity(newGatekeeper));
-    txBuilder = new TransactionBuilder();
-    txBuilder = txBuilder.add(toggleActive(umi, { tokenManager, active: false }));
-    await assert.rejects(
-      async () => {
-        await txBuilder.sendAndConfirm(umi);
-      },
-      (err) => {
-        return (err as Error).message.includes("InvalidToggleActiveAuthority");
-      },
-      "Expected unpause to fail as the gatekeeper was removed"
-    );
-  });
-
-  it("should prevent minting when paused", async () => {
-    // Pause the token manager
-    let txBuilder = new TransactionBuilder();
-    txBuilder = txBuilder.add(toggleActive(umi, { tokenManager, active: false }));
-    await txBuilder.sendAndConfirm(umi);
-
-    let tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
-    assert.strictEqual(tokenManagerAcc.active, false);
-
-    // Attempt to mint tokens
-    txBuilder = new TransactionBuilder();
-    let userBaseAtaAcc = await safeFetchToken(umi, userBase)
-
-    if (!userBaseAtaAcc) {
-      txBuilder = txBuilder.add(createAssociatedToken(umi, {
-        mint: baseMint,
-      }))
-    }
-    txBuilder = txBuilder.add(mint(umi, {
-      tokenManager,
-      mint: baseMint,
-      quoteMint: quoteMint,
-      payerMintAta: userBase,
-      payerQuoteMintAta: userQuote,
-      vault: vaultIssuance,
-      associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
-      quantity: 1000,
-      proof: getMerkleProof(allowedWallets, keypair.publicKey.toBase58())
-    }));
-
-    await assert.rejects(
-      async () => {
-        await txBuilder.sendAndConfirm(umi);
-      },
-      (err) => {
-        return (err as Error).message.includes("Mint and redemptions paused");
-      },
-      "Expected minting to fail when paused"
-    );
-
-    // Attempt to redeem tokens
-    txBuilder = new TransactionBuilder();
-    userBaseAtaAcc = await safeFetchToken(umi, userBase)
-
-    if (!userBaseAtaAcc) {
-      txBuilder = txBuilder.add(createAssociatedToken(umi, {
-        mint: baseMint,
-      }))
-    }
-    txBuilder = txBuilder.add(redeem(umi, {
-      tokenManager,
-      mint: baseMint,
-      quoteMint: quoteMint,
-      payerMintAta: userBase,
-      payerQuoteMintAta: userQuote,
-      vault: vaultIssuance,
-      associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
-      quantity: 1000,
-      proof: getMerkleProof(allowedWallets, keypair.publicKey.toBase58())
-    }));
-
-    await assert.rejects(
-      async () => {
-        await txBuilder.sendAndConfirm(umi);
-      },
-      (err) => {
-        return (err as Error).message.includes("Mint and redemptions paused");
-      },
-      "Expected redemption to fail when paused"
-    );
-
-    // Try to set the same pause status again, which should fail
-    txBuilder = new TransactionBuilder();
-    txBuilder = txBuilder.add(toggleActive(umi, { tokenManager, active: false }));
-    await assert.rejects(
-      async () => {
-        await txBuilder.sendAndConfirm(umi);
-      },
-      (err) => {
-        return (err as Error).message.includes("Token manager status unchanged");
-      },
-      "Expected failure due to no change in token manager status"
-    );
-
-    // Try unpause and test if working;
-    txBuilder = new TransactionBuilder();
-    txBuilder = txBuilder.add(toggleActive(umi, { tokenManager, active: true }));
-    await txBuilder.sendAndConfirm(umi);
-
-    tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
-    assert.equal(tokenManagerAcc.active, true);
-  });
-
-  it("should enforce allowList changes", async () => {
-    const newAllowedWallets = ["BLDRZQiqt4ESPz12L9mt4XTBjeEfjoBopGPDMA36KtuZ"];
-
-    let tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
-    const originalMerkleRoot = tokenManagerAcc.merkleRoot;
-    const newMerkleRoot = getMerkleRoot(newAllowedWallets);
-
-    // Update the allowList to a new set of wallets
-    let txBuilder = new TransactionBuilder();
-    txBuilder = txBuilder.add(updateTokenManagerAdmin(umi, {
-      tokenManager,
-      newMerkleRoot: some(newMerkleRoot),
-      newLimitPerSlot: null,
-      admin: umi.identity
-    }));
-    await txBuilder.sendAndConfirm(umi);
-
-    tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
-    assert.deepStrictEqual(
-      new Uint8Array(tokenManagerAcc.merkleRoot),
-      new Uint8Array(newMerkleRoot)
-    );
-
-    // Attempt to mint with the original wallet, which is no longer allowed
-    txBuilder = new TransactionBuilder();
-    let proof = getMerkleProof(allowedWallets, keypair.publicKey.toBase58());
-    txBuilder = txBuilder.add(mint(umi, {
-      tokenManager,
-      mint: baseMint,
-      quoteMint: quoteMint,
-      payerMintAta: userBase,
-      payerQuoteMintAta: userQuote,
-      vault: vaultIssuance,
-      associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
-      quantity: 1000,
-      proof
-    }));
-
-    await assert.rejects(
-      async () => {
-        await txBuilder.sendAndConfirm(umi);
-      },
-      (err) => {
-        return (err as Error).message.includes("Address not found in allowed list");
-      },
-      "Expected minting to fail with old wallet not in the new allowList"
-    );
-
-    txBuilder = new TransactionBuilder();
-    txBuilder = txBuilder.add(redeem(umi, {
-      tokenManager,
-      mint: baseMint,
-      quoteMint: quoteMint,
-      payerMintAta: userBase,
-      payerQuoteMintAta: userQuote,
-      vault: vaultIssuance,
-      associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
-      quantity: 1000,
-      proof
-    }));
-
-    await assert.rejects(
-      async () => {
-        await txBuilder.sendAndConfirm(umi);
-      },
-      (err) => {
-        return (err as Error).message.includes("Address not found in allowed list");
-      },
-      "Expected redemptions to fail with old wallet not in the new allowList"
-    );
-
-    // Restore the original allowList
-    txBuilder = new TransactionBuilder();
-    txBuilder = txBuilder.add(updateTokenManagerAdmin(umi, {
-      tokenManager,
-      admin: umi.identity,
-      // Params
-      newMerkleRoot: some(originalMerkleRoot),
-      newLimitPerSlot: null,
-    }));
-    await txBuilder.sendAndConfirm(umi);
-
-    tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
-
-    assert.deepStrictEqual(
-      new Uint8Array(tokenManagerAcc.merkleRoot),
-      new Uint8Array(originalMerkleRoot)
-    );
-
-    // Attempt to mint again with the original wallet
-    txBuilder = new TransactionBuilder();
-    txBuilder = txBuilder.add(mint(umi, {
-      tokenManager,
-      mint: baseMint,
-      quoteMint: quoteMint,
-      payerMintAta: userBase,
-      payerQuoteMintAta: userQuote,
-      vault: vaultIssuance,
-      associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
-      quantity: 1000,
-      proof
-    }));
-
-    await assert.doesNotReject(
-      async () => {
-        await txBuilder.sendAndConfirm(umi);
-      },
-      "Expected minting to succeed with wallet back in the allowList"
-    );
-
-    txBuilder = new TransactionBuilder();
-    txBuilder = txBuilder.add(redeem(umi, {
-      tokenManager,
-      mint: baseMint,
-      quoteMint: quoteMint,
-      payerMintAta: userBase,
-      payerQuoteMintAta: userQuote,
-      vault: vaultIssuance,
-      associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
-      quantity: 1000,
-      proof
-    }));
-
-    await assert.doesNotReject(
-      async () => {
-        await txBuilder.sendAndConfirm(umi);
-      },
-      "Expected redemptions to succeed with wallet back in the allowList"
-    );
-  });
-
-  it("deposit and withdraw funds from the vaultIssuance", async () => {
-    let _tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
-    let _vaultAcc = await safeFetchToken(umi, vaultIssuance);
-
-    // Higher than total collateral amount
-    let quantity = Number(_tokenManagerAcc.totalCollateral) + 1; // Amount to deposit
-    // console.log("Quantity to Withdraw higher than collateral: ", quantity);
-    // console.log("TotalSupply: ", Number(_tokenManagerAcc.totalSupply / BigInt(10 ** baseMintDecimals)));
-    // console.log("TotalCollateral: ", Number(_tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals)));
-
-
-    // Process withdraw without one being initialized
-    let txBuilder = new TransactionBuilder();
-    txBuilder = txBuilder.add(withdrawFunds(umi, {
-      tokenManager,
-      mint: baseMint,
-      quoteMint: quoteMint,
-      vault: vaultIssuance,
-      authorityQuoteMintAta: userQuote,
-      associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
-      admin: umi.identity
-    }));
-
-    await assert.rejects(
-      async () => {
-        await txBuilder.sendAndConfirm(umi);
-      },
-      (err) => {
-        return (err as Error).message.includes("No pending withdrawal");
-      },
-      "Expected withdrawal to fail because of no pending withdrawal"
-    );
-
-    // Initiate withdraw
-    txBuilder = new TransactionBuilder();
-    txBuilder = txBuilder.add(initializeWithdrawFunds(umi, {
-      tokenManager,
-      mint: baseMint,
-      quantity,
-      admin: umi.identity
-    }));
-
-    await assert.rejects(
-      async () => {
-        await txBuilder.sendAndConfirm(umi);
-      },
-      (err) => {
-        return (err as Error).message.includes("Excessive Withdrawal");
-      },
-      "Expected withdrawal to fail because of excessive withdrawal"
-    );
-
-    // Higher than the threshold amount amount
-    quantity = (Number(_tokenManagerAcc.totalCollateral) * (1 - emergencyFundBasisPoints / 10000)) + 1; // Amount to deposit
-    // console.log("Quantity to Withdraw, higher than threshhold: ", quantity);
-    // console.log("TotalSupply: ", Number(_tokenManagerAcc.totalSupply / BigInt(10 ** baseMintDecimals)));
-    // console.log("TotalCollateral: ", Number(_tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals)));
-
-    txBuilder = new TransactionBuilder();
-    txBuilder = txBuilder.add(initializeWithdrawFunds(umi, {
-      tokenManager,
-      quantity,
-      mint: baseMint,
-      admin: umi.identity
-    }));
-
-    await assert.rejects(
-      async () => {
-        await txBuilder.sendAndConfirm(umi);
-      },
-      (err) => {
-        return (err as Error).message.includes("Excessive Withdrawal");
-      },
-      "Expected withdrawal to fail because of excessive withdrawal"
-    );
-
-    // Withdraw within allowed
-    quantity = (Number(_tokenManagerAcc.totalCollateral) * (1 - emergencyFundBasisPoints / 10000)); // Amount to withdraw
-    // console.log("Quantity to Withdraw allowed: ", quantity);
-    // console.log("TotalSupply: ", Number(_tokenManagerAcc.totalSupply / BigInt(10 ** baseMintDecimals)));
-    // console.log("TotalCollateral: ", Number(_tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals)));
-
-    txBuilder = new TransactionBuilder();
-    txBuilder = txBuilder.add(initializeWithdrawFunds(umi, {
-      tokenManager,
-      quantity,
-      mint: baseMint,
-      admin: umi.identity
-    }));
-
-    await txBuilder.sendAndConfirm(umi)
-
-    let tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
-    let vaultAcc = await safeFetchToken(umi, vaultIssuance);
-    let baseMintAcc = await safeFetchMint(umi, baseMint);
-
-    assert.equal(tokenManagerAcc.pendingWithdrawalAmount, quantity, "Pending withdrawal amount should have changed")
-
-    // Fails because of timelock
-    txBuilder = new TransactionBuilder();
-    txBuilder = txBuilder.add(withdrawFunds(umi, {
-      tokenManager,
-      mint: baseMint,
-      quoteMint: quoteMint,
-      vault: vaultIssuance,
-      authorityQuoteMintAta: userQuote,
-      associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
-      admin: umi.identity
-    }));
-
-    await assert.rejects(
-      async () => {
-        await txBuilder.sendAndConfirm(umi);
-      },
-      (err) => {
-        return (err as Error).message.includes("Withdrawal not ready");
-      },
-      "Expected withdrawal to fail because of timelock"
-    );
-
-
-    // // Should work after an hour
-    // txBuilder = new TransactionBuilder();
-    // txBuilder = txBuilder.add(withdrawFunds(umi, {
-    //   tokenManager,
-    //   quoteMint: quoteMint,
-    //   vault: vaultIssuance,
-    //   authorityQuoteMintAta: userQuote,
-    //   associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
-    //   admin: umi.identity
-    // }));
-    // await txBuilder.sendAndConfirm(umi);
-
-    tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
-    vaultAcc = await safeFetchToken(umi, vaultIssuance);
-    baseMintAcc = await safeFetchMint(umi, baseMint);
-    let expectedChange = BigInt(quantity);
-
-    // assert.equal(tokenManagerAcc.totalCollateral, _tokenManagerAcc.totalCollateral - expectedChange, "TokenManager totalCollateral should be equal to the initial totalCollateral minus withdrawed amount");
-    // assert.equal(vaultAcc.amount, _vaultAcc.amount - expectedChange, "Vault balance should be equal to the initial vaultIssuance minus withdrawed amount");
-
-    // Deposit excessive
-    quantity = Number(((baseMintAcc.supply / BigInt(10 ** baseMintDecimals)) * BigInt(exchangeRate) / BigInt(10 ** exchangeRateDecimals)) - (tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals))) * 10 ** quoteMintDecimals + 1;
-    // console.log("Quantity to Deposit not allowed: ", quantity);
-    // console.log("TotalSupply: ", Number(tokenManagerAcc.totalSupply / BigInt(10 ** baseMintDecimals)));
-    // console.log("TotalCollateral: ", Number(tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals)));
-
-    txBuilder = new TransactionBuilder();
-    txBuilder = txBuilder.add(depositFunds(umi, {
-      tokenManager,
-      mint: baseMint,
-      quoteMint: quoteMint,
-      vault: vaultIssuance,
-      authorityQuoteMintAta: userQuote,
-      associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
-      quantity,
-      admin: umi.identity
-    }));
-
-    await assert.rejects(
-      async () => {
-        await txBuilder.sendAndConfirm(umi);
-      },
-      (err) => {
-        return (err as Error).message.includes("Excessive Deposit");
-      },
-      "Expected deposit to fail because of excessive deposit"
-    );
-
-    // Deposit allowed
-    _tokenManagerAcc = tokenManagerAcc;
-    _vaultAcc = vaultAcc;
-
-    quantity = Number(((baseMintAcc.supply / BigInt(10 ** baseMintDecimals)) * BigInt(exchangeRate) / BigInt(10 ** exchangeRateDecimals)) - (tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals))) * 10 ** quoteMintDecimals;
-    // console.log("Quantity deposit allowed: ", quantity);
-    // console.log("TotalSupply: ", Number(tokenManagerAcc.totalSupply / BigInt(10 ** baseMintDecimals)));
-    // console.log("TotalCollateral: ", Number(tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals)));
-
-    txBuilder = new TransactionBuilder();
-    txBuilder = txBuilder.add(depositFunds(umi, {
-      tokenManager,
-      mint: baseMint,
-      quoteMint: quoteMint,
-      vault: vaultIssuance,
-      authorityQuoteMintAta: userQuote,
-      associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
-      quantity,
-      admin: umi.identity
-    }));
-
-    await txBuilder.sendAndConfirm(umi);
-
-    tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
-    vaultAcc = await safeFetchToken(umi, vaultIssuance);
-
-    expectedChange = BigInt(quantity)
-    assert.equal(tokenManagerAcc.totalCollateral, _tokenManagerAcc.totalCollateral + expectedChange, "TokenManager totalCollateral should be equal to the initial totalCollateral plus deposited amount");
-    assert.equal(vaultAcc.amount, _vaultAcc.amount + expectedChange, "Vault balance should be equal to the initial vaultIssuance plus deposited amount");
-  });
-
-  // Stake Program
-  it.only("baseMint can be staked for xMint", async () => {
-    const quantity = 1000 * 10 ** baseMintDecimals;
-
-    let txBuilder = new TransactionBuilder();
-
-    const userXAtaAcc = await safeFetchToken(umi, userX)
-
-    if (!userXAtaAcc) {
-      txBuilder = txBuilder.add(createAssociatedToken(umi, {
-        mint: xMint,
-      }))
-    }
-
-    const _stakePoolAcc = await safeFetchPoolManager(umi, poolManager);
-    const _xMintAcc = await safeFetchMint(umi, xMint);
-    const _vaultAcc = await safeFetchToken(umi, vaultStaking);
-
-    txBuilder = txBuilder.add(stake(umi, {
-      poolManager,
-      baseMint,
-      xMint,
-      payerBaseMintAta: userBase,
-      payerXMintAta: userX,
-      vault: vaultStaking,
-      associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
-      quantity,
-    }))
-
-    // console.log("Inception Timestamp:", Number(_stakePoolAcc.inceptionTimestamp));
-    // console.log("Current Timestamp:", Math.floor(Date.now() / 1000));
-    // console.log("Annual Yield Rate:", Number(_stakePoolAcc.annualYieldRate));
-    // console.log("Initial Exchange Rate:", Number(_stakePoolAcc.initialExchangeRate));
-
-    const exchangeRate = calculateExchangeRate(
-      Number(_stakePoolAcc.lastYieldChangeTimestamp),
-      Math.floor(Date.now() / 1000),
-      Number(_stakePoolAcc.annualYieldRate),
-      Number(_stakePoolAcc.lastYieldChangeExchangeRate)
-    );
-
-    await txBuilder.sendAndConfirm(umi, { send: { skipPreflight: true } });
-
-    const stakePoolAcc = await safeFetchPoolManager(umi, poolManager);
-    const xMintAcc = await safeFetchMint(umi, xMint);
-    const vaultAcc = await safeFetchToken(umi, vaultStaking);
-
-    const expectedBaseMintAmount = BigInt(quantity);
-
-    const expectedxMintAmount = BigInt(Math.floor(quantity * exchangeRate / 10 ** baseMintDecimals));
-    // console.log("Expected xMint Amount: ", Number(expectedxMintAmount));
-
-    assert.equal(stakePoolAcc.baseBalance, _stakePoolAcc.baseBalance + expectedBaseMintAmount, "Base Balance is not correct");
-    assert.equal(vaultAcc.amount, _vaultAcc.amount + expectedBaseMintAmount, "Vault amount is not correct");
-    chaiAssert.closeTo(Number(xMintAcc.supply), Number(_xMintAcc.supply) + Number(expectedxMintAmount), 300000, "xSupply is not correct");
-  })
-
-  it.only("baseMint can be unstaked by redeeming xMint", async () => {
-    // const quantity = 10000 * 10 ** baseMintDecimals;
-    let txBuilder = new TransactionBuilder();
-
-    const userBaseAtaAcc = await safeFetchToken(umi, userBase)
-
-    if (!userBaseAtaAcc) {
-      txBuilder = txBuilder.add(createAssociatedToken(umi, {
-        mint: baseMint,
-      }))
-    }
-
-    const _stakePoolAcc = await safeFetchPoolManager(umi, poolManager);
-    const _xMintAcc = await safeFetchMint(umi, xMint);
-    const _vaultAcc = await safeFetchToken(umi, vaultStaking);
-
-    const quantity = Number(_xMintAcc.supply);
-    // console.log("Quantity: ", quantity);
-
-    txBuilder = txBuilder.add(unstake(umi, {
-      poolManager,
-      baseMint,
-      xMint,
-      payerBaseMintAta: userBase,
-      payerXMintAta: userX,
-      vault: vaultStaking,
-      associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
-      quantity,
-      tokenManager,
-      soldIssuanceProgram: SOLD_ISSUANCE_PROGRAM_ID,
-    }))
-
-    // console.log("Inception Timestamp:", Number(_stakePoolAcc.inceptionTimestamp));
-    // console.log("Current Timestamp:", Math.floor(Date.now() / 1000));
-    // console.log("Annual Yield Rate:", Number(_stakePoolAcc.annualYieldRate));
-    // console.log("Initial Exchange Rate:", Number(_stakePoolAcc.initialExchangeRate));
-
-    const exchangeRate = calculateExchangeRate(
-      Number(_stakePoolAcc.lastYieldChangeTimestamp),
-      Math.floor(Date.now() / 1000),
-      Number(_stakePoolAcc.annualYieldRate),
-      Number(_stakePoolAcc.lastYieldChangeExchangeRate)
-    );
-    // console.log("Exchange Rate: ", exchangeRate);
-
-    await txBuilder.sendAndConfirm(umi, { send: { skipPreflight: true } });
-
-    const stakePoolAcc = await safeFetchPoolManager(umi, poolManager);
-    const xMintAcc = await safeFetchMint(umi, xMint);
-    const vaultAcc = await safeFetchToken(umi, vaultStaking);
-
-    const expectedBaseMintAmount = BigInt(Math.floor((quantity / exchangeRate) * 10 ** baseMintDecimals));
-    // console.log("Expected Base Mint Amount: ", Number(expectedBaseMintAmount));
-    // console.log("Base Balance: ", Number(stakePoolAcc.baseBalance));
-
-    const expectedxMintAmount = BigInt(quantity);
-
-    chaiAssert.closeTo(Number(stakePoolAcc.baseBalance), Number(_stakePoolAcc.baseBalance) - Number(expectedBaseMintAmount), 200000, "Base Balance is not correct");
-    chaiAssert.closeTo(Number(vaultAcc.amount), Number(_vaultAcc.amount) - Number(expectedBaseMintAmount), 200000, "Vault amount is not correct");
-    chaiAssert.equal(xMintAcc.supply, _xMintAcc.supply - expectedxMintAmount, "xSupply is not correct");
-  })
-
-  it.only("should update the annual yield rate of the stake pool", async function () {
-    const annualYieldRate = 2500;
-
-    let txBuilder = new TransactionBuilder();
-
-    txBuilder = txBuilder.add(updateAnnualYield(umi, {
-      poolManager,
-      admin: umi.identity,
-      annualYieldRate,
-      tokenManager,
-      xMint,
-      soldIssuanceProgram: SOLD_ISSUANCE_PROGRAM_ID,
-      associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
-      vault: vaultStaking,
-      baseMint: baseMint,
-    }))
-
-    await txBuilder.sendAndConfirm(umi);
-
-    const stakePoolAcc = await safeFetchPoolManager(umi, poolManager);
-
-    assert.equal(stakePoolAcc.annualYieldRate, 2500, "Annual yield rate should be updated to 25.00%");
-  });
-
-  it("should initiate and accept pool owner update", async () => {
-    const newAdmin = umi.eddsa.generateKeypair();
-
-    await umi.rpc.airdrop(newAdmin.publicKey, createAmount(100_000 * 10 ** 9, "SOL", 9), {
-      commitment: "finalized",
-    });
-
-    // Initiate update of pool owner
-    let txBuilder = new TransactionBuilder();
-    txBuilder = txBuilder.add(initiateUpdatePoolOwner(umi, {
-      poolManager,
-      newOwner: newAdmin.publicKey,
-      owner: umi.identity
-    }));
-    await txBuilder.sendAndConfirm(umi);
-
-    // Check if the update initiation was successful
-    let poolManagerAcc = await safeFetchPoolManager(umi, poolManager);
-    assert.equal(poolManagerAcc.pendingOwner, newAdmin.publicKey, "Pending owner should be set to new admin");
-
-    // Accept update of pool owner
-    umi.use(keypairIdentity(newAdmin)); // Switch to new admin
-    txBuilder = new TransactionBuilder();
-    txBuilder = txBuilder.add(updatePoolOwner(umi, {
-      poolManager,
-      newOwner: umi.identity
-    }));
-    await txBuilder.sendAndConfirm(umi);
-
-    // Verify the new admin is set
-    poolManagerAcc = await safeFetchPoolManager(umi, poolManager);
-
-    assert.equal(poolManagerAcc.owner, newAdmin.publicKey, "owner should be updated to new owner");
-    assert.equal(poolManagerAcc.pendingOwner, publicKey("11111111111111111111111111111111"), "Pending owner should be set to default pubkey");
-
-    // Change back
-    txBuilder = new TransactionBuilder();
-    txBuilder = txBuilder.add(initiateUpdatePoolOwner(umi, {
-      poolManager,
-      newOwner: fromWeb3JsKeypair(keypair).publicKey,
-      owner: umi.identity
-    }));
-    await txBuilder.sendAndConfirm(umi);
-
-
-    // Accept update back to original admin
-    umi.use(keypairIdentity(fromWeb3JsKeypair(keypair))); // Switch to new admin
-
-    txBuilder = new TransactionBuilder();
-    txBuilder = txBuilder.add(updatePoolOwner(umi, {
-      poolManager,
-      newOwner: umi.identity
-    }));
-    await txBuilder.sendAndConfirm(umi);
-
-    // Verify the admin is set back to original
-    poolManagerAcc = await safeFetchPoolManager(umi, poolManager);
-    assert.equal(poolManagerAcc.admin, keypair.publicKey.toBase58(), "Admin should be reverted back to original admin");
-  });
-
-  it("should initiate and accept manager owner update", async () => {
-    const newAdmin = umi.eddsa.generateKeypair();
-
-    await umi.rpc.airdrop(newAdmin.publicKey, createAmount(100_000 * 10 ** 9, "SOL", 9), {
-      commitment: "finalized",
-    });
-    umi.use(keypairIdentity(fromWeb3JsKeypair(keypair))); // Switch to new admin
-
-    // Initiate update of tokenManager owner
-    let txBuilder = new TransactionBuilder();
-    txBuilder = txBuilder.add(initiateUpdateManagerOwner(umi, {
-      tokenManager,
-      newOwner: newAdmin.publicKey,
-      owner: umi.identity
-    }));
-    await txBuilder.sendAndConfirm(umi);
-
-    // Check if the update initiation was successful
-    let tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
-
-    assert.equal(tokenManagerAcc.pendingOwner, newAdmin.publicKey, "Pending owner should be set to new admin");
-
-    // Accept update of manager owner
-    umi.use(keypairIdentity(newAdmin)); // Switch to new admin
-    txBuilder = new TransactionBuilder();
-    txBuilder = txBuilder.add(updateManagerOwner(umi, {
-      tokenManager,
-      newOwner: umi.identity
-    }));
-    await txBuilder.sendAndConfirm(umi);
-
-    // Verify the new admin is set
-    tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
-    assert.equal(tokenManagerAcc.owner, newAdmin.publicKey, "owner should be updated to new owner");
-    assert.equal(tokenManagerAcc.pendingOwner, publicKey("11111111111111111111111111111111"), "Pending owner should be set to default pubkey");
-
-    // Change back
-    txBuilder = new TransactionBuilder();
-    txBuilder = txBuilder.add(initiateUpdateManagerOwner(umi, {
-      tokenManager,
-      newOwner: fromWeb3JsKeypair(keypair).publicKey,
-      owner: umi.identity
-    }));
-    await txBuilder.sendAndConfirm(umi);
-
-    // Accept update back to original admin
-    umi.use(keypairIdentity(fromWeb3JsKeypair(keypair))); // Switch back to original admin
-    txBuilder = new TransactionBuilder();
-    txBuilder = txBuilder.add(updateManagerOwner(umi, {
-      tokenManager,
-      newOwner: umi.identity
-    }));
-    await txBuilder.sendAndConfirm(umi);
-
-    // Verify the admin is set back to original
-    tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
-    assert.equal(tokenManagerAcc.admin, publicKey(keypair.publicKey), "Admin should be reverted back to original admin");
-  });
-
-  it("should update xMint metadata of stake program", async () => {
-    const name = "TEST";
-    const symbol = "TEST"
-    const uri = "https://example.com/new-xmint-info.json"
-
-    let txBuilder = new TransactionBuilder();
-    txBuilder = txBuilder.add(updateXmintMetadata(umi, {
-      poolManager,
-      metadataAccount: xMetadata,
-      name,
-      symbol,
-      uri,
-      owner: umi.identity
-    }));
-
-    await txBuilder.sendAndConfirm(umi);
-
-    const xMintMetadata = await safeFetchMetadata(umi, xMetadata);
-    assert.equal(xMintMetadata.name, name, "Name should be updated");
-    assert.equal(xMintMetadata.symbol, symbol, "Symbol should be updated");
-    assert.equal(xMintMetadata.uri, uri, "Uri should be updated");
-  });
-
-  it("should update base mint metadata of issuance program", async () => {
-    const name = "TEST";
-    const symbol = "TEST"
-    const uri = "https://example.com/new-xmint-info.json"
-
-    let txBuilder = new TransactionBuilder();
-    txBuilder = txBuilder.add(updateMintMetadata(umi, {
-      tokenManager,
-      metadataAccount: baseMetadata,
-      name,
-      symbol,
-      uri,
-      owner: umi.identity
-    }));
-
-    await txBuilder.sendAndConfirm(umi);
-
-    const mintMetadata = await safeFetchMetadata(umi, baseMetadata);
-    assert.equal(mintMetadata.name, name, "Name should be updated");
-    assert.equal(mintMetadata.symbol, symbol, "Symbol should be updated");
-    assert.equal(mintMetadata.uri, uri, "Uri should be updated");
-  });
+  //   it("Sold can be redeemed for Quote", async () => {
+  //     const quantity = 1000 * 10 ** baseMintDecimals;
+
+  //     const proof = getMerkleProof(allowedWallets, keypair.publicKey.toBase58());
+
+  //     let txBuilder = new TransactionBuilder();
+
+  //     const userQuoteAtaAcc = await safeFetchToken(umi, userQuote)
+
+  //     if (!userQuoteAtaAcc) {
+  //       txBuilder = txBuilder.add(createAssociatedToken(umi, {
+  //         mint: userQuote,
+  //       }))
+  //     }
+
+  //     const _tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
+  //     const _vaultAcc = await safeFetchToken(umi, vaultIssuance);
+  //     const _baseMintAcc = await safeFetchMint(umi, baseMint);
+
+  //     txBuilder = txBuilder.add(redeem(umi, {
+  //       tokenManager,
+  //       mint: baseMint,
+  //       quoteMint: quoteMint,
+  //       payerMintAta: userBase,
+  //       payerQuoteMintAta: userQuote,
+  //       vault: vaultIssuance,
+  //       associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
+  //       quantity,
+  //       proof
+  //     }))
+
+  //     const res = await txBuilder.sendAndConfirm(umi, { send: { skipPreflight: false } });
+  //     // console.log(bs58.encode(res.signature));
+
+  //     const tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
+  //     const vaultAcc = await safeFetchToken(umi, vaultIssuance);
+  //     const baseMintAcc = await safeFetchMint(umi, baseMint);
+
+  //     const expectedMintAmount = BigInt(quantity);
+
+  //     const expectedQuoteAmount = (BigInt(quantity) / BigInt(10 ** baseMintDecimals) * BigInt(exchangeRate) / BigInt(10 ** exchangeRateDecimals)) * BigInt(10 ** quoteMintDecimals);
+
+  //     assert.equal(baseMintAcc.supply, _baseMintAcc.supply - expectedMintAmount, "Total supply should be correct");
+  //     assert.equal(tokenManagerAcc.totalCollateral, _tokenManagerAcc.totalCollateral - expectedQuoteAmount, "Total collateral should be correct");
+  //     assert.equal(vaultAcc.amount, _vaultAcc.amount - expectedQuoteAmount, "Vault amount should be correct");
+  //   });
+
+  //   it("should add and remove a gatekeeper and check unpause permissions", async () => {
+  //     const newGatekeeper = umi.eddsa.generateKeypair();
+
+  //     await umi.rpc.airdrop(newGatekeeper.publicKey, createAmount(100_000 * 10 ** 9, "SOL", 9), { commitment: "finalized" })
+
+  //     const gatekeeper = findGatekeeperPda(umi, { wallet: newGatekeeper.publicKey });
+
+  //     // Add the new gatekeeper
+  //     let txBuilder = new TransactionBuilder();
+  //     txBuilder = txBuilder.add(addGatekeeper(umi, {
+  //       tokenManager,
+  //       newGatekeeper: newGatekeeper.publicKey,
+  //       admin: umi.identity,
+  //       gatekeeper
+  //     }));
+  //     await txBuilder.sendAndConfirm(umi);
+
+  //     // Verify the gatekeeper was added
+  //     let gatekeeperAcc = await safeFetchGatekeeper(umi, gatekeeper);
+  //     assert.equal(gatekeeperAcc.wallet, newGatekeeper.publicKey, "Gatekeeper should be added");
+
+  //     // Pause the token manager with new gatekeeper
+  //     umi = umi.use(keypairIdentity(newGatekeeper));
+  //     txBuilder = new TransactionBuilder();
+  //     txBuilder = txBuilder.add(toggleActive(umi, { tokenManager, gatekeeper, active: false }));
+  //     await txBuilder.sendAndConfirm(umi);
+
+  //     let tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
+  //     assert.strictEqual(tokenManagerAcc.active, false);
+
+  //     // Attempt to unpause the token manager as the new gatekeeper
+  //     umi.use(keypairIdentity(fromWeb3JsKeypair(keypair))); // Switch back to admin
+  //     txBuilder = new TransactionBuilder();
+  //     txBuilder = txBuilder.add(toggleActive(umi, { tokenManager, active: true }));
+  //     await txBuilder.sendAndConfirm(umi);
+
+  //     tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
+  //     assert.strictEqual(tokenManagerAcc.active, true, "Token manager should be unpaused by gatekeeper");
+
+  //     // Remove the gatekeeper
+  //     txBuilder = new TransactionBuilder();
+  //     txBuilder = txBuilder.add(removeGatekeeper(umi, {
+  //       tokenManager,
+  //       gatekeeper,
+  //       admin: umi.identity,
+  //     }));
+  //     await txBuilder.sendAndConfirm(umi);
+
+  //     // Verify the gatekeeper was removed
+  //     const gatekeeperAccAfterRemoval = await safeFetchGatekeeper(umi, gatekeeper);
+  //     assert.strictEqual(gatekeeperAccAfterRemoval, null, "Expected gatekeeper account to be null");
+
+  //     // Attempt to unpause the token manager as the removed gatekeeper
+  //     umi = umi.use(keypairIdentity(newGatekeeper));
+  //     txBuilder = new TransactionBuilder();
+  //     txBuilder = txBuilder.add(toggleActive(umi, { tokenManager, active: false }));
+  //     await assert.rejects(
+  //       async () => {
+  //         await txBuilder.sendAndConfirm(umi);
+  //       },
+  //       (err) => {
+  //         return (err as Error).message.includes("InvalidToggleActiveAuthority");
+  //       },
+  //       "Expected unpause to fail as the gatekeeper was removed"
+  //     );
+  //   });
+
+  //   it("should prevent minting when paused", async () => {
+  //     // Pause the token manager
+  //     let txBuilder = new TransactionBuilder();
+  //     txBuilder = txBuilder.add(toggleActive(umi, { tokenManager, active: false }));
+  //     await txBuilder.sendAndConfirm(umi);
+
+  //     let tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
+  //     assert.strictEqual(tokenManagerAcc.active, false);
+
+  //     // Attempt to mint tokens
+  //     txBuilder = new TransactionBuilder();
+  //     let userBaseAtaAcc = await safeFetchToken(umi, userBase)
+
+  //     if (!userBaseAtaAcc) {
+  //       txBuilder = txBuilder.add(createAssociatedToken(umi, {
+  //         mint: baseMint,
+  //       }))
+  //     }
+  //     txBuilder = txBuilder.add(mint(umi, {
+  //       tokenManager,
+  //       mint: baseMint,
+  //       quoteMint: quoteMint,
+  //       payerMintAta: userBase,
+  //       payerQuoteMintAta: userQuote,
+  //       vault: vaultIssuance,
+  //       associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
+  //       quantity: 1000,
+  //       proof: getMerkleProof(allowedWallets, keypair.publicKey.toBase58())
+  //     }));
+
+  //     await assert.rejects(
+  //       async () => {
+  //         await txBuilder.sendAndConfirm(umi);
+  //       },
+  //       (err) => {
+  //         return (err as Error).message.includes("Mint and redemptions paused");
+  //       },
+  //       "Expected minting to fail when paused"
+  //     );
+
+  //     // Attempt to redeem tokens
+  //     txBuilder = new TransactionBuilder();
+  //     userBaseAtaAcc = await safeFetchToken(umi, userBase)
+
+  //     if (!userBaseAtaAcc) {
+  //       txBuilder = txBuilder.add(createAssociatedToken(umi, {
+  //         mint: baseMint,
+  //       }))
+  //     }
+  //     txBuilder = txBuilder.add(redeem(umi, {
+  //       tokenManager,
+  //       mint: baseMint,
+  //       quoteMint: quoteMint,
+  //       payerMintAta: userBase,
+  //       payerQuoteMintAta: userQuote,
+  //       vault: vaultIssuance,
+  //       associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
+  //       quantity: 1000,
+  //       proof: getMerkleProof(allowedWallets, keypair.publicKey.toBase58())
+  //     }));
+
+  //     await assert.rejects(
+  //       async () => {
+  //         await txBuilder.sendAndConfirm(umi);
+  //       },
+  //       (err) => {
+  //         return (err as Error).message.includes("Mint and redemptions paused");
+  //       },
+  //       "Expected redemption to fail when paused"
+  //     );
+
+  //     // Try to set the same pause status again, which should fail
+  //     txBuilder = new TransactionBuilder();
+  //     txBuilder = txBuilder.add(toggleActive(umi, { tokenManager, active: false }));
+  //     await assert.rejects(
+  //       async () => {
+  //         await txBuilder.sendAndConfirm(umi);
+  //       },
+  //       (err) => {
+  //         return (err as Error).message.includes("Token manager status unchanged");
+  //       },
+  //       "Expected failure due to no change in token manager status"
+  //     );
+
+  //     // Try unpause and test if working;
+  //     txBuilder = new TransactionBuilder();
+  //     txBuilder = txBuilder.add(toggleActive(umi, { tokenManager, active: true }));
+  //     await txBuilder.sendAndConfirm(umi);
+
+  //     tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
+  //     assert.equal(tokenManagerAcc.active, true);
+  //   });
+
+  //   it("should enforce allowList changes", async () => {
+  //     const newAllowedWallets = ["BLDRZQiqt4ESPz12L9mt4XTBjeEfjoBopGPDMA36KtuZ"];
+
+  //     let tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
+  //     const originalMerkleRoot = tokenManagerAcc.merkleRoot;
+  //     const newMerkleRoot = getMerkleRoot(newAllowedWallets);
+
+  //     // Update the allowList to a new set of wallets
+  //     let txBuilder = new TransactionBuilder();
+  //     txBuilder = txBuilder.add(updateTokenManagerAdmin(umi, {
+  //       tokenManager,
+  //       newMerkleRoot: some(newMerkleRoot),
+  //       newLimitPerSlot: null,
+  //       admin: umi.identity
+  //     }));
+  //     await txBuilder.sendAndConfirm(umi);
+
+  //     tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
+  //     assert.deepStrictEqual(
+  //       new Uint8Array(tokenManagerAcc.merkleRoot),
+  //       new Uint8Array(newMerkleRoot)
+  //     );
+
+  //     // Attempt to mint with the original wallet, which is no longer allowed
+  //     txBuilder = new TransactionBuilder();
+  //     let proof = getMerkleProof(allowedWallets, keypair.publicKey.toBase58());
+  //     txBuilder = txBuilder.add(mint(umi, {
+  //       tokenManager,
+  //       mint: baseMint,
+  //       quoteMint: quoteMint,
+  //       payerMintAta: userBase,
+  //       payerQuoteMintAta: userQuote,
+  //       vault: vaultIssuance,
+  //       associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
+  //       quantity: 1000,
+  //       proof
+  //     }));
+
+  //     await assert.rejects(
+  //       async () => {
+  //         await txBuilder.sendAndConfirm(umi);
+  //       },
+  //       (err) => {
+  //         return (err as Error).message.includes("Address not found in allowed list");
+  //       },
+  //       "Expected minting to fail with old wallet not in the new allowList"
+  //     );
+
+  //     txBuilder = new TransactionBuilder();
+  //     txBuilder = txBuilder.add(redeem(umi, {
+  //       tokenManager,
+  //       mint: baseMint,
+  //       quoteMint: quoteMint,
+  //       payerMintAta: userBase,
+  //       payerQuoteMintAta: userQuote,
+  //       vault: vaultIssuance,
+  //       associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
+  //       quantity: 1000,
+  //       proof
+  //     }));
+
+  //     await assert.rejects(
+  //       async () => {
+  //         await txBuilder.sendAndConfirm(umi);
+  //       },
+  //       (err) => {
+  //         return (err as Error).message.includes("Address not found in allowed list");
+  //       },
+  //       "Expected redemptions to fail with old wallet not in the new allowList"
+  //     );
+
+  //     // Restore the original allowList
+  //     txBuilder = new TransactionBuilder();
+  //     txBuilder = txBuilder.add(updateTokenManagerAdmin(umi, {
+  //       tokenManager,
+  //       admin: umi.identity,
+  //       // Params
+  //       newMerkleRoot: some(originalMerkleRoot),
+  //       newLimitPerSlot: null,
+  //     }));
+  //     await txBuilder.sendAndConfirm(umi);
+
+  //     tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
+
+  //     assert.deepStrictEqual(
+  //       new Uint8Array(tokenManagerAcc.merkleRoot),
+  //       new Uint8Array(originalMerkleRoot)
+  //     );
+
+  //     // Attempt to mint again with the original wallet
+  //     txBuilder = new TransactionBuilder();
+  //     txBuilder = txBuilder.add(mint(umi, {
+  //       tokenManager,
+  //       mint: baseMint,
+  //       quoteMint: quoteMint,
+  //       payerMintAta: userBase,
+  //       payerQuoteMintAta: userQuote,
+  //       vault: vaultIssuance,
+  //       associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
+  //       quantity: 1000,
+  //       proof
+  //     }));
+
+  //     await assert.doesNotReject(
+  //       async () => {
+  //         await txBuilder.sendAndConfirm(umi);
+  //       },
+  //       "Expected minting to succeed with wallet back in the allowList"
+  //     );
+
+  //     txBuilder = new TransactionBuilder();
+  //     txBuilder = txBuilder.add(redeem(umi, {
+  //       tokenManager,
+  //       mint: baseMint,
+  //       quoteMint: quoteMint,
+  //       payerMintAta: userBase,
+  //       payerQuoteMintAta: userQuote,
+  //       vault: vaultIssuance,
+  //       associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
+  //       quantity: 1000,
+  //       proof
+  //     }));
+
+  //     await assert.doesNotReject(
+  //       async () => {
+  //         await txBuilder.sendAndConfirm(umi);
+  //       },
+  //       "Expected redemptions to succeed with wallet back in the allowList"
+  //     );
+  //   });
+
+  //   it("deposit and withdraw funds from the vaultIssuance", async () => {
+  //     let _tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
+  //     let _vaultAcc = await safeFetchToken(umi, vaultIssuance);
+
+  //     // Higher than total collateral amount
+  //     let quantity = Number(_tokenManagerAcc.totalCollateral) + 1; // Amount to deposit
+  //     // console.log("Quantity to Withdraw higher than collateral: ", quantity);
+  //     // console.log("TotalSupply: ", Number(_tokenManagerAcc.totalSupply / BigInt(10 ** baseMintDecimals)));
+  //     // console.log("TotalCollateral: ", Number(_tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals)));
+
+
+  //     // Process withdraw without one being initialized
+  //     let txBuilder = new TransactionBuilder();
+  //     txBuilder = txBuilder.add(withdrawFunds(umi, {
+  //       tokenManager,
+  //       mint: baseMint,
+  //       quoteMint: quoteMint,
+  //       vault: vaultIssuance,
+  //       authorityQuoteMintAta: userQuote,
+  //       associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
+  //       admin: umi.identity
+  //     }));
+
+  //     await assert.rejects(
+  //       async () => {
+  //         await txBuilder.sendAndConfirm(umi);
+  //       },
+  //       (err) => {
+  //         return (err as Error).message.includes("No pending withdrawal");
+  //       },
+  //       "Expected withdrawal to fail because of no pending withdrawal"
+  //     );
+
+  //     // Initiate withdraw
+  //     txBuilder = new TransactionBuilder();
+  //     txBuilder = txBuilder.add(initializeWithdrawFunds(umi, {
+  //       tokenManager,
+  //       mint: baseMint,
+  //       quantity,
+  //       admin: umi.identity
+  //     }));
+
+  //     await assert.rejects(
+  //       async () => {
+  //         await txBuilder.sendAndConfirm(umi);
+  //       },
+  //       (err) => {
+  //         return (err as Error).message.includes("Excessive Withdrawal");
+  //       },
+  //       "Expected withdrawal to fail because of excessive withdrawal"
+  //     );
+
+  //     // Higher than the threshold amount amount
+  //     quantity = (Number(_tokenManagerAcc.totalCollateral) * (1 - emergencyFundBasisPoints / 10000)) + 1; // Amount to deposit
+  //     // console.log("Quantity to Withdraw, higher than threshhold: ", quantity);
+  //     // console.log("TotalSupply: ", Number(_tokenManagerAcc.totalSupply / BigInt(10 ** baseMintDecimals)));
+  //     // console.log("TotalCollateral: ", Number(_tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals)));
+
+  //     txBuilder = new TransactionBuilder();
+  //     txBuilder = txBuilder.add(initializeWithdrawFunds(umi, {
+  //       tokenManager,
+  //       quantity,
+  //       mint: baseMint,
+  //       admin: umi.identity
+  //     }));
+
+  //     await assert.rejects(
+  //       async () => {
+  //         await txBuilder.sendAndConfirm(umi);
+  //       },
+  //       (err) => {
+  //         return (err as Error).message.includes("Excessive Withdrawal");
+  //       },
+  //       "Expected withdrawal to fail because of excessive withdrawal"
+  //     );
+
+  //     // Withdraw within allowed
+  //     quantity = (Number(_tokenManagerAcc.totalCollateral) * (1 - emergencyFundBasisPoints / 10000)); // Amount to withdraw
+  //     // console.log("Quantity to Withdraw allowed: ", quantity);
+  //     // console.log("TotalSupply: ", Number(_tokenManagerAcc.totalSupply / BigInt(10 ** baseMintDecimals)));
+  //     // console.log("TotalCollateral: ", Number(_tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals)));
+
+  //     txBuilder = new TransactionBuilder();
+  //     txBuilder = txBuilder.add(initializeWithdrawFunds(umi, {
+  //       tokenManager,
+  //       quantity,
+  //       mint: baseMint,
+  //       admin: umi.identity
+  //     }));
+
+  //     await txBuilder.sendAndConfirm(umi)
+
+  //     let tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
+  //     let vaultAcc = await safeFetchToken(umi, vaultIssuance);
+  //     let baseMintAcc = await safeFetchMint(umi, baseMint);
+
+  //     assert.equal(tokenManagerAcc.pendingWithdrawalAmount, quantity, "Pending withdrawal amount should have changed")
+
+  //     // Fails because of timelock
+  //     txBuilder = new TransactionBuilder();
+  //     txBuilder = txBuilder.add(withdrawFunds(umi, {
+  //       tokenManager,
+  //       mint: baseMint,
+  //       quoteMint: quoteMint,
+  //       vault: vaultIssuance,
+  //       authorityQuoteMintAta: userQuote,
+  //       associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
+  //       admin: umi.identity
+  //     }));
+
+  //     await assert.rejects(
+  //       async () => {
+  //         await txBuilder.sendAndConfirm(umi);
+  //       },
+  //       (err) => {
+  //         return (err as Error).message.includes("Withdrawal not ready");
+  //       },
+  //       "Expected withdrawal to fail because of timelock"
+  //     );
+
+
+  //     // // Should work after an hour
+  //     // txBuilder = new TransactionBuilder();
+  //     // txBuilder = txBuilder.add(withdrawFunds(umi, {
+  //     //   tokenManager,
+  //     //   quoteMint: quoteMint,
+  //     //   vault: vaultIssuance,
+  //     //   authorityQuoteMintAta: userQuote,
+  //     //   associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
+  //     //   admin: umi.identity
+  //     // }));
+  //     // await txBuilder.sendAndConfirm(umi);
+
+  //     tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
+  //     vaultAcc = await safeFetchToken(umi, vaultIssuance);
+  //     baseMintAcc = await safeFetchMint(umi, baseMint);
+  //     let expectedChange = BigInt(quantity);
+
+  //     // assert.equal(tokenManagerAcc.totalCollateral, _tokenManagerAcc.totalCollateral - expectedChange, "TokenManager totalCollateral should be equal to the initial totalCollateral minus withdrawed amount");
+  //     // assert.equal(vaultAcc.amount, _vaultAcc.amount - expectedChange, "Vault balance should be equal to the initial vaultIssuance minus withdrawed amount");
+
+  //     // Deposit excessive
+  //     quantity = Number(((baseMintAcc.supply / BigInt(10 ** baseMintDecimals)) * BigInt(exchangeRate) / BigInt(10 ** exchangeRateDecimals)) - (tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals))) * 10 ** quoteMintDecimals + 1;
+  //     // console.log("Quantity to Deposit not allowed: ", quantity);
+  //     // console.log("TotalSupply: ", Number(tokenManagerAcc.totalSupply / BigInt(10 ** baseMintDecimals)));
+  //     // console.log("TotalCollateral: ", Number(tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals)));
+
+  //     txBuilder = new TransactionBuilder();
+  //     txBuilder = txBuilder.add(depositFunds(umi, {
+  //       tokenManager,
+  //       mint: baseMint,
+  //       quoteMint: quoteMint,
+  //       vault: vaultIssuance,
+  //       authorityQuoteMintAta: userQuote,
+  //       associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
+  //       quantity,
+  //       admin: umi.identity
+  //     }));
+
+  //     await assert.rejects(
+  //       async () => {
+  //         await txBuilder.sendAndConfirm(umi);
+  //       },
+  //       (err) => {
+  //         return (err as Error).message.includes("Excessive Deposit");
+  //       },
+  //       "Expected deposit to fail because of excessive deposit"
+  //     );
+
+  //     // Deposit allowed
+  //     _tokenManagerAcc = tokenManagerAcc;
+  //     _vaultAcc = vaultAcc;
+
+  //     quantity = Number(((baseMintAcc.supply / BigInt(10 ** baseMintDecimals)) * BigInt(exchangeRate) / BigInt(10 ** exchangeRateDecimals)) - (tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals))) * 10 ** quoteMintDecimals;
+  //     // console.log("Quantity deposit allowed: ", quantity);
+  //     // console.log("TotalSupply: ", Number(tokenManagerAcc.totalSupply / BigInt(10 ** baseMintDecimals)));
+  //     // console.log("TotalCollateral: ", Number(tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals)));
+
+  //     txBuilder = new TransactionBuilder();
+  //     txBuilder = txBuilder.add(depositFunds(umi, {
+  //       tokenManager,
+  //       mint: baseMint,
+  //       quoteMint: quoteMint,
+  //       vault: vaultIssuance,
+  //       authorityQuoteMintAta: userQuote,
+  //       associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
+  //       quantity,
+  //       admin: umi.identity
+  //     }));
+
+  //     await txBuilder.sendAndConfirm(umi);
+
+  //     tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
+  //     vaultAcc = await safeFetchToken(umi, vaultIssuance);
+
+  //     expectedChange = BigInt(quantity)
+  //     assert.equal(tokenManagerAcc.totalCollateral, _tokenManagerAcc.totalCollateral + expectedChange, "TokenManager totalCollateral should be equal to the initial totalCollateral plus deposited amount");
+  //     assert.equal(vaultAcc.amount, _vaultAcc.amount + expectedChange, "Vault balance should be equal to the initial vaultIssuance plus deposited amount");
+  //   });
+
+  //   // Stake Program
+  //   it.only("baseMint can be staked for xMint", async () => {
+  //     const quantity = 1000 * 10 ** baseMintDecimals;
+
+  //     let txBuilder = new TransactionBuilder();
+
+  //     const userXAtaAcc = await safeFetchToken(umi, userX)
+
+  //     if (!userXAtaAcc) {
+  //       txBuilder = txBuilder.add(createAssociatedToken(umi, {
+  //         mint: xMint,
+  //       }))
+  //     }
+
+  //     const _stakePoolAcc = await safeFetchPoolManager(umi, poolManager);
+  //     const _xMintAcc = await safeFetchMint(umi, xMint);
+  //     const _vaultAcc = await safeFetchToken(umi, vaultStaking);
+
+  //     txBuilder = txBuilder.add(stake(umi, {
+  //       poolManager,
+  //       baseMint,
+  //       xMint,
+  //       payerBaseMintAta: userBase,
+  //       payerXMintAta: userX,
+  //       vault: vaultStaking,
+  //       associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
+  //       quantity,
+  //     }))
+
+  //     // console.log("Inception Timestamp:", Number(_stakePoolAcc.inceptionTimestamp));
+  //     // console.log("Current Timestamp:", Math.floor(Date.now() / 1000));
+  //     // console.log("Annual Yield Rate:", Number(_stakePoolAcc.annualYieldRate));
+  //     // console.log("Initial Exchange Rate:", Number(_stakePoolAcc.initialExchangeRate));
+
+  //     const exchangeRate = calculateExchangeRate(
+  //       Number(_stakePoolAcc.lastYieldChangeTimestamp),
+  //       Math.floor(Date.now() / 1000),
+  //       Number(_stakePoolAcc.annualYieldRate),
+  //       Number(_stakePoolAcc.lastYieldChangeExchangeRate)
+  //     );
+
+  //     await txBuilder.sendAndConfirm(umi, { send: { skipPreflight: true } });
+
+  //     const stakePoolAcc = await safeFetchPoolManager(umi, poolManager);
+  //     const xMintAcc = await safeFetchMint(umi, xMint);
+  //     const vaultAcc = await safeFetchToken(umi, vaultStaking);
+
+  //     const expectedBaseMintAmount = BigInt(quantity);
+
+  //     const expectedxMintAmount = BigInt(Math.floor(quantity * exchangeRate / 10 ** baseMintDecimals));
+  //     // console.log("Expected xMint Amount: ", Number(expectedxMintAmount));
+
+  //     assert.equal(stakePoolAcc.baseBalance, _stakePoolAcc.baseBalance + expectedBaseMintAmount, "Base Balance is not correct");
+  //     assert.equal(vaultAcc.amount, _vaultAcc.amount + expectedBaseMintAmount, "Vault amount is not correct");
+  //     chaiAssert.closeTo(Number(xMintAcc.supply), Number(_xMintAcc.supply) + Number(expectedxMintAmount), 300000, "xSupply is not correct");
+  //   })
+
+  //   it.only("baseMint can be unstaked by redeeming xMint", async () => {
+  //     // const quantity = 10000 * 10 ** baseMintDecimals;
+  //     let txBuilder = new TransactionBuilder();
+
+  //     const userBaseAtaAcc = await safeFetchToken(umi, userBase)
+
+  //     if (!userBaseAtaAcc) {
+  //       txBuilder = txBuilder.add(createAssociatedToken(umi, {
+  //         mint: baseMint,
+  //       }))
+  //     }
+
+  //     const _stakePoolAcc = await safeFetchPoolManager(umi, poolManager);
+  //     const _xMintAcc = await safeFetchMint(umi, xMint);
+  //     const _vaultAcc = await safeFetchToken(umi, vaultStaking);
+
+  //     const quantity = Number(_xMintAcc.supply);
+  //     // console.log("Quantity: ", quantity);
+
+  //     txBuilder = txBuilder.add(unstake(umi, {
+  //       poolManager,
+  //       baseMint,
+  //       xMint,
+  //       payerBaseMintAta: userBase,
+  //       payerXMintAta: userX,
+  //       vault: vaultStaking,
+  //       associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
+  //       quantity,
+  //       tokenManager,
+  //       soldIssuanceProgram: SOLD_ISSUANCE_PROGRAM_ID,
+  //     }))
+
+  //     // console.log("Inception Timestamp:", Number(_stakePoolAcc.inceptionTimestamp));
+  //     // console.log("Current Timestamp:", Math.floor(Date.now() / 1000));
+  //     // console.log("Annual Yield Rate:", Number(_stakePoolAcc.annualYieldRate));
+  //     // console.log("Initial Exchange Rate:", Number(_stakePoolAcc.initialExchangeRate));
+
+  //     const exchangeRate = calculateExchangeRate(
+  //       Number(_stakePoolAcc.lastYieldChangeTimestamp),
+  //       Math.floor(Date.now() / 1000),
+  //       Number(_stakePoolAcc.annualYieldRate),
+  //       Number(_stakePoolAcc.lastYieldChangeExchangeRate)
+  //     );
+  //     // console.log("Exchange Rate: ", exchangeRate);
+
+  //     await txBuilder.sendAndConfirm(umi, { send: { skipPreflight: true } });
+
+  //     const stakePoolAcc = await safeFetchPoolManager(umi, poolManager);
+  //     const xMintAcc = await safeFetchMint(umi, xMint);
+  //     const vaultAcc = await safeFetchToken(umi, vaultStaking);
+
+  //     const expectedBaseMintAmount = BigInt(Math.floor((quantity / exchangeRate) * 10 ** baseMintDecimals));
+  //     // console.log("Expected Base Mint Amount: ", Number(expectedBaseMintAmount));
+  //     // console.log("Base Balance: ", Number(stakePoolAcc.baseBalance));
+
+  //     const expectedxMintAmount = BigInt(quantity);
+
+  //     chaiAssert.closeTo(Number(stakePoolAcc.baseBalance), Number(_stakePoolAcc.baseBalance) - Number(expectedBaseMintAmount), 200000, "Base Balance is not correct");
+  //     chaiAssert.closeTo(Number(vaultAcc.amount), Number(_vaultAcc.amount) - Number(expectedBaseMintAmount), 200000, "Vault amount is not correct");
+  //     chaiAssert.equal(xMintAcc.supply, _xMintAcc.supply - expectedxMintAmount, "xSupply is not correct");
+  //   })
+
+  //   it.only("should update the annual yield rate of the stake pool", async function () {
+  //     const annualYieldRate = 2500;
+
+  //     let txBuilder = new TransactionBuilder();
+
+  //     txBuilder = txBuilder.add(updateAnnualYield(umi, {
+  //       poolManager,
+  //       admin: umi.identity,
+  //       annualYieldRate,
+  //       tokenManager,
+  //       xMint,
+  //       soldIssuanceProgram: SOLD_ISSUANCE_PROGRAM_ID,
+  //       associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
+  //       vault: vaultStaking,
+  //       baseMint: baseMint,
+  //     }))
+
+  //     await txBuilder.sendAndConfirm(umi);
+
+  //     const stakePoolAcc = await safeFetchPoolManager(umi, poolManager);
+
+  //     assert.equal(stakePoolAcc.annualYieldRate, 2500, "Annual yield rate should be updated to 25.00%");
+  //   });
+
+  //   it("should initiate and accept pool owner update", async () => {
+  //     const newAdmin = umi.eddsa.generateKeypair();
+
+  //     await umi.rpc.airdrop(newAdmin.publicKey, createAmount(100_000 * 10 ** 9, "SOL", 9), {
+  //       commitment: "finalized",
+  //     });
+
+  //     // Initiate update of pool owner
+  //     let txBuilder = new TransactionBuilder();
+  //     txBuilder = txBuilder.add(initiateUpdatePoolOwner(umi, {
+  //       poolManager,
+  //       newOwner: newAdmin.publicKey,
+  //       owner: umi.identity
+  //     }));
+  //     await txBuilder.sendAndConfirm(umi);
+
+  //     // Check if the update initiation was successful
+  //     let poolManagerAcc = await safeFetchPoolManager(umi, poolManager);
+  //     assert.equal(poolManagerAcc.pendingOwner, newAdmin.publicKey, "Pending owner should be set to new admin");
+
+  //     // Accept update of pool owner
+  //     umi.use(keypairIdentity(newAdmin)); // Switch to new admin
+  //     txBuilder = new TransactionBuilder();
+  //     txBuilder = txBuilder.add(updatePoolOwner(umi, {
+  //       poolManager,
+  //       newOwner: umi.identity
+  //     }));
+  //     await txBuilder.sendAndConfirm(umi);
+
+  //     // Verify the new admin is set
+  //     poolManagerAcc = await safeFetchPoolManager(umi, poolManager);
+
+  //     assert.equal(poolManagerAcc.owner, newAdmin.publicKey, "owner should be updated to new owner");
+  //     assert.equal(poolManagerAcc.pendingOwner, publicKey("11111111111111111111111111111111"), "Pending owner should be set to default pubkey");
+
+  //     // Change back
+  //     txBuilder = new TransactionBuilder();
+  //     txBuilder = txBuilder.add(initiateUpdatePoolOwner(umi, {
+  //       poolManager,
+  //       newOwner: fromWeb3JsKeypair(keypair).publicKey,
+  //       owner: umi.identity
+  //     }));
+  //     await txBuilder.sendAndConfirm(umi);
+
+
+  //     // Accept update back to original admin
+  //     umi.use(keypairIdentity(fromWeb3JsKeypair(keypair))); // Switch to new admin
+
+  //     txBuilder = new TransactionBuilder();
+  //     txBuilder = txBuilder.add(updatePoolOwner(umi, {
+  //       poolManager,
+  //       newOwner: umi.identity
+  //     }));
+  //     await txBuilder.sendAndConfirm(umi);
+
+  //     // Verify the admin is set back to original
+  //     poolManagerAcc = await safeFetchPoolManager(umi, poolManager);
+  //     assert.equal(poolManagerAcc.admin, keypair.publicKey.toBase58(), "Admin should be reverted back to original admin");
+  //   });
+
+  //   it("should initiate and accept manager owner update", async () => {
+  //     const newAdmin = umi.eddsa.generateKeypair();
+
+  //     await umi.rpc.airdrop(newAdmin.publicKey, createAmount(100_000 * 10 ** 9, "SOL", 9), {
+  //       commitment: "finalized",
+  //     });
+  //     umi.use(keypairIdentity(fromWeb3JsKeypair(keypair))); // Switch to new admin
+
+  //     // Initiate update of tokenManager owner
+  //     let txBuilder = new TransactionBuilder();
+  //     txBuilder = txBuilder.add(initiateUpdateManagerOwner(umi, {
+  //       tokenManager,
+  //       newOwner: newAdmin.publicKey,
+  //       owner: umi.identity
+  //     }));
+  //     await txBuilder.sendAndConfirm(umi);
+
+  //     // Check if the update initiation was successful
+  //     let tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
+
+  //     assert.equal(tokenManagerAcc.pendingOwner, newAdmin.publicKey, "Pending owner should be set to new admin");
+
+  //     // Accept update of manager owner
+  //     umi.use(keypairIdentity(newAdmin)); // Switch to new admin
+  //     txBuilder = new TransactionBuilder();
+  //     txBuilder = txBuilder.add(updateManagerOwner(umi, {
+  //       tokenManager,
+  //       newOwner: umi.identity
+  //     }));
+  //     await txBuilder.sendAndConfirm(umi);
+
+  //     // Verify the new admin is set
+  //     tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
+  //     assert.equal(tokenManagerAcc.owner, newAdmin.publicKey, "owner should be updated to new owner");
+  //     assert.equal(tokenManagerAcc.pendingOwner, publicKey("11111111111111111111111111111111"), "Pending owner should be set to default pubkey");
+
+  //     // Change back
+  //     txBuilder = new TransactionBuilder();
+  //     txBuilder = txBuilder.add(initiateUpdateManagerOwner(umi, {
+  //       tokenManager,
+  //       newOwner: fromWeb3JsKeypair(keypair).publicKey,
+  //       owner: umi.identity
+  //     }));
+  //     await txBuilder.sendAndConfirm(umi);
+
+  //     // Accept update back to original admin
+  //     umi.use(keypairIdentity(fromWeb3JsKeypair(keypair))); // Switch back to original admin
+  //     txBuilder = new TransactionBuilder();
+  //     txBuilder = txBuilder.add(updateManagerOwner(umi, {
+  //       tokenManager,
+  //       newOwner: umi.identity
+  //     }));
+  //     await txBuilder.sendAndConfirm(umi);
+
+  //     // Verify the admin is set back to original
+  //     tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
+  //     assert.equal(tokenManagerAcc.admin, publicKey(keypair.publicKey), "Admin should be reverted back to original admin");
+  //   });
+
+  //   it("should update xMint metadata of stake program", async () => {
+  //     const name = "TEST";
+  //     const symbol = "TEST"
+  //     const uri = "https://example.com/new-xmint-info.json"
+
+  //     let txBuilder = new TransactionBuilder();
+  //     txBuilder = txBuilder.add(updateXmintMetadata(umi, {
+  //       poolManager,
+  //       metadataAccount: xMetadata,
+  //       name,
+  //       symbol,
+  //       uri,
+  //       owner: umi.identity
+  //     }));
+
+  //     await txBuilder.sendAndConfirm(umi);
+
+  //     const xMintMetadata = await safeFetchMetadata(umi, xMetadata);
+  //     assert.equal(xMintMetadata.name, name, "Name should be updated");
+  //     assert.equal(xMintMetadata.symbol, symbol, "Symbol should be updated");
+  //     assert.equal(xMintMetadata.uri, uri, "Uri should be updated");
+  //   });
+
+  //   it("should update base mint metadata of issuance program", async () => {
+  //     const name = "TEST";
+  //     const symbol = "TEST"
+  //     const uri = "https://example.com/new-xmint-info.json"
+
+  //     let txBuilder = new TransactionBuilder();
+  //     txBuilder = txBuilder.add(updateMintMetadata(umi, {
+  //       tokenManager,
+  //       metadataAccount: baseMetadata,
+  //       name,
+  //       symbol,
+  //       uri,
+  //       owner: umi.identity
+  //     }));
+
+  //     await txBuilder.sendAndConfirm(umi);
+
+  //     const mintMetadata = await safeFetchMetadata(umi, baseMetadata);
+  //     assert.equal(mintMetadata.name, name, "Name should be updated");
+  //     assert.equal(mintMetadata.symbol, symbol, "Symbol should be updated");
+  //     assert.equal(mintMetadata.uri, uri, "Uri should be updated");
+  //   });
 });

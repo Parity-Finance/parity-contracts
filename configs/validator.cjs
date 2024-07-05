@@ -43,11 +43,23 @@ module.exports = {
       //   programId: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
       //   deployPath: getProgram("spl_token.so"),
       // },
-      {
-        label: "Mpl System Extras",
-        programId: "SysExL2WDyJi9aRZrXorrjHJut3JwHQ7R9bTyctbNNG",
-        deployPath: getProgram("mpl_system_extras.so"),
-      },
+      // {
+      //   label: "Pyth Receiver",
+      //   programId: "rec5EKMGg6MxZYaMdyBfgwp4d5rB9T1VQH5pJv5LtFJ",
+      //   deployPath: getProgram("pyth_receiver.so"),
+      // },
+      // {
+      //   label: "Push Oracle",
+      //   programId: "pythWSnswVUd12oZpeFP8e9CVaEqJg25g1Vtc2biRsT",
+      //   deployPath: getProgram("pyth_push_oracle.so"),
+      // }
     ],
+    accounts: [
+      {
+        label: "USDC Price Update Account",
+        accountId: "Dpw1EAVrSB1ibxiDQyTAW6Zip3J4Btk2x4SgApQCeFbX",
+        cluster: 'mainnet-beta'
+      }
+    ]
   },
 };

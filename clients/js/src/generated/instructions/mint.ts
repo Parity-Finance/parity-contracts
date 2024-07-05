@@ -37,6 +37,7 @@ export type MintInstructionAccounts = {
   quoteMint: PublicKey | Pda;
   payerQuoteMintAta: PublicKey | Pda;
   vault: PublicKey | Pda;
+  priceUpdate: PublicKey | Pda;
   payer?: Signer;
   systemProgram?: PublicKey | Pda;
   tokenProgram?: PublicKey | Pda;
@@ -117,23 +118,28 @@ export function mint(
       isWritable: true as boolean,
       value: input.vault ?? null,
     },
-    payer: {
+    priceUpdate: {
       index: 6,
+      isWritable: false as boolean,
+      value: input.priceUpdate ?? null,
+    },
+    payer: {
+      index: 7,
       isWritable: true as boolean,
       value: input.payer ?? null,
     },
     systemProgram: {
-      index: 7,
+      index: 8,
       isWritable: false as boolean,
       value: input.systemProgram ?? null,
     },
     tokenProgram: {
-      index: 8,
+      index: 9,
       isWritable: false as boolean,
       value: input.tokenProgram ?? null,
     },
     associatedTokenProgram: {
-      index: 9,
+      index: 10,
       isWritable: false as boolean,
       value: input.associatedTokenProgram ?? null,
     },

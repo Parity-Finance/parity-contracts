@@ -24,6 +24,8 @@ pub struct Redeem {
 
     pub vault: solana_program::pubkey::Pubkey,
 
+    pub price_update: solana_program::pubkey::Pubkey,
+
     pub payer: solana_program::pubkey::Pubkey,
 
     pub system_program: solana_program::pubkey::Pubkey,
@@ -46,7 +48,7 @@ impl Redeem {
         args: RedeemInstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(10 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(11 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.token_manager,
             false,
@@ -68,6 +70,10 @@ impl Redeem {
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.vault, false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            self.price_update,
+            false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.payer, true,
@@ -130,10 +136,11 @@ pub struct RedeemInstructionArgs {
 ///   3. `[]` quote_mint
 ///   4. `[writable]` payer_quote_mint_ata
 ///   5. `[writable]` vault
-///   6. `[writable, signer]` payer
-///   7. `[optional]` system_program (default to `11111111111111111111111111111111`)
-///   8. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
-///   9. `[]` associated_token_program
+///   6. `[]` price_update
+///   7. `[writable, signer]` payer
+///   8. `[optional]` system_program (default to `11111111111111111111111111111111`)
+///   9. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
+///   10. `[]` associated_token_program
 #[derive(Default)]
 pub struct RedeemBuilder {
     token_manager: Option<solana_program::pubkey::Pubkey>,
@@ -142,6 +149,7 @@ pub struct RedeemBuilder {
     quote_mint: Option<solana_program::pubkey::Pubkey>,
     payer_quote_mint_ata: Option<solana_program::pubkey::Pubkey>,
     vault: Option<solana_program::pubkey::Pubkey>,
+    price_update: Option<solana_program::pubkey::Pubkey>,
     payer: Option<solana_program::pubkey::Pubkey>,
     system_program: Option<solana_program::pubkey::Pubkey>,
     token_program: Option<solana_program::pubkey::Pubkey>,
@@ -186,6 +194,11 @@ impl RedeemBuilder {
     #[inline(always)]
     pub fn vault(&mut self, vault: solana_program::pubkey::Pubkey) -> &mut Self {
         self.vault = Some(vault);
+        self
+    }
+    #[inline(always)]
+    pub fn price_update(&mut self, price_update: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.price_update = Some(price_update);
         self
     }
     #[inline(always)]
@@ -252,6 +265,7 @@ impl RedeemBuilder {
                 .payer_quote_mint_ata
                 .expect("payer_quote_mint_ata is not set"),
             vault: self.vault.expect("vault is not set"),
+            price_update: self.price_update.expect("price_update is not set"),
             payer: self.payer.expect("payer is not set"),
             system_program: self
                 .system_program
@@ -286,6 +300,8 @@ pub struct RedeemCpiAccounts<'a, 'b> {
 
     pub vault: &'b solana_program::account_info::AccountInfo<'a>,
 
+    pub price_update: &'b solana_program::account_info::AccountInfo<'a>,
+
     pub payer: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
@@ -312,6 +328,8 @@ pub struct RedeemCpi<'a, 'b> {
 
     pub vault: &'b solana_program::account_info::AccountInfo<'a>,
 
+    pub price_update: &'b solana_program::account_info::AccountInfo<'a>,
+
     pub payer: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
@@ -337,6 +355,7 @@ impl<'a, 'b> RedeemCpi<'a, 'b> {
             quote_mint: accounts.quote_mint,
             payer_quote_mint_ata: accounts.payer_quote_mint_ata,
             vault: accounts.vault,
+            price_update: accounts.price_update,
             payer: accounts.payer,
             system_program: accounts.system_program,
             token_program: accounts.token_program,
@@ -377,7 +396,7 @@ impl<'a, 'b> RedeemCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(10 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(11 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.token_manager.key,
             false,
@@ -400,6 +419,10 @@ impl<'a, 'b> RedeemCpi<'a, 'b> {
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.vault.key,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            *self.price_update.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
@@ -434,7 +457,7 @@ impl<'a, 'b> RedeemCpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(10 + 1 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(11 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.token_manager.clone());
         account_infos.push(self.mint.clone());
@@ -442,6 +465,7 @@ impl<'a, 'b> RedeemCpi<'a, 'b> {
         account_infos.push(self.quote_mint.clone());
         account_infos.push(self.payer_quote_mint_ata.clone());
         account_infos.push(self.vault.clone());
+        account_infos.push(self.price_update.clone());
         account_infos.push(self.payer.clone());
         account_infos.push(self.system_program.clone());
         account_infos.push(self.token_program.clone());
@@ -468,10 +492,11 @@ impl<'a, 'b> RedeemCpi<'a, 'b> {
 ///   3. `[]` quote_mint
 ///   4. `[writable]` payer_quote_mint_ata
 ///   5. `[writable]` vault
-///   6. `[writable, signer]` payer
-///   7. `[]` system_program
-///   8. `[]` token_program
-///   9. `[]` associated_token_program
+///   6. `[]` price_update
+///   7. `[writable, signer]` payer
+///   8. `[]` system_program
+///   9. `[]` token_program
+///   10. `[]` associated_token_program
 pub struct RedeemCpiBuilder<'a, 'b> {
     instruction: Box<RedeemCpiBuilderInstruction<'a, 'b>>,
 }
@@ -486,6 +511,7 @@ impl<'a, 'b> RedeemCpiBuilder<'a, 'b> {
             quote_mint: None,
             payer_quote_mint_ata: None,
             vault: None,
+            price_update: None,
             payer: None,
             system_program: None,
             token_program: None,
@@ -536,6 +562,14 @@ impl<'a, 'b> RedeemCpiBuilder<'a, 'b> {
     #[inline(always)]
     pub fn vault(&mut self, vault: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
         self.instruction.vault = Some(vault);
+        self
+    }
+    #[inline(always)]
+    pub fn price_update(
+        &mut self,
+        price_update: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.price_update = Some(price_update);
         self
     }
     #[inline(always)]
@@ -650,6 +684,11 @@ impl<'a, 'b> RedeemCpiBuilder<'a, 'b> {
 
             vault: self.instruction.vault.expect("vault is not set"),
 
+            price_update: self
+                .instruction
+                .price_update
+                .expect("price_update is not set"),
+
             payer: self.instruction.payer.expect("payer is not set"),
 
             system_program: self
@@ -683,6 +722,7 @@ struct RedeemCpiBuilderInstruction<'a, 'b> {
     quote_mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     payer_quote_mint_ata: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     vault: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    price_update: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     payer: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,

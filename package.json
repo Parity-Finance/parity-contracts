@@ -24,7 +24,9 @@
         "@metaplex-foundation/umi": "^0.9.1",
         "@metaplex-foundation/umi-bundle-defaults": "^0.9.1",
         "@metaplex-foundation/umi-web3js-adapters": "^0.9.1",
-        "@solana/spl-token": "^0.4.6"
+        "@pythnetwork/pyth-solana-receiver": "^0.8.0",
+        "@solana/spl-token": "^0.4.6",
+        "rpc-websockets": "7.9.0"
     },
     "devDependencies": {
         "@metaplex-foundation/amman": "^0.12.1",

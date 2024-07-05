@@ -4,6 +4,7 @@ use anchor_spl::{
     associated_token::AssociatedToken,
     token::{mint_to, transfer_checked, Mint, MintTo, Token, TokenAccount, TransferChecked},
 };
+use pyth_solana_receiver_sdk::price_update::{get_feed_id_from_hex, PriceUpdateV2};
 
 #[derive(Accounts)]
 pub struct MintTokens<'info> {
@@ -43,7 +44,7 @@ pub struct MintTokens<'info> {
         associated_token::authority = token_manager,
     )]
     pub vault: Account<'info, TokenAccount>,
-
+    pub price_update: Account<'info, PriceUpdateV2>,
     // Other
     #[account(mut)]
     pub payer: Signer<'info>,
@@ -69,6 +70,29 @@ pub fn handler(ctx: Context<MintTokens>, quantity: u64, proof: Vec<[u8; 32]>) ->
     // Block Limit check
     let current_slot: u64 = Clock::get()?.slot;
     token_manager.check_block_limit(quantity, current_slot)?;
+
+    // Oracle
+    let price_update = &mut ctx.accounts.price_update;
+    // get_price_no_older_than will fail if the price update is more than 30 seconds old
+    let maximum_age: u64 = 300;
+    // get_price_no_older_than will fail if the price update is for a different price feed.
+    // This string is the id of the BTC/USD feed. See https://pyth.network/developers/price-feed-ids for all available IDs.
+    let feed_id: [u8; 32] =
+        get_feed_id_from_hex("eaa020c61cc479712813461ce153894a96a6c00b21ed0cfc2798d1f9a9e9c94a")?;
+
+    let clock = Clock::get()?;
+
+    let price = price_update.get_price_unchecked(&feed_id)?;
+    msg!("Current timestamp: {}", clock.unix_timestamp);
+    // let price = price_update.get_price_no_older_than(&clock, maximum_age, &feed_id)?;
+    // Sample output:
+    // The price is (7160106530699 ± 5129162301) * 10^-8
+    msg!(
+        "The price is ({} ± {}) * 10^{}",
+        price.price,
+        price.conf,
+        price.exponent
+    );
 
     // Minting
     let bump = token_manager.bump; // Corrected to be a slice of a slice of a byte slice
