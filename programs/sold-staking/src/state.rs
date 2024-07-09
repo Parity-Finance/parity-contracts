@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-use crate::SoldStakingError;
+use crate::{from_decimal, pow, to_decimal, SoldStakingError, PRECISION};
 
 pub const POOL_MANAGER_LENGTH: usize = 8 + 1 + (32 * 5) + 1 + 1 + (8 * 7);
 
@@ -31,9 +31,7 @@ pub struct PoolManager {
 }
 
 impl PoolManager {
-    // Constants for scaling
-    const SCALE_FACTOR: u64 = 31_536_000;
-    const SECONDS_PER_YEAR: u64 = 31_536_000; // 60 * 60 * 24 * 365
+    const SECONDS_PER_INTERVAL: i64 = 8 * 60 * 60; // 8 hours / Can be changed
 
     pub fn calculate_exchange_rate(&mut self, current_timestamp: i64) -> Option<u64> {
         if current_timestamp == self.last_yield_change_timestamp {
@@ -43,30 +41,49 @@ impl PoolManager {
         let elapsed_time = current_timestamp.checked_sub(self.last_yield_change_timestamp)?;
         msg!("Elapsed time: {}", elapsed_time);
 
-        let years_elapsed = (elapsed_time as u128)
-            .checked_mul(Self::SCALE_FACTOR as u128)?
-            .checked_div(Self::SECONDS_PER_YEAR as u128)?;
-        msg!("Years elapsed: {}", years_elapsed);
+        let interval_amounts = elapsed_time.checked_div(Self::SECONDS_PER_INTERVAL)?;
+        let remaining_seconds = elapsed_time.checked_rem(Self::SECONDS_PER_INTERVAL)?;
+        msg!("8-hour intervals: {}", interval_amounts);
+        msg!("Remaining seconds: {}", remaining_seconds);
 
-        let rate = (self.annual_yield_rate as u128)
-            .checked_mul(Self::SCALE_FACTOR as u128)?
-            .checked_div(10_000)?;
-        msg!("Scaled annual rate: {}", rate);
+        // TODO: Store in contract
+        let interval_rate = 166517567 + PRECISION;
+        msg!("Interval Rate: {}", interval_rate);
 
-        let effective_rate = rate
-            .checked_mul(years_elapsed)?
-            .checked_div(Self::SCALE_FACTOR as u128)?;
-        msg!("Effective rate for the elapsed time: {}", effective_rate);
-
-        // Apply the effective rate to the latest exchange rate
-        let compounded_rate = (self.last_yield_change_exchange_rate as u128)
-            .checked_mul(Self::SCALE_FACTOR as u128 + effective_rate)?
-            .checked_div(Self::SCALE_FACTOR as u128)?;
+        let compounded_rate = to_decimal(
+            pow(
+                from_decimal(interval_rate).unwrap(),
+                interval_amounts as i32,
+            )
+            .unwrap(),
+        )
+        .unwrap();
         msg!("Compounded rate: {}", compounded_rate);
 
-        msg!("Last computed exchange rate: {}", compounded_rate);
+        // Calculate the linear yield for the remaining seconds
+        let linear_yield = (interval_rate as u128)
+            .checked_mul(remaining_seconds as u128)
+            .unwrap()
+            .checked_div(Self::SECONDS_PER_INTERVAL as u128)
+            .unwrap()
+            .checked_div(PRECISION as u128)
+            .unwrap();
+        msg!("Linear yield: {}", linear_yield);
 
-        Some(compounded_rate as u64)
+        // Add the linear yield to the compounded rate
+        let total_rate = compounded_rate.checked_add(linear_yield).unwrap();
+        msg!("Total rate: {}", total_rate);
+
+        // Multiply the current exchange rate with the total rate
+        let new_exchange_rate = (self.last_yield_change_exchange_rate as u128)
+            .checked_mul(total_rate)
+            .unwrap()
+            .checked_div(PRECISION as u128)
+            .unwrap() as u64;
+
+        msg!("New exchange rate: {}", new_exchange_rate);
+
+        Some(new_exchange_rate as u64)
     }
 
     pub fn calculate_normalized_quantity(
@@ -220,14 +237,14 @@ mod tests {
             .calculate_exchange_rate(current_timestamp)
             .unwrap();
         println!("One year has passed: {}", result);
-        assert_eq!(result, 1_200_000); // The exchange rate should have increased
+        assert_eq!(result, 1_199_999); // The exchange rate should have increased
 
         // Test case where half a year has passed
         pool_manager.last_yield_change_timestamp = 0;
         let result = pool_manager
             .calculate_exchange_rate(current_timestamp / 2)
             .unwrap();
-        assert_eq!(result, 1_100_000); // The exchange rate should have increased but less than 20%
+        assert_eq!(result, 1_095_353); // The exchange rate should have increased but less than 20%
     }
 
     #[test]
@@ -268,7 +285,7 @@ mod tests {
             .unwrap();
 
         // Verify the result for one year
-        assert_eq!(amount_to_mint, 200000000); // Needs to mint 200 base tokens
+        assert_eq!(amount_to_mint, 199999000); // Needs to mint 200 base tokens
 
         // Calculate the amount to mint for half a year
         let half_year_timestamp = current_timestamp / 2; // Half a year in seconds
@@ -277,7 +294,7 @@ mod tests {
             .unwrap();
 
         // Verify the result for half a year
-        assert_eq!(amount_to_mint_half_year, 100000000); // Needs to mint 100 base tokens
+        assert_eq!(amount_to_mint_half_year, 95353000); // Needs to mint 100 base tokens
     }
 
     #[test]
@@ -292,13 +309,13 @@ mod tests {
         let x_mint_amount = pool_manager
             .calculate_output_amount(base_quantity, current_timestamp, true)
             .unwrap();
-        assert_eq!(x_mint_amount, 833_333_333); // Expected xMint amount after one year
+        assert_eq!(x_mint_amount, 833_334_027); // Expected xMint amount after one year
 
         // Test conversion from xMint to baseMint
         let x_quantity = 100_000_000; // 1 xMint token
         let base_mint_amount = pool_manager
             .calculate_output_amount(x_quantity, current_timestamp, false)
             .unwrap();
-        assert_eq!(base_mint_amount, 120_000_000); // Expected baseMint amount after one year
+        assert_eq!(base_mint_amount, 119_999_900); // Expected baseMint amount after one year
     }
 }

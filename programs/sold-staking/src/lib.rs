@@ -1,12 +1,14 @@
 pub mod error;
 pub mod instructions;
 pub mod state;
+pub mod u64x64_math;
 
 use anchor_lang::prelude::*;
 
 pub use error::*;
 pub use instructions::*;
 pub use state::*;
+pub use u64x64_math::*;
 
 declare_id!("B6rAjGxw89UQCho4fLBGcEne9jadXv2QewPgpQ1SmUnw");
 
