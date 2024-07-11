@@ -30,7 +30,7 @@ Authorities same as Ethena
 ~~Create update pool_manager instruction gated for owner~~
 ~~Pause functionality check for gatekeeper or admin~~
 ~~implement safe math library~~
-Remove supply amount stored on PDA 
+Add mint and redemption fee basispoint
 
 Tests
 - ~~Pause Test~~
