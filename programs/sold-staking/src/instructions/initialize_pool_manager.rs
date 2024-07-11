@@ -17,6 +17,8 @@ pub struct InitializePoolManagerParams {
     pub symbol: String,
     pub uri: String,
     pub decimals: u8,
+    pub interval_apr_rate: u64,
+    pub seconds_per_interval: i32,
     pub initial_exchange_rate: u64,
     pub admin: Pubkey,
 }
@@ -120,7 +122,8 @@ pub fn handler(
     pool_manager.initial_exchange_rate = params.initial_exchange_rate;
     // Other
     pool_manager.base_balance = 0;
-    pool_manager.annual_yield_rate = 2000;
+    pool_manager.interval_apr_rate = params.interval_apr_rate;
+    pool_manager.seconds_per_interval = params.seconds_per_interval;
 
     let clock = Clock::get()?;
     let current_timestamp = clock.unix_timestamp;

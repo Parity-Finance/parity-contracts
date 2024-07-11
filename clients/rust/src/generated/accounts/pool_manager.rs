@@ -45,7 +45,8 @@ pub struct PoolManager {
     pub x_mint: Pubkey,
     pub base_mint_decimals: u8,
     pub x_mint_decimals: u8,
-    pub annual_yield_rate: u64,
+    pub interval_apr_rate: u64,
+    pub seconds_per_interval: i32,
     pub initial_exchange_rate: u64,
     pub last_yield_change_exchange_rate: u64,
     pub inception_timestamp: i64,
@@ -54,7 +55,7 @@ pub struct PoolManager {
 }
 
 impl PoolManager {
-    pub const LEN: usize = 219;
+    pub const LEN: usize = 223;
 
     /// Prefix values used to generate a PDA for this account.
     ///

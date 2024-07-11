@@ -417,8 +417,12 @@
             "type": "u8"
           },
           {
-            "name": "annualYieldRate",
+            "name": "intervalAprRate",
             "type": "u64"
+          },
+          {
+            "name": "secondsPerInterval",
+            "type": "i32"
           },
           {
             "name": "initialExchangeRate",
@@ -467,6 +471,14 @@
             "type": "u8"
           },
           {
+            "name": "intervalAprRate",
+            "type": "u64"
+          },
+          {
+            "name": "secondsPerInterval",
+            "type": "i32"
+          },
+          {
             "name": "initialExchangeRate",
             "type": "u64"
           },
@@ -483,7 +495,7 @@
         "kind": "struct",
         "fields": [
           {
-            "name": "annualYieldRate",
+            "name": "intervalAprRate",
             "type": "u64"
           }
         ]

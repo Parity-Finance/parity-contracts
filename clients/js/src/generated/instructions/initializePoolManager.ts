@@ -18,6 +18,7 @@ import {
 import {
   Serializer,
   array,
+  i32,
   mapSerializer,
   publicKey as publicKeySerializer,
   string,
@@ -54,6 +55,8 @@ export type InitializePoolManagerInstructionData = {
   symbol: string;
   uri: string;
   decimals: number;
+  intervalAprRate: bigint;
+  secondsPerInterval: number;
   initialExchangeRate: bigint;
   admin: PublicKey;
 };
@@ -63,6 +66,8 @@ export type InitializePoolManagerInstructionDataArgs = {
   symbol: string;
   uri: string;
   decimals: number;
+  intervalAprRate: number | bigint;
+  secondsPerInterval: number;
   initialExchangeRate: number | bigint;
   admin: PublicKey;
 };
@@ -83,6 +88,8 @@ export function getInitializePoolManagerInstructionDataSerializer(): Serializer<
         ['symbol', string()],
         ['uri', string()],
         ['decimals', u8()],
+        ['intervalAprRate', u64()],
+        ['secondsPerInterval', i32()],
         ['initialExchangeRate', u64()],
         ['admin', publicKeySerializer()],
       ],

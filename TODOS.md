@@ -18,7 +18,7 @@ Refactor to token2022
 ~~Settings timelock~~
 ~~Withdraw timelock~~
 ~~Update Owner two step function~~
-Use signed numbers to ensure no overflow or underflow
+~~Use signed numbers to ensure no overflow or underflow~~
 
 Different Authority Types
 Authorities same as Ethena
@@ -29,7 +29,8 @@ Authorities same as Ethena
 ~~Adjust yield update function~~
 ~~Create update pool_manager instruction gated for owner~~
 ~~Pause functionality check for gatekeeper or admin~~
-implement safe math library
+~~implement safe math library~~
+Add mint and redemption fee basispoint
 
 Tests
 - ~~Pause Test~~

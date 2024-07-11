@@ -45,11 +45,11 @@ export type UpdateAnnualYieldInstructionAccounts = {
 // Data.
 export type UpdateAnnualYieldInstructionData = {
   discriminator: Array<number>;
-  annualYieldRate: bigint;
+  intervalAprRate: bigint;
 };
 
 export type UpdateAnnualYieldInstructionDataArgs = {
-  annualYieldRate: number | bigint;
+  intervalAprRate: number | bigint;
 };
 
 export function getUpdateAnnualYieldInstructionDataSerializer(): Serializer<
@@ -64,7 +64,7 @@ export function getUpdateAnnualYieldInstructionDataSerializer(): Serializer<
     struct<UpdateAnnualYieldInstructionData>(
       [
         ['discriminator', array(u8(), { size: 8 })],
-        ['annualYieldRate', u64()],
+        ['intervalAprRate', u64()],
       ],
       { description: 'UpdateAnnualYieldInstructionData' }
     ),

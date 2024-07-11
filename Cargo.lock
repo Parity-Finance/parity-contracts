@@ -3138,6 +3138,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "ruint"
+version = "1.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "77e1574d439643c8962edf612a888e7cc5581bcdf36cb64e6bc88466b03b2daa"
+dependencies = [
+ "ruint-macro",
+ "thiserror",
+]
+
+[[package]]
+name = "ruint-macro"
+version = "1.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "48fd7bd8a6377e15ad9d42a8ec25371b94ddc67abe7c8b9127bec79bebaaae18"
+
+[[package]]
 name = "rustc-demangle"
 version = "0.1.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4720,6 +4736,7 @@ dependencies = [
  "anchor-spl",
  "bytemuck",
  "jet-proto-proc-macros",
+ "ruint",
  "solana-program",
  "sold-issuance",
  "static_assertions",
