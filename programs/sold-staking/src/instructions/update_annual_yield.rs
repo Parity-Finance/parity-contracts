@@ -12,7 +12,7 @@ use sold_issuance::{
 
 #[derive(AnchorSerialize, AnchorDeserialize, Debug, Clone)]
 pub struct UpdateYieldParams {
-    pub annual_yield_rate: u64,
+    pub interval_apr_rate: u64,
 }
 
 #[derive(Accounts)]
@@ -54,9 +54,10 @@ pub struct UpdateAnnualYield<'info> {
 }
 
 pub fn handler(ctx: Context<UpdateAnnualYield>, params: UpdateYieldParams) -> Result<()> {
-    if params.annual_yield_rate > 20000 {
-        return err!(SoldStakingError::InvalidYieldRate);
-    }
+    // What check to make?
+    // if params.interval_apr_rate > 20000 {
+    //     return err!(SoldStakingError::InvalidYieldRate);
+    // }
 
     let pool_manager = &mut ctx.accounts.pool_manager;
     let x_mint = &mut ctx.accounts.x_mint;
@@ -102,7 +103,7 @@ pub fn handler(ctx: Context<UpdateAnnualYield>, params: UpdateYieldParams) -> Re
         .ok_or(SoldStakingError::CalculationOverflow)?;
     pool_manager.last_yield_change_timestamp = current_timestamp;
     pool_manager.last_yield_change_exchange_rate = exchange_rate;
-    pool_manager.annual_yield_rate = params.annual_yield_rate;
+    pool_manager.interval_apr_rate = params.interval_apr_rate;
 
     Ok(())
 }

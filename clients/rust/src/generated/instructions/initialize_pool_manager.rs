@@ -130,6 +130,8 @@ pub struct InitializePoolManagerInstructionArgs {
     pub symbol: String,
     pub uri: String,
     pub decimals: u8,
+    pub interval_apr_rate: u64,
+    pub seconds_per_interval: i32,
     pub initial_exchange_rate: u64,
     pub admin: Pubkey,
 }
@@ -166,6 +168,8 @@ pub struct InitializePoolManagerBuilder {
     symbol: Option<String>,
     uri: Option<String>,
     decimals: Option<u8>,
+    interval_apr_rate: Option<u64>,
+    seconds_per_interval: Option<i32>,
     initial_exchange_rate: Option<u64>,
     admin: Option<Pubkey>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
@@ -262,6 +266,16 @@ impl InitializePoolManagerBuilder {
         self
     }
     #[inline(always)]
+    pub fn interval_apr_rate(&mut self, interval_apr_rate: u64) -> &mut Self {
+        self.interval_apr_rate = Some(interval_apr_rate);
+        self
+    }
+    #[inline(always)]
+    pub fn seconds_per_interval(&mut self, seconds_per_interval: i32) -> &mut Self {
+        self.seconds_per_interval = Some(seconds_per_interval);
+        self
+    }
+    #[inline(always)]
     pub fn initial_exchange_rate(&mut self, initial_exchange_rate: u64) -> &mut Self {
         self.initial_exchange_rate = Some(initial_exchange_rate);
         self
@@ -320,6 +334,14 @@ impl InitializePoolManagerBuilder {
             symbol: self.symbol.clone().expect("symbol is not set"),
             uri: self.uri.clone().expect("uri is not set"),
             decimals: self.decimals.clone().expect("decimals is not set"),
+            interval_apr_rate: self
+                .interval_apr_rate
+                .clone()
+                .expect("interval_apr_rate is not set"),
+            seconds_per_interval: self
+                .seconds_per_interval
+                .clone()
+                .expect("seconds_per_interval is not set"),
             initial_exchange_rate: self
                 .initial_exchange_rate
                 .clone()
@@ -568,6 +590,8 @@ impl<'a, 'b> InitializePoolManagerCpiBuilder<'a, 'b> {
             symbol: None,
             uri: None,
             decimals: None,
+            interval_apr_rate: None,
+            seconds_per_interval: None,
             initial_exchange_rate: None,
             admin: None,
             __remaining_accounts: Vec::new(),
@@ -675,6 +699,16 @@ impl<'a, 'b> InitializePoolManagerCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
+    pub fn interval_apr_rate(&mut self, interval_apr_rate: u64) -> &mut Self {
+        self.instruction.interval_apr_rate = Some(interval_apr_rate);
+        self
+    }
+    #[inline(always)]
+    pub fn seconds_per_interval(&mut self, seconds_per_interval: i32) -> &mut Self {
+        self.instruction.seconds_per_interval = Some(seconds_per_interval);
+        self
+    }
+    #[inline(always)]
     pub fn initial_exchange_rate(&mut self, initial_exchange_rate: u64) -> &mut Self {
         self.instruction.initial_exchange_rate = Some(initial_exchange_rate);
         self
@@ -734,6 +768,16 @@ impl<'a, 'b> InitializePoolManagerCpiBuilder<'a, 'b> {
                 .decimals
                 .clone()
                 .expect("decimals is not set"),
+            interval_apr_rate: self
+                .instruction
+                .interval_apr_rate
+                .clone()
+                .expect("interval_apr_rate is not set"),
+            seconds_per_interval: self
+                .instruction
+                .seconds_per_interval
+                .clone()
+                .expect("seconds_per_interval is not set"),
             initial_exchange_rate: self
                 .instruction
                 .initial_exchange_rate
@@ -806,6 +850,8 @@ struct InitializePoolManagerCpiBuilderInstruction<'a, 'b> {
     symbol: Option<String>,
     uri: Option<String>,
     decimals: Option<u8>,
+    interval_apr_rate: Option<u64>,
+    seconds_per_interval: Option<i32>,
     initial_exchange_rate: Option<u64>,
     admin: Option<Pubkey>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.

@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 
 use crate::{from_decimal, pow, to_decimal, SoldStakingError, PRECISION};
 
-pub const POOL_MANAGER_LENGTH: usize = 8 + 1 + (32 * 5) + 1 + 1 + (8 * 7);
+pub const POOL_MANAGER_LENGTH: usize = 8 + 1 + (32 * 5) + 1 + 1 + (8 * 7) + 4;
 
 #[account]
 pub struct PoolManager {
@@ -20,7 +20,8 @@ pub struct PoolManager {
     pub x_mint_decimals: u8,    // 1 byte
 
     // Yield
-    pub annual_yield_rate: u64, // 8 bytes - Stored as basis points, e.g., 2000 for 20%
+    pub interval_apr_rate: u64, // 8 bytes - Stored as basis points, e.g., 2000 for 20%
+    pub seconds_per_interval: i32, // 4 bytes
     pub initial_exchange_rate: u64, // 8 bytes
     pub last_yield_change_exchange_rate: u64, // 8 bytes
     pub inception_timestamp: i64, // 8 bytes // A bit useless
@@ -31,8 +32,6 @@ pub struct PoolManager {
 }
 
 impl PoolManager {
-    const SECONDS_PER_INTERVAL: i64 = 8 * 60 * 60; // 8 hours / Can be changed
-
     pub fn calculate_exchange_rate(&mut self, current_timestamp: i64) -> Option<u64> {
         if current_timestamp == self.last_yield_change_timestamp {
             return Some(self.last_yield_change_exchange_rate);
@@ -41,13 +40,12 @@ impl PoolManager {
         let elapsed_time = current_timestamp.checked_sub(self.last_yield_change_timestamp)?;
         msg!("Elapsed time: {}", elapsed_time);
 
-        let interval_amounts = elapsed_time.checked_div(Self::SECONDS_PER_INTERVAL)?;
-        let remaining_seconds = elapsed_time.checked_rem(Self::SECONDS_PER_INTERVAL)?;
-        msg!("8-hour intervals: {}", interval_amounts);
+        let interval_amounts = elapsed_time.checked_div(self.seconds_per_interval as i64)?;
+        let remaining_seconds = elapsed_time.checked_rem(self.seconds_per_interval as i64)?;
+        msg!("intervals: {}", interval_amounts);
         msg!("Remaining seconds: {}", remaining_seconds);
 
-        // TODO: Store in contract
-        let interval_rate = 166517567 + PRECISION;
+        let interval_rate = self.interval_apr_rate as u128;
         msg!("Interval Rate: {}", interval_rate);
 
         let compounded_rate = to_decimal(
@@ -64,9 +62,7 @@ impl PoolManager {
         let linear_yield = (interval_rate as u128)
             .checked_mul(remaining_seconds as u128)
             .unwrap()
-            .checked_div(Self::SECONDS_PER_INTERVAL as u128)
-            .unwrap()
-            .checked_div(PRECISION as u128)
+            .checked_div(self.seconds_per_interval as u128)
             .unwrap();
         msg!("Linear yield: {}", linear_yield);
 
@@ -211,7 +207,8 @@ mod tests {
             x_mint: Pubkey::default(),
             base_mint_decimals: 6,
             x_mint_decimals: 6,
-            annual_yield_rate: 2000,
+            interval_apr_rate: 1000166517567, // Interval APR rate without considering zeros
+            seconds_per_interval: 8 * 60 * 60, // 8 hours / Can be changed
             initial_exchange_rate: 1000000,
             last_yield_change_exchange_rate: 1000000,
             inception_timestamp: 0,

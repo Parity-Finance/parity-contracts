@@ -22,6 +22,7 @@ import {
 import {
   Serializer,
   array,
+  i32,
   i64,
   mapSerializer,
   publicKey as publicKeySerializer,
@@ -43,7 +44,8 @@ export type PoolManagerAccountData = {
   xMint: PublicKey;
   baseMintDecimals: number;
   xMintDecimals: number;
-  annualYieldRate: bigint;
+  intervalAprRate: bigint;
+  secondsPerInterval: number;
   initialExchangeRate: bigint;
   lastYieldChangeExchangeRate: bigint;
   inceptionTimestamp: bigint;
@@ -60,7 +62,8 @@ export type PoolManagerAccountDataArgs = {
   xMint: PublicKey;
   baseMintDecimals: number;
   xMintDecimals: number;
-  annualYieldRate: number | bigint;
+  intervalAprRate: number | bigint;
+  secondsPerInterval: number;
   initialExchangeRate: number | bigint;
   lastYieldChangeExchangeRate: number | bigint;
   inceptionTimestamp: number | bigint;
@@ -84,7 +87,8 @@ export function getPoolManagerAccountDataSerializer(): Serializer<
         ['xMint', publicKeySerializer()],
         ['baseMintDecimals', u8()],
         ['xMintDecimals', u8()],
-        ['annualYieldRate', u64()],
+        ['intervalAprRate', u64()],
+        ['secondsPerInterval', i32()],
         ['initialExchangeRate', u64()],
         ['lastYieldChangeExchangeRate', u64()],
         ['inceptionTimestamp', i64()],
@@ -176,7 +180,8 @@ export function getPoolManagerGpaBuilder(
       xMint: PublicKey;
       baseMintDecimals: number;
       xMintDecimals: number;
-      annualYieldRate: number | bigint;
+      intervalAprRate: number | bigint;
+      secondsPerInterval: number;
       initialExchangeRate: number | bigint;
       lastYieldChangeExchangeRate: number | bigint;
       inceptionTimestamp: number | bigint;
@@ -192,19 +197,20 @@ export function getPoolManagerGpaBuilder(
       xMint: [137, publicKeySerializer()],
       baseMintDecimals: [169, u8()],
       xMintDecimals: [170, u8()],
-      annualYieldRate: [171, u64()],
-      initialExchangeRate: [179, u64()],
-      lastYieldChangeExchangeRate: [187, u64()],
-      inceptionTimestamp: [195, i64()],
-      lastYieldChangeTimestamp: [203, i64()],
-      baseBalance: [211, u64()],
+      intervalAprRate: [171, u64()],
+      secondsPerInterval: [179, i32()],
+      initialExchangeRate: [183, u64()],
+      lastYieldChangeExchangeRate: [191, u64()],
+      inceptionTimestamp: [199, i64()],
+      lastYieldChangeTimestamp: [207, i64()],
+      baseBalance: [215, u64()],
     })
     .deserializeUsing<PoolManager>((account) => deserializePoolManager(account))
     .whereField('discriminator', [54, 241, 200, 10, 177, 151, 78, 17]);
 }
 
 export function getPoolManagerSize(): number {
-  return 219;
+  return 223;
 }
 
 export function findPoolManagerPda(

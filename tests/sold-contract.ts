@@ -2,7 +2,7 @@ import { keypairIdentity, Pda, PublicKey, publicKey, TransactionBuilder, createA
 import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
 import { createAssociatedToken, createSplAssociatedTokenProgram, createSplTokenProgram, findAssociatedTokenPda, safeFetchMint, safeFetchToken, SPL_ASSOCIATED_TOKEN_PROGRAM_ID } from "@metaplex-foundation/mpl-toolbox"
 import { Connection, Keypair, PublicKey as Web3JsPublicKey } from "@solana/web3.js";
-import { createSoldIssuanceProgram, findTokenManagerPda, initializeTokenManager, SOLD_ISSUANCE_PROGRAM_ID, mint, redeem, safeFetchTokenManager, getMerkleRoot, getMerkleProof, toggleActive, updatePoolManager, depositFunds, withdrawFunds, initializePoolManager, SOLD_STAKING_PROGRAM_ID, calculateExchangeRate, stake, unstake, updateAnnualYield, findPoolManagerPda, updateTokenManagerAdmin, safeFetchPoolManager, initializeWithdrawFunds, initiateUpdatePoolOwner, updatePoolOwner, updateManagerOwner, initiateUpdateManagerOwner, updateXmintMetadata, updateMintMetadata, addGatekeeper, safeFetchGatekeeper, removeGatekeeper, findGatekeeperPda } from "../clients/js/src"
+import { createSoldIssuanceProgram, findTokenManagerPda, initializeTokenManager, SOLD_ISSUANCE_PROGRAM_ID, mint, redeem, safeFetchTokenManager, getMerkleRoot, getMerkleProof, toggleActive, updatePoolManager, depositFunds, withdrawFunds, initializePoolManager, SOLD_STAKING_PROGRAM_ID, calculateExchangeRate, stake, unstake, updateAnnualYield, findPoolManagerPda, updateTokenManagerAdmin, safeFetchPoolManager, initializeWithdrawFunds, initiateUpdatePoolOwner, updatePoolOwner, updateManagerOwner, initiateUpdateManagerOwner, updateXmintMetadata, updateMintMetadata, addGatekeeper, safeFetchGatekeeper, removeGatekeeper, findGatekeeperPda, calculateIntervalRate } from "../clients/js/src"
 import { ASSOCIATED_TOKEN_PROGRAM_ID, createMint, getOrCreateAssociatedTokenAccount, mintTo, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { fromWeb3JsKeypair, fromWeb3JsPublicKey, toWeb3JsKeypair } from "@metaplex-foundation/umi-web3js-adapters";
 import { findMetadataPda, safeFetchMetadata } from "@metaplex-foundation/mpl-token-metadata";
@@ -40,6 +40,8 @@ describe.only("sold-issuance", () => {
   const emergencyFundBasisPoints = 1200; // 12% have to stay in the vaultIssuance
   const exchangeRate = 1 * 10 ** quoteMintDecimals; // Exchange rate is exactly how many quoteMint you will get for 1 baseMint. That's why quote mint decimals have to be considered
   const exchangeRateDecimals = quoteMintDecimals
+  const intervalAprRate = 1000166517567; // 1,2 ^ (1 / 1095) for 20% annual APY ^ 1 / auto-compounding intervals per year (8 hourly compounding)
+  const secondsPerInterval = 8 * 60 * 60; // 8 hours
 
   const limitPerSlot = 100000 * 10 ** baseMintDecimals;
 
@@ -113,7 +115,7 @@ describe.only("sold-issuance", () => {
     }
   })
 
-  it.only("Token manager is initialized!", async () => {
+  it("Token manager is initialized!", async () => {
     const merkleRoot = getMerkleRoot(allowedWallets);
 
     let txBuilder = new TransactionBuilder();
@@ -165,7 +167,7 @@ describe.only("sold-issuance", () => {
     assert.equal(tokenManagerAcc.totalCollateral, 0, "Token manager's total collateral should be zero");
   });
 
-  it.only("Stake Pool is initialized!", async () => {
+  it("Stake Pool is initialized!", async () => {
     let txBuilder = new TransactionBuilder();
 
     txBuilder = txBuilder.add(initializePoolManager(umi, {
@@ -180,6 +182,8 @@ describe.only("sold-issuance", () => {
       uri: "https://builderz.dev/_next/image?url=%2Fimages%2Fheader-gif.gif&w=3840&q=75",
       decimals: xMintDecimals,
       initialExchangeRate,
+      secondsPerInterval,
+      intervalAprRate,
       owner: umi.identity,
       admin: umi.identity.publicKey,
     }))
@@ -198,7 +202,7 @@ describe.only("sold-issuance", () => {
     assert.equal(xMintAcc.supply, 0n);
   });
 
-  it.only("Sold can be minted for USDC", async () => {
+  it("Sold can be minted for USDC", async () => {
     const quantity = 10000 * 10 ** baseMintDecimals;
 
     const proof = getMerkleProof(allowedWallets, keypair.publicKey.toBase58());
@@ -374,8 +378,10 @@ describe.only("sold-issuance", () => {
 
   it("should prevent minting when paused", async () => {
     // Pause the token manager
+    umi = umi.use(keypairIdentity(fromWeb3JsKeypair(keypair))); // Switch back to admin
+
     let txBuilder = new TransactionBuilder();
-    txBuilder = txBuilder.add(toggleActive(umi, { tokenManager, active: false }));
+    txBuilder = txBuilder.add(toggleActive(umi, { tokenManager, authority: umi.identity, active: false }));
     await txBuilder.sendAndConfirm(umi);
 
     let tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
@@ -797,7 +803,7 @@ describe.only("sold-issuance", () => {
   });
 
   // Stake Program
-  it.only("baseMint can be staked for xMint", async () => {
+  it("baseMint can be staked for xMint", async () => {
     const quantity = 1000 * 10 ** baseMintDecimals;
 
     let txBuilder = new TransactionBuilder();
@@ -833,9 +839,11 @@ describe.only("sold-issuance", () => {
     const exchangeRate = calculateExchangeRate(
       Number(_stakePoolAcc.lastYieldChangeTimestamp),
       Math.floor(Date.now() / 1000),
-      Number(_stakePoolAcc.annualYieldRate),
-      Number(_stakePoolAcc.lastYieldChangeExchangeRate)
+      Number(_stakePoolAcc.intervalAprRate),
+      Number(_stakePoolAcc.lastYieldChangeExchangeRate),
+      Number(_stakePoolAcc.secondsPerInterval)
     );
+    // console.log("Exchange Rate: ", exchangeRate);
 
     await txBuilder.sendAndConfirm(umi, { send: { skipPreflight: true } });
 
@@ -845,15 +853,17 @@ describe.only("sold-issuance", () => {
 
     const expectedBaseMintAmount = BigInt(quantity);
 
-    const expectedxMintAmount = BigInt(Math.floor(quantity * exchangeRate / 10 ** baseMintDecimals));
+    const expectedxMintAmount = BigInt(Math.floor(quantity / exchangeRate * 10 ** baseMintDecimals));
     // console.log("Expected xMint Amount: ", Number(expectedxMintAmount));
+    // console.log("xMint Supply start: ", Number(_xMintAcc.supply));
+    // console.log("xMint Supply end: ", Number(xMintAcc.supply));
 
     assert.equal(stakePoolAcc.baseBalance, _stakePoolAcc.baseBalance + expectedBaseMintAmount, "Base Balance is not correct");
     assert.equal(vaultAcc.amount, _vaultAcc.amount + expectedBaseMintAmount, "Vault amount is not correct");
     chaiAssert.closeTo(Number(xMintAcc.supply), Number(_xMintAcc.supply) + Number(expectedxMintAmount), 300000, "xSupply is not correct");
   })
 
-  it.only("baseMint can be unstaked by redeeming xMint", async () => {
+  it("baseMint can be unstaked by redeeming xMint", async () => {
     // const quantity = 10000 * 10 ** baseMintDecimals;
     let txBuilder = new TransactionBuilder();
 
@@ -893,8 +903,9 @@ describe.only("sold-issuance", () => {
     const exchangeRate = calculateExchangeRate(
       Number(_stakePoolAcc.lastYieldChangeTimestamp),
       Math.floor(Date.now() / 1000),
-      Number(_stakePoolAcc.annualYieldRate),
-      Number(_stakePoolAcc.lastYieldChangeExchangeRate)
+      Number(_stakePoolAcc.intervalAprRate),
+      Number(_stakePoolAcc.lastYieldChangeExchangeRate),
+      Number(_stakePoolAcc.secondsPerInterval)
     );
     // console.log("Exchange Rate: ", exchangeRate);
 
@@ -904,26 +915,31 @@ describe.only("sold-issuance", () => {
     const xMintAcc = await safeFetchMint(umi, xMint);
     const vaultAcc = await safeFetchToken(umi, vaultStaking);
 
-    const expectedBaseMintAmount = BigInt(Math.floor((quantity / exchangeRate) * 10 ** baseMintDecimals));
+    const expectedBaseMintAmount = BigInt(Math.floor((quantity * exchangeRate) / 10 ** baseMintDecimals));
     // console.log("Expected Base Mint Amount: ", Number(expectedBaseMintAmount));
-    // console.log("Base Balance: ", Number(stakePoolAcc.baseBalance));
+    // console.log("Base Balance Start: ", Number(_stakePoolAcc.baseBalance));
+    // console.log("Base Balance end: ", Number(stakePoolAcc.baseBalance));
 
     const expectedxMintAmount = BigInt(quantity);
 
-    chaiAssert.closeTo(Number(stakePoolAcc.baseBalance), Number(_stakePoolAcc.baseBalance) - Number(expectedBaseMintAmount), 200000, "Base Balance is not correct");
-    chaiAssert.closeTo(Number(vaultAcc.amount), Number(_vaultAcc.amount) - Number(expectedBaseMintAmount), 200000, "Vault amount is not correct");
+    chaiAssert.equal(Number(stakePoolAcc.baseBalance), 0, "Base Balance is not correct");
+    chaiAssert.equal(Number(vaultAcc.amount), 0, "Vault amount is not correct");
     chaiAssert.equal(xMintAcc.supply, _xMintAcc.supply - expectedxMintAmount, "xSupply is not correct");
   })
 
-  it.only("should update the annual yield rate of the stake pool", async function () {
-    const annualYieldRate = 2500;
+  it("should update the annual yield rate of the stake pool", async function () {
+    const annualYieldRate = 2500; // in Basis points
+    const intervalSeconds = 60 * 60 * 8 // 8 hour interval
+
+    const intervalRate = calculateIntervalRate(annualYieldRate, intervalSeconds);
+    // console.log("Interval Rate: ", Number(intervalRate));
 
     let txBuilder = new TransactionBuilder();
 
     txBuilder = txBuilder.add(updateAnnualYield(umi, {
       poolManager,
       admin: umi.identity,
-      annualYieldRate,
+      intervalAprRate: intervalRate,
       tokenManager,
       xMint,
       soldIssuanceProgram: SOLD_ISSUANCE_PROGRAM_ID,
@@ -936,7 +952,7 @@ describe.only("sold-issuance", () => {
 
     const stakePoolAcc = await safeFetchPoolManager(umi, poolManager);
 
-    assert.equal(stakePoolAcc.annualYieldRate, 2500, "Annual yield rate should be updated to 25.00%");
+    assert.equal(stakePoolAcc.intervalAprRate, intervalRate, "Annual yield rate should be updated to 25.00%");
   });
 
   it("should initiate and accept pool owner update", async () => {

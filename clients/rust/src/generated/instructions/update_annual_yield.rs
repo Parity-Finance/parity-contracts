@@ -119,7 +119,7 @@ impl UpdateAnnualYieldInstructionData {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct UpdateAnnualYieldInstructionArgs {
-    pub annual_yield_rate: u64,
+    pub interval_apr_rate: u64,
 }
 
 /// Instruction builder for `UpdateAnnualYield`.
@@ -148,7 +148,7 @@ pub struct UpdateAnnualYieldBuilder {
     token_program: Option<solana_program::pubkey::Pubkey>,
     associated_token_program: Option<solana_program::pubkey::Pubkey>,
     sold_issuance_program: Option<solana_program::pubkey::Pubkey>,
-    annual_yield_rate: Option<u64>,
+    interval_apr_rate: Option<u64>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
@@ -215,8 +215,8 @@ impl UpdateAnnualYieldBuilder {
         self
     }
     #[inline(always)]
-    pub fn annual_yield_rate(&mut self, annual_yield_rate: u64) -> &mut Self {
-        self.annual_yield_rate = Some(annual_yield_rate);
+    pub fn interval_apr_rate(&mut self, interval_apr_rate: u64) -> &mut Self {
+        self.interval_apr_rate = Some(interval_apr_rate);
         self
     }
     /// Add an aditional account to the instruction.
@@ -260,10 +260,10 @@ impl UpdateAnnualYieldBuilder {
                 .expect("sold_issuance_program is not set"),
         };
         let args = UpdateAnnualYieldInstructionArgs {
-            annual_yield_rate: self
-                .annual_yield_rate
+            interval_apr_rate: self
+                .interval_apr_rate
                 .clone()
-                .expect("annual_yield_rate is not set"),
+                .expect("interval_apr_rate is not set"),
         };
 
         accounts.instruction_with_remaining_accounts(args, &self.__remaining_accounts)
@@ -490,7 +490,7 @@ impl<'a, 'b> UpdateAnnualYieldCpiBuilder<'a, 'b> {
             token_program: None,
             associated_token_program: None,
             sold_issuance_program: None,
-            annual_yield_rate: None,
+            interval_apr_rate: None,
             __remaining_accounts: Vec::new(),
         });
         Self { instruction }
@@ -570,8 +570,8 @@ impl<'a, 'b> UpdateAnnualYieldCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn annual_yield_rate(&mut self, annual_yield_rate: u64) -> &mut Self {
-        self.instruction.annual_yield_rate = Some(annual_yield_rate);
+    pub fn interval_apr_rate(&mut self, interval_apr_rate: u64) -> &mut Self {
+        self.instruction.interval_apr_rate = Some(interval_apr_rate);
         self
     }
     /// Add an additional account to the instruction.
@@ -616,11 +616,11 @@ impl<'a, 'b> UpdateAnnualYieldCpiBuilder<'a, 'b> {
         signers_seeds: &[&[&[u8]]],
     ) -> solana_program::entrypoint::ProgramResult {
         let args = UpdateAnnualYieldInstructionArgs {
-            annual_yield_rate: self
+            interval_apr_rate: self
                 .instruction
-                .annual_yield_rate
+                .interval_apr_rate
                 .clone()
-                .expect("annual_yield_rate is not set"),
+                .expect("interval_apr_rate is not set"),
         };
         let instruction = UpdateAnnualYieldCpi {
             __program: self.instruction.__program,
@@ -683,7 +683,7 @@ struct UpdateAnnualYieldCpiBuilderInstruction<'a, 'b> {
     token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     associated_token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     sold_issuance_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    annual_yield_rate: Option<u64>,
+    interval_apr_rate: Option<u64>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(
         &'b solana_program::account_info::AccountInfo<'a>,
