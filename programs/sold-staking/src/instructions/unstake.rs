@@ -68,6 +68,8 @@ pub fn handler(ctx: Context<Unstake>, quantity: u64) -> Result<()> {
     let current_timestamp = Clock::get()?.unix_timestamp;
     let x_amount = quantity;
 
+    let initial_x_mint_supply = x_mint.supply;
+
     // Burning
     let bump = pool_manager.bump; // Corrected to be a slice of a slice of a byte slice
     let signer_seeds: &[&[&[u8]]] = &[&[b"pool-manager", &[bump]]];
@@ -85,7 +87,8 @@ pub fn handler(ctx: Context<Unstake>, quantity: u64) -> Result<()> {
     )?;
 
     // Mint Base into pool
-    let amount_to_mint = pool_manager.calculate_amount_to_mint(x_mint.supply, current_timestamp)?;
+    let amount_to_mint =
+        pool_manager.calculate_amount_to_mint(initial_x_mint_supply, current_timestamp)?;
     msg!("Amount to mint: {}", amount_to_mint);
 
     if amount_to_mint > 0 {
