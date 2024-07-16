@@ -62,10 +62,12 @@ pub struct TokenManager {
     pub withdraw_time_lock: i64,
     pub withdraw_execution_window: i64,
     pub total_collateral: u64,
+    pub mint_fee_bps: u16,
+    pub redeem_fee_bps: u16,
 }
 
 impl TokenManager {
-    pub const LEN: usize = 310;
+    pub const LEN: usize = 314;
 
     /// Prefix values used to generate a PDA for this account.
     ///

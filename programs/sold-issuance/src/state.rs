@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 
 use crate::SoldIssuanceError;
 
-pub const TOKEN_MANAGER_SIZE: usize = 8 + (32 * 7) + (8 * 9) + 2 + (1 * 4);
+pub const TOKEN_MANAGER_SIZE: usize = 8 + (32 * 7) + (8 * 9) + (2 * 3) + (1 * 4);
 
 #[account]
 pub struct TokenManager {
@@ -36,6 +36,8 @@ pub struct TokenManager {
 
     // Other
     pub total_collateral: u64, // 8
+    pub mint_fee_bps: u16, // 2
+    pub redeem_fee_bps: u16, // 2
 }
 
 #[account]
@@ -198,6 +200,8 @@ mod tests {
             withdraw_time_lock: 0,
             withdraw_execution_window: 0,
             total_collateral: 0,
+            mint_fee_bps: 0,
+            redeem_fee_bps: 0
         }
     }
 

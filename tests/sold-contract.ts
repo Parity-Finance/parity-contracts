@@ -139,7 +139,9 @@ describe.only("sold-issuance", () => {
       minter: poolManager,
       limitPerSlot,
       withdrawExecutionWindow,
-      withdrawTimeLock
+      withdrawTimeLock,
+      mintFeeBps: 50,
+      redeemFeeBps: 50
     }))
 
     await txBuilder.sendAndConfirm(umi);

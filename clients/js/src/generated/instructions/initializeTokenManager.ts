@@ -64,6 +64,8 @@ export type InitializeTokenManagerInstructionData = {
   limitPerSlot: bigint;
   withdrawTimeLock: bigint;
   withdrawExecutionWindow: bigint;
+  mintFeeBps: number;
+  redeemFeeBps: number;
 };
 
 export type InitializeTokenManagerInstructionDataArgs = {
@@ -79,6 +81,8 @@ export type InitializeTokenManagerInstructionDataArgs = {
   limitPerSlot: number | bigint;
   withdrawTimeLock: number | bigint;
   withdrawExecutionWindow: number | bigint;
+  mintFeeBps: number;
+  redeemFeeBps: number;
 };
 
 export function getInitializeTokenManagerInstructionDataSerializer(): Serializer<
@@ -105,6 +109,8 @@ export function getInitializeTokenManagerInstructionDataSerializer(): Serializer
         ['limitPerSlot', u64()],
         ['withdrawTimeLock', i64()],
         ['withdrawExecutionWindow', i64()],
+        ['mintFeeBps', u16()],
+        ['redeemFeeBps', u16()],
       ],
       { description: 'InitializeTokenManagerInstructionData' }
     ),

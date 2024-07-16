@@ -136,6 +136,8 @@ pub struct InitializeTokenManagerInstructionArgs {
     pub limit_per_slot: u64,
     pub withdraw_time_lock: i64,
     pub withdraw_execution_window: i64,
+    pub mint_fee_bps: u16,
+    pub redeem_fee_bps: u16,
 }
 
 /// Instruction builder for `InitializeTokenManager`.
@@ -178,6 +180,8 @@ pub struct InitializeTokenManagerBuilder {
     limit_per_slot: Option<u64>,
     withdraw_time_lock: Option<i64>,
     withdraw_execution_window: Option<i64>,
+    mint_fee_bps: Option<u16>,
+    redeem_fee_bps: Option<u16>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
@@ -310,6 +314,16 @@ impl InitializeTokenManagerBuilder {
         self.withdraw_execution_window = Some(withdraw_execution_window);
         self
     }
+    #[inline(always)]
+    pub fn mint_fee_bps(&mut self, mint_fee_bps: u16) -> &mut Self {
+        self.mint_fee_bps = Some(mint_fee_bps);
+        self
+    }
+    #[inline(always)]
+    pub fn redeem_fee_bps(&mut self, redeem_fee_bps: u16) -> &mut Self {
+        self.redeem_fee_bps = Some(redeem_fee_bps);
+        self
+    }
     /// Add an aditional account to the instruction.
     #[inline(always)]
     pub fn add_remaining_account(
@@ -382,6 +396,11 @@ impl InitializeTokenManagerBuilder {
                 .withdraw_execution_window
                 .clone()
                 .expect("withdraw_execution_window is not set"),
+            mint_fee_bps: self.mint_fee_bps.clone().expect("mint_fee_bps is not set"),
+            redeem_fee_bps: self
+                .redeem_fee_bps
+                .clone()
+                .expect("redeem_fee_bps is not set"),
         };
 
         accounts.instruction_with_remaining_accounts(args, &self.__remaining_accounts)
@@ -632,6 +651,8 @@ impl<'a, 'b> InitializeTokenManagerCpiBuilder<'a, 'b> {
             limit_per_slot: None,
             withdraw_time_lock: None,
             withdraw_execution_window: None,
+            mint_fee_bps: None,
+            redeem_fee_bps: None,
             __remaining_accounts: Vec::new(),
         });
         Self { instruction }
@@ -772,6 +793,16 @@ impl<'a, 'b> InitializeTokenManagerCpiBuilder<'a, 'b> {
         self.instruction.withdraw_execution_window = Some(withdraw_execution_window);
         self
     }
+    #[inline(always)]
+    pub fn mint_fee_bps(&mut self, mint_fee_bps: u16) -> &mut Self {
+        self.instruction.mint_fee_bps = Some(mint_fee_bps);
+        self
+    }
+    #[inline(always)]
+    pub fn redeem_fee_bps(&mut self, redeem_fee_bps: u16) -> &mut Self {
+        self.instruction.redeem_fee_bps = Some(redeem_fee_bps);
+        self
+    }
     /// Add an additional account to the instruction.
     #[inline(always)]
     pub fn add_remaining_account(
@@ -854,6 +885,16 @@ impl<'a, 'b> InitializeTokenManagerCpiBuilder<'a, 'b> {
                 .withdraw_execution_window
                 .clone()
                 .expect("withdraw_execution_window is not set"),
+            mint_fee_bps: self
+                .instruction
+                .mint_fee_bps
+                .clone()
+                .expect("mint_fee_bps is not set"),
+            redeem_fee_bps: self
+                .instruction
+                .redeem_fee_bps
+                .clone()
+                .expect("redeem_fee_bps is not set"),
         };
         let instruction = InitializeTokenManagerCpi {
             __program: self.instruction.__program,
@@ -928,6 +969,8 @@ struct InitializeTokenManagerCpiBuilderInstruction<'a, 'b> {
     limit_per_slot: Option<u64>,
     withdraw_time_lock: Option<i64>,
     withdraw_execution_window: Option<i64>,
+    mint_fee_bps: Option<u16>,
+    redeem_fee_bps: Option<u16>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(
         &'b solana_program::account_info::AccountInfo<'a>,

@@ -709,6 +709,14 @@
           {
             "name": "totalCollateral",
             "type": "u64"
+          },
+          {
+            "name": "mintFeeBps",
+            "type": "u16"
+          },
+          {
+            "name": "redeemFeeBps",
+            "type": "u16"
           }
         ]
       }
@@ -784,6 +792,14 @@
           {
             "name": "withdrawExecutionWindow",
             "type": "i64"
+          },
+          {
+            "name": "mintFeeBps",
+            "type": "u16"
+          },
+          {
+            "name": "redeemFeeBps",
+            "type": "u16"
           }
         ]
       }
@@ -846,6 +862,18 @@
             "name": "newWithdrawExecutionWindow",
             "type": {
               "option": "i64"
+            }
+          },
+          {
+            "name": "newMintFeeBps",
+            "type": {
+              "option": "u16"
+            }
+          },
+          {
+            "name": "newRedeemFeeBps",
+            "type": {
+              "option": "u16"
             }
           }
         ]

@@ -74,7 +74,20 @@ pub fn handler(ctx: Context<MintTokens>, quantity: u64, proof: Vec<[u8; 32]>) ->
     let bump = token_manager.bump; // Corrected to be a slice of a slice of a byte slice
     let signer_seeds: &[&[&[u8]]] = &[&[b"token-manager", &[bump]]];
 
-    let mint_amount = quantity;
+    // Calculate mint fee
+
+    let mint_fee = quantity
+    .checked_mul(token_manager.mint_fee_bps as u64)
+    .ok_or(SoldIssuanceError::CalculationOverflow)?
+    .checked_div(10000)
+    .ok_or(SoldIssuanceError::CalculationOverflow)?;
+
+    // deduct the mint fee from the mint amount
+
+    let mint_amount = quantity
+    .checked_sub(mint_fee)
+    .ok_or(SoldIssuanceError::CalculationOverflow)?;
+
     msg!("Mint amount: {}", mint_amount);
 
     mint_to(

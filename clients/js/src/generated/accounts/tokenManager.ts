@@ -59,6 +59,8 @@ export type TokenManagerAccountData = {
   withdrawTimeLock: bigint;
   withdrawExecutionWindow: bigint;
   totalCollateral: bigint;
+  mintFeeBps: number;
+  redeemFeeBps: number;
 };
 
 export type TokenManagerAccountDataArgs = {
@@ -83,6 +85,8 @@ export type TokenManagerAccountDataArgs = {
   withdrawTimeLock: number | bigint;
   withdrawExecutionWindow: number | bigint;
   totalCollateral: number | bigint;
+  mintFeeBps: number;
+  redeemFeeBps: number;
 };
 
 export function getTokenManagerAccountDataSerializer(): Serializer<
@@ -118,6 +122,8 @@ export function getTokenManagerAccountDataSerializer(): Serializer<
         ['withdrawTimeLock', i64()],
         ['withdrawExecutionWindow', i64()],
         ['totalCollateral', u64()],
+        ['mintFeeBps', u16()],
+        ['redeemFeeBps', u16()],
       ],
       { description: 'TokenManagerAccountData' }
     ),
@@ -217,6 +223,8 @@ export function getTokenManagerGpaBuilder(
       withdrawTimeLock: number | bigint;
       withdrawExecutionWindow: number | bigint;
       totalCollateral: number | bigint;
+      mintFeeBps: number;
+      redeemFeeBps: number;
     }>({
       discriminator: [0, array(u8(), { size: 8 })],
       bump: [8, u8()],
@@ -240,6 +248,8 @@ export function getTokenManagerGpaBuilder(
       withdrawTimeLock: [286, i64()],
       withdrawExecutionWindow: [294, i64()],
       totalCollateral: [302, u64()],
+      mintFeeBps: [310, u16()],
+      redeemFeeBps: [312, u16()],
     })
     .deserializeUsing<TokenManager>((account) =>
       deserializeTokenManager(account)
@@ -248,7 +258,7 @@ export function getTokenManagerGpaBuilder(
 }
 
 export function getTokenManagerSize(): number {
-  return 310;
+  return 314;
 }
 
 export function findTokenManagerPda(

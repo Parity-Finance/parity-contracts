@@ -47,6 +47,8 @@ export type UpdateTokenManagerOwnerInstructionData = {
   emergencyFundBasisPoints: Option<number>;
   newWithdrawTimeLock: Option<bigint>;
   newWithdrawExecutionWindow: Option<bigint>;
+  newMintFeeBps: Option<number>;
+  newRedeemFeeBps: Option<number>;
 };
 
 export type UpdateTokenManagerOwnerInstructionDataArgs = {
@@ -55,6 +57,8 @@ export type UpdateTokenManagerOwnerInstructionDataArgs = {
   emergencyFundBasisPoints: OptionOrNullable<number>;
   newWithdrawTimeLock: OptionOrNullable<number | bigint>;
   newWithdrawExecutionWindow: OptionOrNullable<number | bigint>;
+  newMintFeeBps: OptionOrNullable<number>;
+  newRedeemFeeBps: OptionOrNullable<number>;
 };
 
 export function getUpdateTokenManagerOwnerInstructionDataSerializer(): Serializer<
@@ -74,6 +78,8 @@ export function getUpdateTokenManagerOwnerInstructionDataSerializer(): Serialize
         ['emergencyFundBasisPoints', option(u16())],
         ['newWithdrawTimeLock', option(i64())],
         ['newWithdrawExecutionWindow', option(i64())],
+        ['newMintFeeBps', option(u16())],
+        ['newRedeemFeeBps', option(u16())],
       ],
       { description: 'UpdateTokenManagerOwnerInstructionData' }
     ),

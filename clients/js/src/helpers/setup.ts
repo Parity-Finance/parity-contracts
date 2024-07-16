@@ -68,7 +68,9 @@ export async function setup(umi: Umi, setupOptions: SetupOptions) {
         minter: poolManager,
         limitPerSlot: setupOptions.limitPerSlot,
         withdrawExecutionWindow: setupOptions.withdrawExecutionWindow,
-        withdrawTimeLock: setupOptions.withdrawTimeLock
+        withdrawTimeLock: setupOptions.withdrawTimeLock,
+        mintFeeBps: 0,
+        redeemFeeBps: 0
     })).add(initializePoolManager(umi, {
         poolManager,
         vault: vaultStaking,
@@ -80,6 +82,8 @@ export async function setup(umi: Umi, setupOptions: SetupOptions) {
         symbol: setupOptions.xMintSymbol,
         uri: setupOptions.xMintUri,
         decimals: setupOptions.xMintDecimals,
+        intervalAprRate: 0,
+        secondsPerInterval: 0,
         initialExchangeRate: setupOptions.stakingInitialExchangeRate,
         owner: umi.identity,
         admin: umi.identity.publicKey,

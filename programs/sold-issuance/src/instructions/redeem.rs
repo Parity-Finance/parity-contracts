@@ -70,7 +70,19 @@ pub fn handler(ctx: Context<RedeemTokens>, quantity: u64, proof: Vec<[u8; 32]>) 
     let bump = token_manager.bump; // Corrected to be a slice of a slice of a byte slice
     let signer_seeds: &[&[&[u8]]] = &[&[b"token-manager", &[bump]]];
 
-    let burn_amount = quantity;
+   // Calculate redeem fee
+   let redeem_fee = quantity
+   .checked_mul(token_manager.redeem_fee_bps as u64)
+   .ok_or(SoldIssuanceError::CalculationOverflow)?
+   .checked_div(10000)
+   .ok_or(SoldIssuanceError::CalculationOverflow)?;
+
+   // deduct the reddem fee from the burn amount
+
+   let burn_amount = quantity
+   .checked_sub(redeem_fee)
+   .ok_or(SoldIssuanceError::CalculationOverflow)?;
+
     msg!("Burn amount: {}", burn_amount);
 
     burn(

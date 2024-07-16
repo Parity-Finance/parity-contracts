@@ -23,6 +23,8 @@ pub struct InitializeTokenManagerParams {
     pub limit_per_slot: u64,
     pub withdraw_time_lock: i64,
     pub withdraw_execution_window: i64,
+    pub mint_fee_bps: u16,
+    pub redeem_fee_bps: u16,
 }
 
 #[derive(Accounts)]
@@ -137,6 +139,11 @@ pub fn handler(
     token_manager.withdrawal_initiation_time = 0;
     token_manager.withdraw_time_lock = params.withdraw_time_lock;
     token_manager.withdraw_execution_window = params.withdraw_execution_window;
+
+
+    token_manager.mint_fee_bps = params.mint_fee_bps;
+    token_manager.redeem_fee_bps = params.redeem_fee_bps;
+
 
     Ok(())
 }
