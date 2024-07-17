@@ -243,7 +243,10 @@ describe.only("sold-issuance", () => {
     const vaultAcc = await safeFetchToken(umi, vaultIssuance);
     const baseMintAcc = await safeFetchMint(umi, baseMint);
 
-    const expectedMintAmount = BigInt(quantity);
+    //const mintFeeBps = _tokenManagerAcc.mintFeeBps;
+    const mintFeeBps = tokenManagerAcc.mintFeeBps;
+    const feeAmount = (BigInt(quantity) * BigInt(mintFeeBps)) / BigInt(10000);
+    const expectedMintAmount = BigInt(quantity) - feeAmount;
     const powerDifference = quoteMintDecimals - baseMintDecimals;
 
     // Adjust quantity by the power difference before converting to BigInt
@@ -302,11 +305,13 @@ describe.only("sold-issuance", () => {
     const vaultAcc = await safeFetchToken(umi, vaultIssuance);
     const baseMintAcc = await safeFetchMint(umi, baseMint);
 
-    const expectedMintAmount = BigInt(quantity);
+    const redeemFeeBps = tokenManagerAcc.redeemFeeBps;
+    const feeAmount = (BigInt(quantity) * BigInt(redeemFeeBps)) / BigInt(10000);
+    const expectedMintAmount = BigInt(quantity) - feeAmount;
 
     const expectedQuoteAmount = (BigInt(quantity) / BigInt(10 ** baseMintDecimals) * BigInt(exchangeRate) / BigInt(10 ** exchangeRateDecimals)) * BigInt(10 ** quoteMintDecimals);
 
-    assert.equal(baseMintAcc.supply, _baseMintAcc.supply - expectedMintAmount, "Total supply should be correct");
+    assert.equal(baseMintAcc.supply, _baseMintAcc.supply - BigInt(quantity), "Total supply should be correct");
     assert.equal(tokenManagerAcc.totalCollateral, _tokenManagerAcc.totalCollateral - expectedQuoteAmount, "Total collateral should be correct");
     assert.equal(vaultAcc.amount, _vaultAcc.amount - expectedQuoteAmount, "Vault amount should be correct");
   });
