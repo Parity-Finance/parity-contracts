@@ -71,12 +71,15 @@ pub fn handler(ctx: Context<WithdrawFunds>) -> Result<()> {
         return err!(SoldIssuanceError::WithdrawalExpired);
     }
 
+    let mut withdraw_amount = pending_withdrawal_amount;
+
     // Calculate max withdrawable amount
     let max_withdrawable_amount = token_manager.calculate_max_withdrawable_amount(mint.supply)?;
 
     if pending_withdrawal_amount > max_withdrawable_amount {
         msg!("Pending withdrawal amount: {}", pending_withdrawal_amount);
-        msg!("Max withdrawable amount: {}", max_withdrawable_amount)
+        msg!("Max withdrawable amount: {}", max_withdrawable_amount);
+        withdraw_amount = max_withdrawable_amount;
     }
 
     // Withdraw
@@ -94,14 +97,14 @@ pub fn handler(ctx: Context<WithdrawFunds>) -> Result<()> {
             },
             signer_seeds,
         ),
-        max_withdrawable_amount,
+        withdraw_amount,
         ctx.accounts.quote_mint.decimals,
     )?;
 
     // Update token_manager
     token_manager.total_collateral = token_manager
         .total_collateral
-        .checked_sub(max_withdrawable_amount)
+        .checked_sub(withdraw_amount)
         .ok_or(SoldIssuanceError::CalculationOverflow)?;
 
     token_manager.pending_withdrawal_amount = 0;

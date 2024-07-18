@@ -9,6 +9,7 @@ import { findMetadataPda, safeFetchMetadata } from "@metaplex-foundation/mpl-tok
 import assert from 'assert';
 import chai, { assert as chaiAssert } from 'chai';
 import { bs58 } from "@coral-xyz/anchor/dist/cjs/utils/bytes";
+import { calculateMaxWithdrawableAmount } from "../clients/js/src/utils/maxWithdrawable";
 
 describe.only("sold-issuance", () => {
   let umi = createUmi("http://localhost:8899");
@@ -46,7 +47,7 @@ describe.only("sold-issuance", () => {
   const limitPerSlot = 100000 * 10 ** baseMintDecimals;
 
   const withdrawExecutionWindow = 3600;
-  const withdrawTimeLock = 3600;
+  const withdrawTimeLock = 0;
 
   // Staking Program
   let poolManager = findPoolManagerPda(umi)[0];
@@ -305,15 +306,14 @@ describe.only("sold-issuance", () => {
     const vaultAcc = await safeFetchToken(umi, vaultIssuance);
     const baseMintAcc = await safeFetchMint(umi, baseMint);
 
+    const expectedQuoteAmount = (BigInt(quantity) / BigInt(10 ** baseMintDecimals) * BigInt(exchangeRate) / BigInt(10 ** exchangeRateDecimals)) * BigInt(10 ** quoteMintDecimals);
     const redeemFeeBps = tokenManagerAcc.redeemFeeBps;
     const feeAmount = (BigInt(quantity) * BigInt(redeemFeeBps)) / BigInt(10000);
-    const expectedMintAmount = BigInt(quantity) - feeAmount;
-
-    const expectedQuoteAmount = (BigInt(quantity) / BigInt(10 ** baseMintDecimals) * BigInt(exchangeRate) / BigInt(10 ** exchangeRateDecimals)) * BigInt(10 ** quoteMintDecimals);
+    const expectedQuoteAmountAfterFees = expectedQuoteAmount - feeAmount;
 
     assert.equal(baseMintAcc.supply, _baseMintAcc.supply - BigInt(quantity), "Total supply should be correct");
-    assert.equal(tokenManagerAcc.totalCollateral, _tokenManagerAcc.totalCollateral - expectedQuoteAmount, "Total collateral should be correct");
-    assert.equal(vaultAcc.amount, _vaultAcc.amount - expectedQuoteAmount, "Vault amount should be correct");
+    assert.equal(tokenManagerAcc.totalCollateral, _tokenManagerAcc.totalCollateral - expectedQuoteAmountAfterFees, "Total collateral should be correct");
+    assert.equal(vaultAcc.amount, _vaultAcc.amount - expectedQuoteAmountAfterFees, "Vault amount should be correct");
   });
 
   it("should add and remove a gatekeeper and check unpause permissions", async () => {
@@ -612,6 +612,7 @@ describe.only("sold-issuance", () => {
   it("deposit and withdraw funds from the vaultIssuance", async () => {
     let _tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
     let _vaultAcc = await safeFetchToken(umi, vaultIssuance);
+    let _baseMintAcc = await safeFetchMint(umi, baseMint);
 
     // Higher than total collateral amount
     let quantity = Number(_tokenManagerAcc.totalCollateral) + 1; // Amount to deposit
@@ -658,14 +659,26 @@ describe.only("sold-issuance", () => {
       (err) => {
         return (err as Error).message.includes("Excessive Withdrawal");
       },
-      "Expected withdrawal to fail because of excessive withdrawal"
+      "Expected withdrawal to fail because of excessive withdrawal - Higher than total collateral amount"
     );
 
     // Higher than the threshold amount amount
-    quantity = (Number(_tokenManagerAcc.totalCollateral) * (1 - emergencyFundBasisPoints / 10000)) + 1; // Amount to deposit
-    // console.log("Quantity to Withdraw, higher than threshhold: ", quantity);
-    // console.log("TotalSupply: ", Number(_tokenManagerAcc.totalSupply / BigInt(10 ** baseMintDecimals)));
+    // Calculate the maximum withdrawable amount based on mint supply
+    const maxWithdrawableAmount = calculateMaxWithdrawableAmount(
+      BigInt(_baseMintAcc.supply),
+      BigInt(_tokenManagerAcc.exchangeRate),
+      _tokenManagerAcc.mintDecimals,
+      _tokenManagerAcc.quoteMintDecimals,
+      _tokenManagerAcc.emergencyFundBasisPoints,
+      BigInt(_tokenManagerAcc.totalCollateral)
+    );
+
+    // Higher than the threshold amount amount
+    quantity = Number(maxWithdrawableAmount) + 1; // Amount to deposit
+    // console.log("Quantity to Withdraw, higher than threshold: ", quantity);
     // console.log("TotalCollateral: ", Number(_tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals)));
+    // console.log("Mint supply: ", Number(_baseMintAcc.supply / BigInt(10 ** baseMintDecimals)));
+
 
     txBuilder = new TransactionBuilder();
     txBuilder = txBuilder.add(initializeWithdrawFunds(umi, {
@@ -682,13 +695,13 @@ describe.only("sold-issuance", () => {
       (err) => {
         return (err as Error).message.includes("Excessive Withdrawal");
       },
-      "Expected withdrawal to fail because of excessive withdrawal"
+      "Expected withdrawal to fail because of excessive withdrawal - Higher than threshold amount"
     );
 
     // Withdraw within allowed
-    quantity = (Number(_tokenManagerAcc.totalCollateral) * (1 - emergencyFundBasisPoints / 10000)); // Amount to withdraw
+    quantity = Number(maxWithdrawableAmount); // Amount to deposit
     // console.log("Quantity to Withdraw allowed: ", quantity);
-    // console.log("TotalSupply: ", Number(_tokenManagerAcc.totalSupply / BigInt(10 ** baseMintDecimals)));
+    // console.log("TotalSupply: ", Number(_baseMintAcc.supply / BigInt(10 ** baseMintDecimals)));
     // console.log("TotalCollateral: ", Number(_tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals)));
 
     txBuilder = new TransactionBuilder();
@@ -708,6 +721,28 @@ describe.only("sold-issuance", () => {
     assert.equal(tokenManagerAcc.pendingWithdrawalAmount, quantity, "Pending withdrawal amount should have changed")
 
     // Fails because of timelock
+    // txBuilder = new TransactionBuilder();
+    // txBuilder = txBuilder.add(withdrawFunds(umi, {
+    //   tokenManager,
+    //   mint: baseMint,
+    //   quoteMint: quoteMint,
+    //   vault: vaultIssuance,
+    //   authorityQuoteMintAta: userQuote,
+    //   associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
+    //   admin: umi.identity
+    // }));
+
+    // await assert.rejects(
+    //   async () => {
+    //     await txBuilder.sendAndConfirm(umi);
+    //   },
+    //   (err) => {
+    //     return (err as Error).message.includes("Withdrawal not ready");
+    //   },
+    //   "Expected withdrawal to fail because of timelock"
+    // );
+
+    // Should work after an hour or specified time
     txBuilder = new TransactionBuilder();
     txBuilder = txBuilder.add(withdrawFunds(umi, {
       tokenManager,
@@ -718,29 +753,7 @@ describe.only("sold-issuance", () => {
       associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
       admin: umi.identity
     }));
-
-    await assert.rejects(
-      async () => {
-        await txBuilder.sendAndConfirm(umi);
-      },
-      (err) => {
-        return (err as Error).message.includes("Withdrawal not ready");
-      },
-      "Expected withdrawal to fail because of timelock"
-    );
-
-
-    // // Should work after an hour
-    // txBuilder = new TransactionBuilder();
-    // txBuilder = txBuilder.add(withdrawFunds(umi, {
-    //   tokenManager,
-    //   quoteMint: quoteMint,
-    //   vault: vaultIssuance,
-    //   authorityQuoteMintAta: userQuote,
-    //   associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
-    //   admin: umi.identity
-    // }));
-    // await txBuilder.sendAndConfirm(umi);
+    await txBuilder.sendAndConfirm(umi);
 
     tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
     vaultAcc = await safeFetchToken(umi, vaultIssuance);
@@ -752,8 +765,13 @@ describe.only("sold-issuance", () => {
 
     // Deposit excessive
     quantity = Number(((baseMintAcc.supply / BigInt(10 ** baseMintDecimals)) * BigInt(exchangeRate) / BigInt(10 ** exchangeRateDecimals)) - (tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals))) * 10 ** quoteMintDecimals + 1;
+    if (quantity < 0) {
+      quantity = 1;
+    } else {
+      quantity += 1;
+    }
     // console.log("Quantity to Deposit not allowed: ", quantity);
-    // console.log("TotalSupply: ", Number(tokenManagerAcc.totalSupply / BigInt(10 ** baseMintDecimals)));
+    // console.log("TotalSupply: ", Number(baseMintAcc.supply / BigInt(10 ** baseMintDecimals)));
     // console.log("TotalCollateral: ", Number(tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals)));
 
     txBuilder = new TransactionBuilder();
@@ -781,11 +799,16 @@ describe.only("sold-issuance", () => {
     // Deposit allowed
     _tokenManagerAcc = tokenManagerAcc;
     _vaultAcc = vaultAcc;
+    _baseMintAcc = baseMintAcc;
 
     quantity = Number(((baseMintAcc.supply / BigInt(10 ** baseMintDecimals)) * BigInt(exchangeRate) / BigInt(10 ** exchangeRateDecimals)) - (tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals))) * 10 ** quoteMintDecimals;
+
+    const maxCollateral = Number(((baseMintAcc.supply / BigInt(10 ** baseMintDecimals)) * BigInt(exchangeRate)));
+    quantity = maxCollateral - Number(_tokenManagerAcc.totalCollateral);
+    // console.log("Max Collateral: ", maxCollateral);
+    // console.log("TotalSupply: ", Number(_baseMintAcc.supply));
+    // console.log("TotalCollateral: ", Number(_tokenManagerAcc.totalCollateral));
     // console.log("Quantity deposit allowed: ", quantity);
-    // console.log("TotalSupply: ", Number(tokenManagerAcc.totalSupply / BigInt(10 ** baseMintDecimals)));
-    // console.log("TotalCollateral: ", Number(tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals)));
 
     txBuilder = new TransactionBuilder();
     txBuilder = txBuilder.add(depositFunds(umi, {

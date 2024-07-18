@@ -30,7 +30,8 @@ Authorities same as Ethena
 ~~Create update pool_manager instruction gated for owner~~
 ~~Pause functionality check for gatekeeper or admin~~
 ~~implement safe math library~~
-Add mint and redemption fee basispoint
+~~Add mint and redemption fee basispoint~~
+~~Fix withdraw check so max withdrawable amount is maximum amount that gets withdrawn if pending amount exceeds~~
 
 Tests
 - ~~Pause Test~~

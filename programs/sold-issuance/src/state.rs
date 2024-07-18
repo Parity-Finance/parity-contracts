@@ -36,8 +36,8 @@ pub struct TokenManager {
 
     // Other
     pub total_collateral: u64, // 8
-    pub mint_fee_bps: u16, // 2
-    pub redeem_fee_bps: u16, // 2
+    pub mint_fee_bps: u16,     // 2
+    pub redeem_fee_bps: u16,   // 2
 }
 
 #[account]
@@ -143,6 +143,12 @@ impl TokenManager {
             .checked_mul(10u128.pow(self.quote_mint_decimals.into()))
             .ok_or(SoldIssuanceError::CalculationOverflow)?;
 
+        msg!("new_total_collateral: {}", new_total_collateral);
+        msg!("max_collateral: {}", max_collateral);
+        msg!("quote_amount: {}", quote_amount);
+        msg!("mint_supply: {}", mint_supply);
+        msg!("total_collateral: {}", self.total_collateral);
+
         if new_total_collateral > max_collateral {
             return Err(SoldIssuanceError::ExcessiveDeposit.into());
         }
@@ -201,7 +207,7 @@ mod tests {
             withdraw_execution_window: 0,
             total_collateral: 0,
             mint_fee_bps: 0,
-            redeem_fee_bps: 0
+            redeem_fee_bps: 0,
         }
     }
 

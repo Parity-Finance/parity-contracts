@@ -12,17 +12,17 @@ yarn install
 
 You will then have access to the following commands.
 
-- `yarn programs:build` - Build all programs and fetch all dependant programs.
-- `yarn programs:test` - Test all programs.
-- `yarn programs:debug` - Test all programs with logs enabled.
-- `yarn programs:clean` - Clean all built and fetched programs.
-- `yarn clients:rust:test` -  Run the Rust client tests.
-- `yarn clients:js:test` -  Run the JS client tests.
-- `yarn generate` - Shortcut for `yarn generate:idls && pnpm generate:clients`.
-- `yarn generate:idls` - Generate IDLs for all programs, as configured in the `configs/shank.cjs` file.
-- `yarn generate:clients` - Generate clients using Kinobi, as configured in the `configs/kinobi.cjs` file.
-- `yarn validator` - Start a local validator using Amman, as configured in the `configs/validator.cjs` file.
-- `yarn validator:debug` - Start a local validator using Amman with logs enabled, as configured in the `configs/validator.cjs` file.
+- `pnpm programs:build` - Build all programs and fetch all dependant programs.
+- `pnpm programs:test` - Test all programs.
+- `pnpm programs:debug` - Test all programs with logs enabled.
+- `pnpm programs:clean` - Clean all built and fetched programs.
+- `pnpm clients:rust:test` -  Run the Rust client tests.
+- `pnpm clients:js:test` -  Run the JS client tests.
+- `pnpm generate` - Shortcut for `yarn generate:idls && pnpm generate:clients`.
+- `pnpm generate:idls` - Generate IDLs for all programs, as configured in the `configs/shank.cjs` file.
+- `pnpm generate:clients` - Generate clients using Kinobi, as configured in the `configs/kinobi.cjs` file.
+- `pnpm validator` - Start a local validator using Amman, as configured in the `configs/validator.cjs` file.
+- `pnpm validator:debug` - Start a local validator using Amman with logs enabled, as configured in the `configs/validator.cjs` file.
 - `pnpm validator:stop` - Stop the local validator.
 - `pnpm validator:logs` - Show the logs of the local validator.
 
@@ -36,10 +36,10 @@ Each client has its own README with instructions on how to get started. You can 
 In order to generate the clients, run the following command.
 
 ```sh
-yarn generate
+pnpm generate
 ```
 
-You will need to run `yarn generate` to re-generate the clients when something changes in the program(s).
+You will need to run `pnpm generate` to re-generate the clients when something changes in the program(s).
 
 ## Setting up CI/CD using GitHub actions
 

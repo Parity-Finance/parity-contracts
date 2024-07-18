@@ -28,14 +28,13 @@ pub fn handler(ctx: Context<InitializeWithdrawFunds>, quantity: u64) -> Result<(
         return err!(SoldIssuanceError::ExcessiveWithdrawal);
     }
 
-    if quote_amount > token_manager.total_collateral {
-        return Err(SoldIssuanceError::ExcessiveWithdrawal.into());
-    }
-
     let max_withdrawable_amount = token_manager.calculate_max_withdrawable_amount(mint.supply)?;
+    msg!("Max withdrawable amount: {}", max_withdrawable_amount);
+    msg!("Quote amount: {}", quote_amount);
+    msg!("Mint supply: {}", mint.supply);
 
     if quote_amount > max_withdrawable_amount {
-        return Err(SoldIssuanceError::ExcessiveWithdrawal.into());
+        return err!(SoldIssuanceError::ExcessiveWithdrawal);
     }
 
     // Update token_manager
