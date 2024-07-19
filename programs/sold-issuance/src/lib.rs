@@ -8,7 +8,7 @@ pub use error::*;
 pub use instructions::*;
 pub use state::*;
 
-declare_id!("E52KjA58odp3taqmaCuBFdDya3s4TA1ho4tSXoW2igxb");
+declare_id!("4nRcwXvRUmpQMfjza6tsYyp3h6UA9hpT47yuXUwdmizo");
 
 #[program]
 pub mod sold_issuance {

@@ -18,7 +18,7 @@ import {
 } from '../errors';
 
 export const SOLD_STAKING_PROGRAM_ID =
-  'B6rAjGxw89UQCho4fLBGcEne9jadXv2QewPgpQ1SmUnw' as PublicKey<'B6rAjGxw89UQCho4fLBGcEne9jadXv2QewPgpQ1SmUnw'>;
+  '6GUDMDrbzne1qxpFF5WzeehZpC3gfAAoJ7GcHu7VNqjy' as PublicKey<'6GUDMDrbzne1qxpFF5WzeehZpC3gfAAoJ7GcHu7VNqjy'>;
 
 export function createSoldStakingProgram(): Program {
   return {
