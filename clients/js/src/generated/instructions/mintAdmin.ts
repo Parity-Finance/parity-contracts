@@ -81,7 +81,7 @@ export function mintAdmin(
   // Program ID.
   const programId = context.programs.getPublicKey(
     'soldIssuance',
-    '4nRcwXvRUmpQMfjza6tsYyp3h6UA9hpT47yuXUwdmizo'
+    '2EWh1kTyMUgv46FdwJYJP61LXvrhLp5CqDfy5gDoqggf'
   );
 
   // Accounts.

@@ -94,7 +94,7 @@ export function updateXmintMetadata(
   // Program ID.
   const programId = context.programs.getPublicKey(
     'soldStaking',
-    '6GUDMDrbzne1qxpFF5WzeehZpC3gfAAoJ7GcHu7VNqjy'
+    '9fQsEayPeUdypEAjyE6HGBkPWqrkMnnJG8Sh5NBXwwAM'
   );
 
   // Accounts.

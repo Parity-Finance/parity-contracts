@@ -60,6 +60,8 @@ impl PoolManager {
 
         // Calculate the linear yield for the remaining seconds
         let linear_yield = (interval_rate as u128)
+            .checked_sub(PRECISION)
+            .unwrap()
             .checked_mul(remaining_seconds as u128)
             .unwrap()
             .checked_div(self.seconds_per_interval as u128)
@@ -241,7 +243,7 @@ mod tests {
         let result = pool_manager
             .calculate_exchange_rate(current_timestamp / 2)
             .unwrap();
-        assert_eq!(result, 1_095_353); // The exchange rate should have increased but less than 20%
+        assert_eq!(result, 1_095_437); // The exchange rate should have increased but less than 20%
     }
 
     #[test]
@@ -291,7 +293,7 @@ mod tests {
             .unwrap();
 
         // Verify the result for half a year
-        assert_eq!(amount_to_mint_half_year, 95353000); // Needs to mint 100 base tokens
+        assert_eq!(amount_to_mint_half_year, 95437000); // Needs to mint 100 base tokens
     }
 
     #[test]

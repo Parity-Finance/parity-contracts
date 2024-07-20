@@ -8,7 +8,7 @@ const programDir = path.join(__dirname, "..", "programs");
 generateIdl({
   generator: "anchor",
   programName: "sold_issuance",
-  programId: "4nRcwXvRUmpQMfjza6tsYyp3h6UA9hpT47yuXUwdmizo",
+  programId: "2EWh1kTyMUgv46FdwJYJP61LXvrhLp5CqDfy5gDoqggf",
   idlDir,
   binaryInstallDir,
   programDir: path.join(programDir, "sold-issuance"),
@@ -18,7 +18,7 @@ generateIdl({
 generateIdl({
   generator: "anchor",
   programName: "sold_staking",
-  programId: "6GUDMDrbzne1qxpFF5WzeehZpC3gfAAoJ7GcHu7VNqjy",
+  programId: "9fQsEayPeUdypEAjyE6HGBkPWqrkMnnJG8Sh5NBXwwAM",
   idlDir,
   binaryInstallDir,
   programDir: path.join(programDir, "sold-staking"),
