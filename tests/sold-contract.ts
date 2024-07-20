@@ -2,7 +2,7 @@ import { keypairIdentity, Pda, PublicKey, publicKey, TransactionBuilder, createA
 import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
 import { createAssociatedToken, createSplAssociatedTokenProgram, createSplTokenProgram, findAssociatedTokenPda, safeFetchMint, safeFetchToken, SPL_ASSOCIATED_TOKEN_PROGRAM_ID } from "@metaplex-foundation/mpl-toolbox"
 import { Connection, Keypair, PublicKey as Web3JsPublicKey } from "@solana/web3.js";
-import { createSoldIssuanceProgram, findTokenManagerPda, initializeTokenManager, SOLD_ISSUANCE_PROGRAM_ID, mint, redeem, safeFetchTokenManager, getMerkleRoot, getMerkleProof, toggleActive, updatePoolManager, depositFunds, withdrawFunds, initializePoolManager, SOLD_STAKING_PROGRAM_ID, calculateExchangeRate, stake, unstake, updateAnnualYield, findPoolManagerPda, updateTokenManagerAdmin, safeFetchPoolManager, initializeWithdrawFunds, initiateUpdatePoolOwner, updatePoolOwner, updateManagerOwner, initiateUpdateManagerOwner, updateXmintMetadata, updateMintMetadata, addGatekeeper, safeFetchGatekeeper, removeGatekeeper, findGatekeeperPda, calculateIntervalRate } from "../clients/js/src"
+import { createSoldIssuanceProgram, findTokenManagerPda, initializeTokenManager, SOLD_ISSUANCE_PROGRAM_ID, mint, redeem, safeFetchTokenManager, getMerkleRoot, getMerkleProof, toggleActive, updatePoolManager, depositFunds, withdrawFunds, initializePoolManager, SOLD_STAKING_PROGRAM_ID, calculateExchangeRate, stake, unstake, updateAnnualYield, findPoolManagerPda, updateTokenManagerAdmin, safeFetchPoolManager, initializeWithdrawFunds, initiateUpdatePoolOwner, updatePoolOwner, updateManagerOwner, initiateUpdateManagerOwner, updateXmintMetadata, updateMintMetadata, addGatekeeper, safeFetchGatekeeper, removeGatekeeper, findGatekeeperPda, calculateIntervalRate, mintAdmin, updateTokenManagerOwner } from "../clients/js/src"
 import { ASSOCIATED_TOKEN_PROGRAM_ID, createMint, getOrCreateAssociatedTokenAccount, mintTo, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { fromWeb3JsKeypair, fromWeb3JsPublicKey, toWeb3JsKeypair } from "@metaplex-foundation/umi-web3js-adapters";
 import { findMetadataPda, safeFetchMetadata } from "@metaplex-foundation/mpl-token-metadata";
@@ -1149,4 +1149,89 @@ describe.only("sold-issuance", () => {
     assert.equal(mintMetadata.symbol, symbol, "Symbol should be updated");
     assert.equal(mintMetadata.uri, uri, "Uri should be updated");
   });
-});
+
+  it("should mint tokens to admin and update token  minter", async () => {
+    const quantity = 10000 * 10 ** baseMintDecimals;
+  
+
+    // Attempt to mint tokens with the wrong minter 
+   let txBuilder = new TransactionBuilder();
+
+   const userBaseAtaAcc = await safeFetchToken(umi, userBase)
+
+   if (!userBaseAtaAcc) {
+     txBuilder = txBuilder.add(createAssociatedToken(umi, {
+       mint: baseMint,
+     }))
+   }
+
+
+     txBuilder = new TransactionBuilder().add(mintAdmin(umi, {
+     tokenManager,
+      mint: baseMint,
+      minterMintAta: userBase,
+      minter: umi.identity,
+      associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
+      quantity: quantity, 
+    }));
+
+        await assert.rejects(
+          async () => {
+            await txBuilder.sendAndConfirm(umi);
+          },
+          (err) => {
+            return (err as Error).message.includes("Invalid minter");
+          },
+          "Expected minting to fail cause wrong minter was passed"
+        );
+      
+
+        // Change the token manager minter
+         txBuilder = new TransactionBuilder().add(updateTokenManagerOwner(umi, {
+          tokenManager,
+          owner: umi.identity,
+          newAdmin: null,
+          newMinter: some(umi.identity.publicKey),
+          emergencyFundBasisPoints: null,
+          newWithdrawTimeLock: null,
+          newWithdrawExecutionWindow: null,
+          newMintFeeBps: null,
+          newRedeemFeeBps: null,
+        }));
+    
+        await txBuilder.sendAndConfirm(umi);
+
+        const tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
+
+        assert.deepStrictEqual(
+          tokenManagerAcc.minter,
+          umi.identity.publicKey,
+          "Token manager's minter should be updated"
+        );
+
+
+        //Now try minting with the newMinter
+
+          const _baseMintAcc = await safeFetchMint(umi, baseMint);
+
+          txBuilder = new TransactionBuilder().add(mintAdmin(umi, {
+            tokenManager,
+             mint: baseMint,
+             minterMintAta: userBase,
+             minter: umi.identity,
+             associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
+             quantity: quantity, 
+           }));
+
+           await txBuilder.sendAndConfirm(umi);
+
+          const baseMintAcc = await safeFetchMint(umi, baseMint);
+          const expectedMintAmount = BigInt(quantity);
+
+          assert.deepStrictEqual(baseMintAcc.supply, _baseMintAcc.supply + expectedMintAmount, "Total supply should be correct");
+
+  })
+
+ });
+
+
