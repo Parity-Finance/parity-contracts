@@ -11,9 +11,9 @@ type MerkleTreeInput = Uint8Array | string;
  * Creates a Merkle Tree from the provided data.
  */
 export const getMerkleTree = (data: MerkleTreeInput[]): MerkleTree =>
-    new MerkleTree(data.map(keccak_256), keccak_256, {
-        sortPairs: true,
-    });
+  new MerkleTree(data.map(keccak_256), keccak_256, {
+    sortPairs: true,
+  });
 
 /**
  * Creates a Merkle Root from the provided data.
@@ -24,7 +24,7 @@ export const getMerkleTree = (data: MerkleTreeInput[]): MerkleTree =>
  * a given data is part of the original data set.
  */
 export const getMerkleRoot = (data: MerkleTreeInput[]): Uint8Array =>
-    getMerkleTree(data).getRoot();
+  getMerkleTree(data).getRoot();
 
 /**
  * Creates a Merkle Proof for a given data item.
@@ -33,13 +33,13 @@ export const getMerkleRoot = (data: MerkleTreeInput[]): Uint8Array =>
  * data item is part of the original data set.
  */
 export const getMerkleProof = (
-    data: MerkleTreeInput[],
-    leaf: MerkleTreeInput,
-    index?: number
+  data: MerkleTreeInput[],
+  leaf: MerkleTreeInput,
+  index?: number
 ): Uint8Array[] =>
-    getMerkleTree(data)
-        .getProof(Buffer.from(keccak_256(leaf)), index)
-        .map((proofItem) => proofItem.data);
+  getMerkleTree(data)
+    .getProof(Buffer.from(keccak_256(leaf)), index)
+    .map((proofItem) => proofItem.data);
 
 /**
  * Creates a Merkle Proof for a data item at a given index.
@@ -48,6 +48,6 @@ export const getMerkleProof = (
  * the given index is part of the original data set.
  */
 export const getMerkleProofAtIndex = (
-    data: MerkleTreeInput[],
-    index: number
+  data: MerkleTreeInput[],
+  index: number
 ): Uint8Array[] => getMerkleProof(data, data[index], index);
