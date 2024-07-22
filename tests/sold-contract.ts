@@ -116,7 +116,7 @@ describe.only("sold-issuance", () => {
     }
   })
 
-  it("Token manager is initialized!", async () => {
+  it.only("Token manager is initialized!", async () => {
     const merkleRoot = getMerkleRoot(allowedWallets);
 
     let txBuilder = new TransactionBuilder();
@@ -172,7 +172,7 @@ describe.only("sold-issuance", () => {
     assert.equal(tokenManagerAcc.redeemFeeBps, 50,"Token manager's redeem fee should be 50");
   });
 
-  it("Stake Pool is initialized!", async () => {
+  it.only("Stake Pool is initialized!", async () => {
     let txBuilder = new TransactionBuilder();
 
     txBuilder = txBuilder.add(initializePoolManager(umi, {
@@ -207,7 +207,7 @@ describe.only("sold-issuance", () => {
     assert.equal(xMintAcc.supply, 0n);
   });
 
-  it("Sold can be minted for USDC", async () => {
+  it.only("Sold can be minted for USDC", async () => {
     const quantity = 10000 * 10 ** baseMintDecimals;
 
     const proof = getMerkleProof(allowedWallets, keypair.publicKey.toBase58());
@@ -270,7 +270,7 @@ describe.only("sold-issuance", () => {
     assert.equal(vaultAcc.amount, _vaultAcc.amount + expectedQuoteAmount, "Vault amount should be correct");
   })
 
-  it("Sold can be redeemed for Quote", async () => {
+  it.only("Sold can be redeemed for Quote", async () => {
     const quantity = 1000 * 10 ** baseMintDecimals;
 
     const proof = getMerkleProof(allowedWallets, keypair.publicKey.toBase58());
@@ -835,7 +835,7 @@ describe.only("sold-issuance", () => {
   });
 
   // Stake Program
-  it("baseMint can be staked for xMint", async () => {
+  it.only("baseMint can be staked for xMint", async () => {
     const quantity = 1000 * 10 ** baseMintDecimals;
 
     let txBuilder = new TransactionBuilder();
@@ -895,7 +895,7 @@ describe.only("sold-issuance", () => {
     chaiAssert.closeTo(Number(xMintAcc.supply), Number(_xMintAcc.supply) + Number(expectedxMintAmount), 300000, "xSupply is not correct");
   })
 
-  it("baseMint can be unstaked by redeeming xMint", async () => {
+  it.only("baseMint can be unstaked by redeeming xMint", async () => {
     // const quantity = 10000 * 10 ** baseMintDecimals;
     let txBuilder = new TransactionBuilder();
 

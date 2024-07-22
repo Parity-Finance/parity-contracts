@@ -90,7 +90,7 @@ export function updateAnnualYield(
   // Program ID.
   const programId = context.programs.getPublicKey(
     'soldStaking',
-    'B6rAjGxw89UQCho4fLBGcEne9jadXv2QewPgpQ1SmUnw'
+    '9fQsEayPeUdypEAjyE6HGBkPWqrkMnnJG8Sh5NBXwwAM'
   );
 
   // Accounts.

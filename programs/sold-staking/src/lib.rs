@@ -10,7 +10,7 @@ pub use instructions::*;
 pub use state::*;
 pub use u64x64_math::*;
 
-declare_id!("B6rAjGxw89UQCho4fLBGcEne9jadXv2QewPgpQ1SmUnw");
+declare_id!("9fQsEayPeUdypEAjyE6HGBkPWqrkMnnJG8Sh5NBXwwAM");
 
 #[program]
 pub mod sold_staking {

@@ -78,7 +78,7 @@ export function withdrawFunds(
   // Program ID.
   const programId = context.programs.getPublicKey(
     'soldIssuance',
-    'E52KjA58odp3taqmaCuBFdDya3s4TA1ho4tSXoW2igxb'
+    '2EWh1kTyMUgv46FdwJYJP61LXvrhLp5CqDfy5gDoqggf'
   );
 
   // Accounts.
