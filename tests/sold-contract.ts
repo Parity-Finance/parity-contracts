@@ -168,6 +168,8 @@ describe.only("sold-issuance", () => {
     assert.equal(tokenManagerAcc.active, true, "Token manager should be active");
     assert.equal(baseMintAcc.supply, 0, "Token manager's total supply should be zero");
     assert.equal(tokenManagerAcc.totalCollateral, 0, "Token manager's total collateral should be zero");
+    assert.equal(tokenManagerAcc.mintFeeBps, 50,"Token manager's mint fee should be 50");
+    assert.equal(tokenManagerAcc.redeemFeeBps, 50,"Token manager's redeem fee should be 50");
   });
 
   it("Stake Pool is initialized!", async () => {
@@ -1104,6 +1106,85 @@ describe.only("sold-issuance", () => {
     assert.equal(tokenManagerAcc.admin, publicKey(keypair.publicKey), "Admin should be reverted back to original admin");
   });
 
+  it("should accept pool manager update", async () => {
+    const newOwner = umi.eddsa.generateKeypair();
+    const newAdmin = umi.eddsa.generateKeypair();
+
+    await umi.rpc.airdrop(newAdmin.publicKey, createAmount(100_000 * 10 ** 9, "SOL", 9), {
+      commitment: "finalized",
+    });
+
+    await umi.rpc.airdrop(newOwner.publicKey, createAmount(100_000 * 10 ** 9, "SOL", 9), {
+      commitment: "finalized",
+    });
+
+
+    //Attempt trying to change pool manager with the wrong previous owner
+
+    umi.use(keypairIdentity(newOwner));
+    
+    let txBuilder = new TransactionBuilder();
+    txBuilder = txBuilder.add(updatePoolManager(umi, {
+      poolManager,
+      owner: umi.identity,
+      newOwner: newOwner.publicKey,
+      newAdmin: newAdmin.publicKey,
+    }));
+
+   await assert.rejects(
+      async () => {
+        await txBuilder.sendAndConfirm(umi);
+      },
+      (err) => {
+        return (err as Error).message.includes("Invalid owner");
+      },
+      "Expected updating pool manager to fail because of Invalid owner"
+    );
+
+    //Attempt trying to change pool manager with the right owner
+    
+    umi.use(keypairIdentity(fromWeb3JsKeypair(keypair)));
+
+     txBuilder = new TransactionBuilder();
+    txBuilder = txBuilder.add(updatePoolManager(umi, {
+      poolManager,
+      owner: umi.identity,
+      newOwner: newOwner.publicKey,
+      newAdmin: newAdmin.publicKey,
+    }));
+
+    await txBuilder.sendAndConfirm(umi);
+
+     // Verify the new admin and owner is set
+    let poolManagerAcc = await safeFetchPoolManager(umi, poolManager);
+
+    assert.equal(poolManagerAcc.admin, newAdmin.publicKey, "admin should be updated to new admin");
+    assert.equal(poolManagerAcc.owner, newOwner.publicKey, "owner should be updated to new owner");
+
+
+    //Change the owner and admin back
+
+    umi.use(keypairIdentity(newOwner))
+
+    txBuilder = new TransactionBuilder();
+    txBuilder = txBuilder.add(updatePoolManager(umi, {
+      poolManager,
+      owner: umi.identity,
+      newOwner: keypair.publicKey,
+      newAdmin: keypair.publicKey,
+    }));
+
+    await txBuilder.sendAndConfirm(umi);
+
+    // Verify the owner and admin is set back to original
+     poolManagerAcc = await safeFetchPoolManager(umi, poolManager);
+
+    assert.equal(poolManagerAcc.admin, keypair.publicKey, "admin should be updated to new admin");
+    assert.equal(poolManagerAcc.owner, keypair.publicKey, "owner should be updated to new owner");
+    umi.use(keypairIdentity(fromWeb3JsKeypair(keypair)));
+
+  })
+
   it("should update xMint metadata of stake program", async () => {
     const name = "TEST";
     const symbol = "TEST"
@@ -1232,6 +1313,268 @@ describe.only("sold-issuance", () => {
 
   })
 
- });
+    it("should update the mint and redeem fee with an higher amount", async () => {
+    
+          let txBuilder = new TransactionBuilder().add(updateTokenManagerOwner(umi, {
+              tokenManager,
+              owner: umi.identity,
+              newAdmin: null,
+              newMinter: null,
+              emergencyFundBasisPoints: null,
+              newWithdrawTimeLock: null,
+              newWithdrawExecutionWindow: null,
+              newMintFeeBps: 80,
+              newRedeemFeeBps: 80,
+            }));
+        
+            let res = await txBuilder.sendAndConfirm(umi, { send: { skipPreflight: false } });
+
+    
+            let tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
+    
+            assert.deepStrictEqual(tokenManagerAcc.mintFeeBps, 80,"Token manager's mint fee should be 80");
+            assert.deepStrictEqual(tokenManagerAcc.redeemFeeBps, 80,"Token manager's redeem fee should be 80");
+
+            //Test the  minting with the new fees set
+
+              let quantity = 10000 * 10 ** baseMintDecimals;
+              const proof = getMerkleProof(allowedWallets, keypair.publicKey.toBase58());
+
+              const userBaseAtaAcc = await safeFetchToken(umi, userBase)
+
+              txBuilder = new TransactionBuilder();
+
+              if (!userBaseAtaAcc) {
+                      txBuilder = txBuilder.add(createAssociatedToken(umi, {
+                       mint: baseMint,
+                    }))
+                }
+
+            let _tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
+            let _vaultAcc = await safeFetchToken(umi, vaultIssuance);
+            let _baseMintAcc = await safeFetchMint(umi, baseMint);
+
+            txBuilder = txBuilder.add(mint(umi, {
+                tokenManager,
+                mint: baseMint,
+                quoteMint: quoteMint,
+                payerMintAta: userBase,
+                payerQuoteMintAta: userQuote,
+                vault: vaultIssuance,
+                associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
+                quantity,
+                proof
+              }))
+
+               res = await txBuilder.sendAndConfirm(umi, { send: { skipPreflight: false } });
+
+             tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
+             let vaultAcc = await safeFetchToken(umi, vaultIssuance);
+             let baseMintAcc = await safeFetchMint(umi, baseMint);
+         
+             //const mintFeeBps = _tokenManagerAcc.mintFeeBps;
+             const mintFeeBps = tokenManagerAcc.mintFeeBps;
+             let feeAmount = (BigInt(quantity) * BigInt(mintFeeBps)) / BigInt(10000);
+             const expectedMintAmount = BigInt(quantity) - feeAmount;
+             const powerDifference = quoteMintDecimals - baseMintDecimals;
+         
+             // Adjust quantity by the power difference before converting to BigInt
+             let adjustedQuantity;
+             if (powerDifference > 0) {
+               adjustedQuantity = BigInt(quantity) * BigInt(10 ** powerDifference);
+             } else if (powerDifference < 0) {
+               adjustedQuantity = BigInt(quantity) / BigInt(10 ** (-powerDifference));
+             } else {
+               adjustedQuantity = BigInt(quantity);
+             }
+         
+             // Calculate the expected quote amount
+             let expectedQuoteAmount = adjustedQuantity * BigInt(exchangeRate) / BigInt(10 ** exchangeRateDecimals);
+         
+             assert.equal(baseMintAcc.supply, _baseMintAcc.supply + expectedMintAmount, "Total supply should be correct");
+             assert.equal(tokenManagerAcc.totalCollateral, _tokenManagerAcc.totalCollateral + expectedQuoteAmount, "Total collateral should be correct");
+             assert.equal(vaultAcc.amount, _vaultAcc.amount + expectedQuoteAmount, "Vault amount should be correct");
+ 
+           //Test the  redeeming with the new fees set
+
+           //new quantity to be redeemed
+            quantity = 1000 * 10 ** baseMintDecimals;
+
+             const userQuoteAtaAcc = await safeFetchToken(umi, userQuote)
+
+             txBuilder = new TransactionBuilder();
+
+             if (!userQuoteAtaAcc) {
+               txBuilder = txBuilder.add(createAssociatedToken(umi, {
+               mint: userQuote,
+               }))
+              }
+
+     _tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
+     _vaultAcc = await safeFetchToken(umi, vaultIssuance);
+     _baseMintAcc = await safeFetchMint(umi, baseMint);
+
+    txBuilder = txBuilder.add(redeem(umi, {
+      tokenManager,
+      mint: baseMint,
+      quoteMint: quoteMint,
+      payerMintAta: userBase,
+      payerQuoteMintAta: userQuote,
+      vault: vaultIssuance,
+      payer: umi.identity,
+      associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
+      quantity,
+      proof
+    }))
+
+     res = await txBuilder.sendAndConfirm(umi, { send: { skipPreflight: false } });
+
+     tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
+     vaultAcc = await safeFetchToken(umi, vaultIssuance);
+     baseMintAcc = await safeFetchMint(umi, baseMint);
+
+    expectedQuoteAmount = (BigInt(quantity) / BigInt(10 ** baseMintDecimals) * BigInt(exchangeRate) / BigInt(10 ** exchangeRateDecimals)) * BigInt(10 ** quoteMintDecimals);
+    const redeemFeeBps = tokenManagerAcc.redeemFeeBps;
+     feeAmount = (BigInt(quantity) * BigInt(redeemFeeBps)) / BigInt(10000);
+    const expectedQuoteAmountAfterFees = expectedQuoteAmount - feeAmount;
+
+    assert.equal(baseMintAcc.supply, _baseMintAcc.supply - BigInt(quantity), "Total supply should be correct");
+    assert.equal(tokenManagerAcc.totalCollateral, _tokenManagerAcc.totalCollateral - expectedQuoteAmountAfterFees, "Total collateral should be correct");
+    assert.equal(vaultAcc.amount, _vaultAcc.amount - expectedQuoteAmountAfterFees, "Vault amount should be correct");
+ 
+        })
 
 
+        it("should update the mint and redeem fee with zero ", async () => {
+    
+          //set mint fee and redeem fee of zero
+          let txBuilder = new TransactionBuilder().add(updateTokenManagerOwner(umi, {
+              tokenManager,
+              owner: umi.identity,
+              newAdmin: null,
+              newMinter: null,
+              emergencyFundBasisPoints: null,
+              newWithdrawTimeLock: null,
+              newWithdrawExecutionWindow: null,
+              newMintFeeBps: 0,
+              newRedeemFeeBps: 0,
+            }));
+        
+            let res = await txBuilder.sendAndConfirm(umi, { send: { skipPreflight: false } });
+
+    
+            let tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
+    
+            assert.deepStrictEqual(tokenManagerAcc.mintFeeBps, 0,"Token manager's mint fee should be 0");
+            assert.deepStrictEqual(tokenManagerAcc.redeemFeeBps, 0,"Token manager's redeem fee should be 0");
+
+            //Test the  minting with the new fees set
+
+              let quantity = 10000 * 10 ** baseMintDecimals;
+              const proof = getMerkleProof(allowedWallets, keypair.publicKey.toBase58());
+
+              const userBaseAtaAcc = await safeFetchToken(umi, userBase)
+
+              txBuilder = new TransactionBuilder();
+
+              if (!userBaseAtaAcc) {
+                      txBuilder = txBuilder.add(createAssociatedToken(umi, {
+                       mint: baseMint,
+                    }))
+                }
+
+            let _tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
+            let _vaultAcc = await safeFetchToken(umi, vaultIssuance);
+            let _baseMintAcc = await safeFetchMint(umi, baseMint);
+
+            txBuilder = txBuilder.add(mint(umi, {
+                tokenManager,
+                mint: baseMint,
+                quoteMint: quoteMint,
+                payerMintAta: userBase,
+                payerQuoteMintAta: userQuote,
+                vault: vaultIssuance,
+                associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
+                quantity,
+                proof
+              }))
+
+               res = await txBuilder.sendAndConfirm(umi, { send: { skipPreflight: false } });
+
+             tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
+             let vaultAcc = await safeFetchToken(umi, vaultIssuance);
+             let baseMintAcc = await safeFetchMint(umi, baseMint);
+         
+             //const mintFeeBps = _tokenManagerAcc.mintFeeBps;
+             const mintFeeBps = tokenManagerAcc.mintFeeBps;
+             let feeAmount = (BigInt(quantity) * BigInt(mintFeeBps)) / BigInt(10000);
+             const expectedMintAmount = BigInt(quantity) - feeAmount;
+             const powerDifference = quoteMintDecimals - baseMintDecimals;
+         
+             // Adjust quantity by the power difference before converting to BigInt
+             let adjustedQuantity;
+             if (powerDifference > 0) {
+               adjustedQuantity = BigInt(quantity) * BigInt(10 ** powerDifference);
+             } else if (powerDifference < 0) {
+               adjustedQuantity = BigInt(quantity) / BigInt(10 ** (-powerDifference));
+             } else {
+               adjustedQuantity = BigInt(quantity);
+             }
+         
+             // Calculate the expected quote amount
+             let expectedQuoteAmount = adjustedQuantity * BigInt(exchangeRate) / BigInt(10 ** exchangeRateDecimals);
+         
+             assert.equal(baseMintAcc.supply, _baseMintAcc.supply + expectedMintAmount, "Total supply should be correct");
+             assert.equal(tokenManagerAcc.totalCollateral, _tokenManagerAcc.totalCollateral + expectedQuoteAmount, "Total collateral should be correct");
+             assert.equal(vaultAcc.amount, _vaultAcc.amount + expectedQuoteAmount, "Vault amount should be correct");
+ 
+           //Test the  redeeming with the new fees set
+
+           //new quantity to be redeemed
+            quantity = 1000 * 10 ** baseMintDecimals;
+
+             const userQuoteAtaAcc = await safeFetchToken(umi, userQuote)
+
+             txBuilder = new TransactionBuilder();
+
+             if (!userQuoteAtaAcc) {
+               txBuilder = txBuilder.add(createAssociatedToken(umi, {
+               mint: userQuote,
+               }))
+              }
+
+     _tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
+     _vaultAcc = await safeFetchToken(umi, vaultIssuance);
+     _baseMintAcc = await safeFetchMint(umi, baseMint);
+
+    txBuilder = txBuilder.add(redeem(umi, {
+      tokenManager,
+      mint: baseMint,
+      quoteMint: quoteMint,
+      payerMintAta: userBase,
+      payerQuoteMintAta: userQuote,
+      vault: vaultIssuance,
+      payer: umi.identity,
+      associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
+      quantity,
+      proof
+    }))
+
+     res = await txBuilder.sendAndConfirm(umi, { send: { skipPreflight: false } });
+
+     tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
+     vaultAcc = await safeFetchToken(umi, vaultIssuance);
+     baseMintAcc = await safeFetchMint(umi, baseMint);
+
+    expectedQuoteAmount = (BigInt(quantity) / BigInt(10 ** baseMintDecimals) * BigInt(exchangeRate) / BigInt(10 ** exchangeRateDecimals)) * BigInt(10 ** quoteMintDecimals);
+    const redeemFeeBps = tokenManagerAcc.redeemFeeBps;
+     feeAmount = (BigInt(quantity) * BigInt(redeemFeeBps)) / BigInt(10000);
+    const expectedQuoteAmountAfterFees = expectedQuoteAmount - feeAmount;
+
+    assert.equal(baseMintAcc.supply, _baseMintAcc.supply - BigInt(quantity), "Total supply should be correct");
+    assert.equal(tokenManagerAcc.totalCollateral, _tokenManagerAcc.totalCollateral - expectedQuoteAmountAfterFees, "Total collateral should be correct");
+    assert.equal(vaultAcc.amount, _vaultAcc.amount - expectedQuoteAmountAfterFees, "Vault amount should be correct");
+ 
+        })
+
+  });
