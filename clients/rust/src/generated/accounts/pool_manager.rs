@@ -52,10 +52,11 @@ pub struct PoolManager {
     pub inception_timestamp: i64,
     pub last_yield_change_timestamp: i64,
     pub base_balance: u64,
+    pub deposit_cap: u64,
 }
 
 impl PoolManager {
-    pub const LEN: usize = 223;
+    pub const LEN: usize = 231;
 
     /// Prefix values used to generate a PDA for this account.
     ///

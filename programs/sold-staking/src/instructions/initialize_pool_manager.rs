@@ -21,6 +21,7 @@ pub struct InitializePoolManagerParams {
     pub seconds_per_interval: i32,
     pub initial_exchange_rate: u64,
     pub admin: Pubkey,
+    pub deposit_cap: u64,
 }
 
 #[derive(Accounts)]
@@ -130,6 +131,7 @@ pub fn handler(
     pool_manager.inception_timestamp = current_timestamp;
     pool_manager.last_yield_change_timestamp = current_timestamp;
     pool_manager.last_yield_change_exchange_rate = params.initial_exchange_rate;
+    pool_manager.deposit_cap = params.deposit_cap;
 
     Ok(())
 }

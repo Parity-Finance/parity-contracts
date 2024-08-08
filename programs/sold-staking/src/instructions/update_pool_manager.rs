@@ -6,6 +6,7 @@ use crate::{error::SoldStakingError, PoolManager};
 pub struct UpdatePoolManagerParams {
     pub new_owner: Option<Pubkey>,
     pub new_admin: Option<Pubkey>,
+    pub new_deposit_cap: Option<u64>,
 }
 
 #[derive(Accounts)]
@@ -28,6 +29,9 @@ pub fn handler(ctx: Context<UpdatePoolManager>, params: UpdatePoolManagerParams)
     }
     if let Some(new_admin) = params.new_admin {
         pool_manager.admin = new_admin;
+    }
+    if let Some(new_deposit_cap) = params.new_deposit_cap {
+        pool_manager.deposit_cap = new_deposit_cap;
     }
     Ok(())
 }

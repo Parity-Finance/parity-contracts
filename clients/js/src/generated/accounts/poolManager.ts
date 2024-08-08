@@ -51,6 +51,7 @@ export type PoolManagerAccountData = {
   inceptionTimestamp: bigint;
   lastYieldChangeTimestamp: bigint;
   baseBalance: bigint;
+  depositCap: bigint;
 };
 
 export type PoolManagerAccountDataArgs = {
@@ -69,6 +70,7 @@ export type PoolManagerAccountDataArgs = {
   inceptionTimestamp: number | bigint;
   lastYieldChangeTimestamp: number | bigint;
   baseBalance: number | bigint;
+  depositCap: number | bigint;
 };
 
 export function getPoolManagerAccountDataSerializer(): Serializer<
@@ -94,6 +96,7 @@ export function getPoolManagerAccountDataSerializer(): Serializer<
         ['inceptionTimestamp', i64()],
         ['lastYieldChangeTimestamp', i64()],
         ['baseBalance', u64()],
+        ['depositCap', u64()],
       ],
       { description: 'PoolManagerAccountData' }
     ),
@@ -187,6 +190,7 @@ export function getPoolManagerGpaBuilder(
       inceptionTimestamp: number | bigint;
       lastYieldChangeTimestamp: number | bigint;
       baseBalance: number | bigint;
+      depositCap: number | bigint;
     }>({
       discriminator: [0, array(u8(), { size: 8 })],
       bump: [8, u8()],
@@ -204,13 +208,14 @@ export function getPoolManagerGpaBuilder(
       inceptionTimestamp: [199, i64()],
       lastYieldChangeTimestamp: [207, i64()],
       baseBalance: [215, u64()],
+      depositCap: [223, u64()],
     })
     .deserializeUsing<PoolManager>((account) => deserializePoolManager(account))
     .whereField('discriminator', [54, 241, 200, 10, 177, 151, 78, 17]);
 }
 
 export function getPoolManagerSize(): number {
-  return 223;
+  return 231;
 }
 
 export function findPoolManagerPda(

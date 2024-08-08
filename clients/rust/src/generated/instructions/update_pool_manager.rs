@@ -75,6 +75,7 @@ impl UpdatePoolManagerInstructionData {
 pub struct UpdatePoolManagerInstructionArgs {
     pub new_owner: Option<Pubkey>,
     pub new_admin: Option<Pubkey>,
+    pub new_deposit_cap: Option<u64>,
 }
 
 /// Instruction builder for `UpdatePoolManager`.
@@ -89,6 +90,7 @@ pub struct UpdatePoolManagerBuilder {
     owner: Option<solana_program::pubkey::Pubkey>,
     new_owner: Option<Pubkey>,
     new_admin: Option<Pubkey>,
+    new_deposit_cap: Option<u64>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
@@ -118,6 +120,12 @@ impl UpdatePoolManagerBuilder {
         self.new_admin = Some(new_admin);
         self
     }
+    /// `[optional argument]`
+    #[inline(always)]
+    pub fn new_deposit_cap(&mut self, new_deposit_cap: u64) -> &mut Self {
+        self.new_deposit_cap = Some(new_deposit_cap);
+        self
+    }
     /// Add an aditional account to the instruction.
     #[inline(always)]
     pub fn add_remaining_account(
@@ -145,6 +153,7 @@ impl UpdatePoolManagerBuilder {
         let args = UpdatePoolManagerInstructionArgs {
             new_owner: self.new_owner.clone(),
             new_admin: self.new_admin.clone(),
+            new_deposit_cap: self.new_deposit_cap.clone(),
         };
 
         accounts.instruction_with_remaining_accounts(args, &self.__remaining_accounts)
@@ -277,6 +286,7 @@ impl<'a, 'b> UpdatePoolManagerCpiBuilder<'a, 'b> {
             owner: None,
             new_owner: None,
             new_admin: None,
+            new_deposit_cap: None,
             __remaining_accounts: Vec::new(),
         });
         Self { instruction }
@@ -304,6 +314,12 @@ impl<'a, 'b> UpdatePoolManagerCpiBuilder<'a, 'b> {
     #[inline(always)]
     pub fn new_admin(&mut self, new_admin: Pubkey) -> &mut Self {
         self.instruction.new_admin = Some(new_admin);
+        self
+    }
+    /// `[optional argument]`
+    #[inline(always)]
+    pub fn new_deposit_cap(&mut self, new_deposit_cap: u64) -> &mut Self {
+        self.instruction.new_deposit_cap = Some(new_deposit_cap);
         self
     }
     /// Add an additional account to the instruction.
@@ -350,6 +366,7 @@ impl<'a, 'b> UpdatePoolManagerCpiBuilder<'a, 'b> {
         let args = UpdatePoolManagerInstructionArgs {
             new_owner: self.instruction.new_owner.clone(),
             new_admin: self.instruction.new_admin.clone(),
+            new_deposit_cap: self.instruction.new_deposit_cap.clone(),
         };
         let instruction = UpdatePoolManagerCpi {
             __program: self.instruction.__program,
@@ -375,6 +392,7 @@ struct UpdatePoolManagerCpiBuilderInstruction<'a, 'b> {
     owner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     new_owner: Option<Pubkey>,
     new_admin: Option<Pubkey>,
+    new_deposit_cap: Option<u64>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(
         &'b solana_program::account_info::AccountInfo<'a>,

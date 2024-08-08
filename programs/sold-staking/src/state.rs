@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 
 use crate::{from_decimal, pow, to_decimal, SoldStakingError, PRECISION};
 
-pub const POOL_MANAGER_LENGTH: usize = 8 + 1 + (32 * 5) + 1 + 1 + (8 * 7) + 4;
+pub const POOL_MANAGER_LENGTH: usize = 8 + 1 + (32 * 5) + 1 + 1 + (8 * 8) + 4;
 
 #[account]
 pub struct PoolManager {
@@ -29,6 +29,8 @@ pub struct PoolManager {
 
     // Other
     pub base_balance: u64, // 8 bytes
+    // Deposit cap
+    pub deposit_cap: u64, // 8 bytes
 }
 
 impl PoolManager {
@@ -193,6 +195,22 @@ impl PoolManager {
 
         Ok(output_amount)
     }
+
+    pub fn check_excessive_deposit(&self, quote_amount: u64, vault_amount: u64) -> Result<()> {
+        let new_vault_amount = (vault_amount as u128)
+            .checked_add(quote_amount as u128)
+            .ok_or(SoldStakingError::CalculationOverflow)?;
+
+        msg!("quote_amount: {}", quote_amount);
+        msg!("vault_amount: {}", vault_amount);
+        msg!("deposit_cap: {}", self.deposit_cap);
+
+        if new_vault_amount > self.deposit_cap as u128 {
+            return Err(SoldStakingError::DepositCapExceeded.into());
+        }
+
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -216,6 +234,7 @@ mod tests {
             inception_timestamp: 0,
             last_yield_change_timestamp: 0,
             base_balance: 0,
+            deposit_cap: 500000,
         }
     }
 
@@ -316,5 +335,19 @@ mod tests {
             .calculate_output_amount(x_quantity, current_timestamp, false)
             .unwrap();
         assert_eq!(base_mint_amount, 119_999_900); // Expected baseMint amount after one year
+    }
+
+    #[test]
+    fn test_check_excessive_deposit() {
+        let mut pool_manager = default_pool_manager();
+        pool_manager.deposit_cap = 1000000;
+
+        // Test case where deposit is within limit
+        let result = pool_manager.check_excessive_deposit(500000, 1000000);
+        assert!(result.is_ok());
+
+         // Test case where deposit exceeds limit
+         let result = pool_manager.check_excessive_deposit(1000001, 1000000);
+         assert!(result.is_err());
     }
 }

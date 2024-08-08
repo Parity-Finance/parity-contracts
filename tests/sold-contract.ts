@@ -126,6 +126,8 @@ describe.only("sold-issuance", () => {
   const withdrawExecutionWindow = 3600;
   const withdrawTimeLock = 0;
 
+  const testDepositCapAmount = 2000 * 10 ** baseMintDecimals;
+
   // Staking Program
   let poolManager = findPoolManagerPda(umi)[0];
   let tokenManager = findTokenManagerPda(umi);
@@ -329,6 +331,7 @@ describe.only("sold-issuance", () => {
         intervalAprRate,
         owner: umi.identity,
         admin: umi.identity.publicKey,
+        depositCap: testDepositCapAmount,
       })
     );
 
@@ -1023,10 +1026,10 @@ describe.only("sold-issuance", () => {
       Number(
         ((baseMintAcc.supply / BigInt(10 ** baseMintDecimals)) *
           BigInt(exchangeRate)) /
-        BigInt(10 ** exchangeRateDecimals) -
-        tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals)
+          BigInt(10 ** exchangeRateDecimals) -
+          tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals)
       ) *
-      10 ** quoteMintDecimals +
+        10 ** quoteMintDecimals +
       1;
     if (quantity < 0) {
       quantity = 1;
@@ -1070,14 +1073,14 @@ describe.only("sold-issuance", () => {
       Number(
         ((baseMintAcc.supply / BigInt(10 ** baseMintDecimals)) *
           BigInt(exchangeRate)) /
-        BigInt(10 ** exchangeRateDecimals) -
-        tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals)
+          BigInt(10 ** exchangeRateDecimals) -
+          tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals)
       ) *
       10 ** quoteMintDecimals;
 
     const maxCollateral = Number(
       (baseMintAcc.supply / BigInt(10 ** baseMintDecimals)) *
-      BigInt(exchangeRate)
+        BigInt(exchangeRate)
     );
     quantity = maxCollateral - Number(_tokenManagerAcc.totalCollateral);
     // console.log("Max Collateral: ", maxCollateral);
@@ -1119,7 +1122,7 @@ describe.only("sold-issuance", () => {
 
   // Stake Program
   it.only("baseMint can be staked for xMint", async () => {
-    const quantity = 1000 * 10 ** baseMintDecimals;
+    let quantity = 1000 * 10 ** baseMintDecimals;
 
     let txBuilder = new TransactionBuilder();
 
@@ -1164,7 +1167,8 @@ describe.only("sold-issuance", () => {
     );
     // console.log("Exchange Rate: ", exchangeRate);
 
-    await txBuilder.sendAndConfirm(umi, { send: { skipPreflight: true } });
+    await txBuilder.sendAndConfirm(umi);
+    //await txBuilder.sendAndConfirm(umi, { send: { skipPreflight: true } });
 
     const stakePoolAcc = await safeFetchPoolManager(umi, poolManager);
     const xMintAcc = await safeFetchMint(umi, xMint);
@@ -1194,6 +1198,33 @@ describe.only("sold-issuance", () => {
       Number(_xMintAcc.supply) + Number(expectedxMintAmount),
       300000,
       "xSupply is not correct"
+    );
+
+    quantity = 1001 * 10 ** baseMintDecimals;
+    //Attempt to try and stake again which should fail because of deposit cap reached
+    txBuilder = new TransactionBuilder();
+
+    txBuilder = txBuilder.add(
+      stake(umi, {
+        poolManager,
+        baseMint,
+        xMint,
+        payerBaseMintAta: userBase,
+        payerXMintAta: userX,
+        vault: vaultStaking,
+        associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
+        quantity,
+      })
+    );
+
+    await assert.rejects(
+      async () => {
+        await txBuilder.sendAndConfirm(umi);
+      },
+      (err) => {
+        return (err as Error).message.includes("Deposit cap reached");
+      },
+      "Expected staking to fail because Deposit cap reached"
     );
   });
 
@@ -1486,6 +1517,128 @@ describe.only("sold-issuance", () => {
     );
   });
 
+  it.only("should update deposit cap", async () => {
+    const notOwner = umi.eddsa.generateKeypair();
+    const newDespositCap = testDepositCapAmount;
+
+    await umi.rpc.airdrop(
+      notOwner.publicKey,
+      createAmount(100_000 * 10 ** 9, "SOL", 9),
+      {
+        commitment: "finalized",
+      }
+    );
+
+    //Attempt trying to update deposit cap with a signer that's not the Owner
+    umi.use(keypairIdentity(notOwner));
+
+    let txBuilder = new TransactionBuilder();
+    txBuilder = txBuilder.add(
+      updatePoolManager(umi, {
+        poolManager,
+        owner: umi.identity,
+        newOwner: null,
+        newAdmin: null,
+        newDepositCap: newDespositCap,
+      })
+    );
+
+    await assert.rejects(
+      async () => {
+        await txBuilder.sendAndConfirm(umi);
+      },
+      (err) => {
+        return (err as Error).message.includes("Invalid owner");
+      },
+      "Expected updating pool manager to fail because of Invalid owner"
+    );
+
+    //Attempt trying to change update deposit cap with the right Owner
+
+    umi.use(keypairIdentity(fromWeb3JsKeypair(keypair)));
+
+    txBuilder = new TransactionBuilder();
+    txBuilder = txBuilder.add(
+      updatePoolManager(umi, {
+        poolManager,
+        owner: umi.identity,
+        newOwner: null,
+        newAdmin: null,
+        newDepositCap: newDespositCap,
+      })
+    );
+
+    await txBuilder.sendAndConfirm(umi);
+
+    //verify the updated deposit cap is set
+    let poolManagerAcc = await safeFetchPoolManager(umi, poolManager);
+
+    assert.equal(
+      poolManagerAcc.depositCap,
+      newDespositCap,
+      "deposit cap should be updated "
+    );
+
+    let quantity = 1000 * 10 ** baseMintDecimals;
+
+    //Attempt  staking to test if it works
+    //This should work since deposit cap variable has been increased
+    txBuilder = new TransactionBuilder();
+
+    const userXAtaAcc = await safeFetchToken(umi, userX);
+
+    if (!userXAtaAcc) {
+      txBuilder = txBuilder.add(
+        createAssociatedToken(umi, {
+          mint: xMint,
+        })
+      );
+    }
+
+    txBuilder = txBuilder.add(
+      stake(umi, {
+        poolManager,
+        baseMint,
+        xMint,
+        payerBaseMintAta: userBase,
+        payerXMintAta: userX,
+        vault: vaultStaking,
+        associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
+        quantity,
+      })
+    );
+
+    await txBuilder.sendAndConfirm(umi);
+
+    //Attempt to try and stake again which should fail because of deposit cap reached
+    quantity = 1001 * 10 ** baseMintDecimals;
+
+    txBuilder = new TransactionBuilder();
+
+    txBuilder = txBuilder.add(
+      stake(umi, {
+        poolManager,
+        baseMint,
+        xMint,
+        payerBaseMintAta: userBase,
+        payerXMintAta: userX,
+        vault: vaultStaking,
+        associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
+        quantity,
+      })
+    );
+
+    await assert.rejects(
+      async () => {
+        await txBuilder.sendAndConfirm(umi);
+      },
+      (err) => {
+        return (err as Error).message.includes("Deposit cap reached");
+      },
+      "Expected staking to fail because Deposit cap reached"
+    );
+  });
+
   it.only("should accept pool manager update", async () => {
     const newOwner = umi.eddsa.generateKeypair();
     const newAdmin = umi.eddsa.generateKeypair();
@@ -1517,6 +1670,7 @@ describe.only("sold-issuance", () => {
         owner: umi.identity,
         newOwner: newOwner.publicKey,
         newAdmin: newAdmin.publicKey,
+        newDepositCap: null,
       })
     );
 
@@ -1541,6 +1695,7 @@ describe.only("sold-issuance", () => {
         owner: umi.identity,
         newOwner: newOwner.publicKey,
         newAdmin: newAdmin.publicKey,
+        newDepositCap: null,
       })
     );
 
@@ -1571,6 +1726,7 @@ describe.only("sold-issuance", () => {
         owner: umi.identity,
         newOwner: keypair.publicKey,
         newAdmin: keypair.publicKey,
+        newDepositCap: null,
       })
     );
 
@@ -1731,7 +1887,7 @@ describe.only("sold-issuance", () => {
     );
   });
 
-  it.only("should update the mint and redeem fee with an higher amount", async () => {
+  it("should update the mint and redeem fee with an higher amount", async () => {
     let txBuilder = new TransactionBuilder().add(
       updateTokenManagerOwner(umi, {
         tokenManager,
@@ -1913,7 +2069,7 @@ describe.only("sold-issuance", () => {
     );
   });
 
-  it.only("should update the mint and redeem fee with zero ", async () => {
+  it("should update the mint and redeem fee with zero ", async () => {
     //set mint fee and redeem fee of zero
     let txBuilder = new TransactionBuilder().add(
       updateTokenManagerOwner(umi, {
