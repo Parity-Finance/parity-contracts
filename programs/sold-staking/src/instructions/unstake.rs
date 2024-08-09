@@ -7,15 +7,15 @@ use anchor_spl::{
 use sold_issuance::{
     cpi::{accounts::MintAdminTokens, mint_admin},
     program::SoldIssuance,
-    TokenManager,
 };
 
 #[derive(Accounts)]
 pub struct Unstake<'info> {
     #[account(mut, seeds = [b"pool-manager"], bump)]
     pub pool_manager: Account<'info, PoolManager>,
+    /// CHECK: This account is checked in the mint_admin CPI call
     #[account(mut)]
-    pub token_manager: Account<'info, TokenManager>,
+    pub token_manager: UncheckedAccount<'info>,
     #[account(
         mut,
         mint::decimals = pool_manager.base_mint_decimals,
@@ -137,7 +137,7 @@ pub fn handler(ctx: Context<Unstake>, quantity: u64) -> Result<()> {
         pool_manager.base_mint_decimals,
     )?;
 
-    // Update token_manager
+    // Update pool_manager
     pool_manager.base_balance = pool_manager
         .base_balance
         .checked_sub(base_amount)
