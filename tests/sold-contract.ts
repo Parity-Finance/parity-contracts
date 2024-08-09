@@ -1707,7 +1707,7 @@ describe.only("sold-issuance", () => {
     );
 
     // Change the owner and admin back
-    umi.use(keypairIdentity(newOwner));
+    umi.use(keypairIdentity(fromWeb3JsKeypair(keypair)));
 
     txBuilder = new TransactionBuilder();
     txBuilder = txBuilder.add(
