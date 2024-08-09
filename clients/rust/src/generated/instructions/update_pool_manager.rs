@@ -73,7 +73,6 @@ impl UpdatePoolManagerInstructionData {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct UpdatePoolManagerInstructionArgs {
-    pub new_owner: Option<Pubkey>,
     pub new_admin: Option<Pubkey>,
     pub new_deposit_cap: Option<u64>,
 }
@@ -88,7 +87,6 @@ pub struct UpdatePoolManagerInstructionArgs {
 pub struct UpdatePoolManagerBuilder {
     pool_manager: Option<solana_program::pubkey::Pubkey>,
     owner: Option<solana_program::pubkey::Pubkey>,
-    new_owner: Option<Pubkey>,
     new_admin: Option<Pubkey>,
     new_deposit_cap: Option<u64>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
@@ -106,12 +104,6 @@ impl UpdatePoolManagerBuilder {
     #[inline(always)]
     pub fn owner(&mut self, owner: solana_program::pubkey::Pubkey) -> &mut Self {
         self.owner = Some(owner);
-        self
-    }
-    /// `[optional argument]`
-    #[inline(always)]
-    pub fn new_owner(&mut self, new_owner: Pubkey) -> &mut Self {
-        self.new_owner = Some(new_owner);
         self
     }
     /// `[optional argument]`
@@ -151,7 +143,6 @@ impl UpdatePoolManagerBuilder {
             owner: self.owner.expect("owner is not set"),
         };
         let args = UpdatePoolManagerInstructionArgs {
-            new_owner: self.new_owner.clone(),
             new_admin: self.new_admin.clone(),
             new_deposit_cap: self.new_deposit_cap.clone(),
         };
@@ -284,7 +275,6 @@ impl<'a, 'b> UpdatePoolManagerCpiBuilder<'a, 'b> {
             __program: program,
             pool_manager: None,
             owner: None,
-            new_owner: None,
             new_admin: None,
             new_deposit_cap: None,
             __remaining_accounts: Vec::new(),
@@ -302,12 +292,6 @@ impl<'a, 'b> UpdatePoolManagerCpiBuilder<'a, 'b> {
     #[inline(always)]
     pub fn owner(&mut self, owner: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
         self.instruction.owner = Some(owner);
-        self
-    }
-    /// `[optional argument]`
-    #[inline(always)]
-    pub fn new_owner(&mut self, new_owner: Pubkey) -> &mut Self {
-        self.instruction.new_owner = Some(new_owner);
         self
     }
     /// `[optional argument]`
@@ -364,7 +348,6 @@ impl<'a, 'b> UpdatePoolManagerCpiBuilder<'a, 'b> {
         signers_seeds: &[&[&[u8]]],
     ) -> solana_program::entrypoint::ProgramResult {
         let args = UpdatePoolManagerInstructionArgs {
-            new_owner: self.instruction.new_owner.clone(),
             new_admin: self.instruction.new_admin.clone(),
             new_deposit_cap: self.instruction.new_deposit_cap.clone(),
         };
@@ -390,7 +373,6 @@ struct UpdatePoolManagerCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     pool_manager: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     owner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    new_owner: Option<Pubkey>,
     new_admin: Option<Pubkey>,
     new_deposit_cap: Option<u64>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.

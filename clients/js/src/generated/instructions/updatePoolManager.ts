@@ -41,13 +41,11 @@ export type UpdatePoolManagerInstructionAccounts = {
 // Data.
 export type UpdatePoolManagerInstructionData = {
   discriminator: Array<number>;
-  newOwner: Option<PublicKey>;
   newAdmin: Option<PublicKey>;
   newDepositCap: Option<bigint>;
 };
 
 export type UpdatePoolManagerInstructionDataArgs = {
-  newOwner: OptionOrNullable<PublicKey>;
   newAdmin: OptionOrNullable<PublicKey>;
   newDepositCap: OptionOrNullable<number | bigint>;
 };
@@ -64,7 +62,6 @@ export function getUpdatePoolManagerInstructionDataSerializer(): Serializer<
     struct<UpdatePoolManagerInstructionData>(
       [
         ['discriminator', array(u8(), { size: 8 })],
-        ['newOwner', option(publicKeySerializer())],
         ['newAdmin', option(publicKeySerializer())],
         ['newDepositCap', option(u64())],
       ],

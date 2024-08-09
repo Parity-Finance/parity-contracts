@@ -515,12 +515,6 @@
         "kind": "struct",
         "fields": [
           {
-            "name": "newOwner",
-            "type": {
-              "option": "publicKey"
-            }
-          },
-          {
             "name": "newAdmin",
             "type": {
               "option": "publicKey"

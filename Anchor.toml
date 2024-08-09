@@ -1,20 +1,16 @@
 [features]
 seeds = false
 skip-lint = false
-
 [programs.devnet]
+pt-staking = "1pPDoX5yEfag7pUNGYmTss9AydSs2qpvRc75Ff6XFH2"
 sold_issuance = "2EWh1kTyMUgv46FdwJYJP61LXvrhLp5CqDfy5gDoqggf"
 sold_staking = "9fQsEayPeUdypEAjyE6HGBkPWqrkMnnJG8Sh5NBXwwAM"
-
-[toolchain]
-anchor_version = "0.29.0"
-solana_version = "1.18.15"
 
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "devnet"
+cluster = "Devnet"
 wallet = "./keys/test-kp.json"
 
 [scripts]

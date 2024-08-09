@@ -1026,10 +1026,10 @@ describe.only("sold-issuance", () => {
       Number(
         ((baseMintAcc.supply / BigInt(10 ** baseMintDecimals)) *
           BigInt(exchangeRate)) /
-          BigInt(10 ** exchangeRateDecimals) -
-          tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals)
+        BigInt(10 ** exchangeRateDecimals) -
+        tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals)
       ) *
-        10 ** quoteMintDecimals +
+      10 ** quoteMintDecimals +
       1;
     if (quantity < 0) {
       quantity = 1;
@@ -1073,14 +1073,14 @@ describe.only("sold-issuance", () => {
       Number(
         ((baseMintAcc.supply / BigInt(10 ** baseMintDecimals)) *
           BigInt(exchangeRate)) /
-          BigInt(10 ** exchangeRateDecimals) -
-          tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals)
+        BigInt(10 ** exchangeRateDecimals) -
+        tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals)
       ) *
       10 ** quoteMintDecimals;
 
     const maxCollateral = Number(
       (baseMintAcc.supply / BigInt(10 ** baseMintDecimals)) *
-        BigInt(exchangeRate)
+      BigInt(exchangeRate)
     );
     quantity = maxCollateral - Number(_tokenManagerAcc.totalCollateral);
     // console.log("Max Collateral: ", maxCollateral);
@@ -1537,7 +1537,6 @@ describe.only("sold-issuance", () => {
       updatePoolManager(umi, {
         poolManager,
         owner: umi.identity,
-        newOwner: null,
         newAdmin: null,
         newDepositCap: newDespositCap,
       })
@@ -1562,7 +1561,6 @@ describe.only("sold-issuance", () => {
       updatePoolManager(umi, {
         poolManager,
         owner: umi.identity,
-        newOwner: null,
         newAdmin: null,
         newDepositCap: newDespositCap,
       })
@@ -1668,7 +1666,6 @@ describe.only("sold-issuance", () => {
       updatePoolManager(umi, {
         poolManager,
         owner: umi.identity,
-        newOwner: newOwner.publicKey,
         newAdmin: newAdmin.publicKey,
         newDepositCap: null,
       })
@@ -1693,7 +1690,6 @@ describe.only("sold-issuance", () => {
       updatePoolManager(umi, {
         poolManager,
         owner: umi.identity,
-        newOwner: newOwner.publicKey,
         newAdmin: newAdmin.publicKey,
         newDepositCap: null,
       })
@@ -1709,14 +1705,8 @@ describe.only("sold-issuance", () => {
       newAdmin.publicKey,
       "admin should be updated to new admin"
     );
-    assert.equal(
-      poolManagerAcc.owner,
-      newOwner.publicKey,
-      "owner should be updated to new owner"
-    );
 
-    //Change the owner and admin back
-
+    // Change the owner and admin back
     umi.use(keypairIdentity(newOwner));
 
     txBuilder = new TransactionBuilder();
@@ -1724,8 +1714,7 @@ describe.only("sold-issuance", () => {
       updatePoolManager(umi, {
         poolManager,
         owner: umi.identity,
-        newOwner: keypair.publicKey,
-        newAdmin: keypair.publicKey,
+        newAdmin: fromWeb3JsKeypair(keypair).publicKey,
         newDepositCap: null,
       })
     );
@@ -1740,12 +1729,6 @@ describe.only("sold-issuance", () => {
       keypair.publicKey,
       "admin should be updated to new admin"
     );
-    assert.equal(
-      poolManagerAcc.owner,
-      keypair.publicKey,
-      "owner should be updated to new owner"
-    );
-    umi.use(keypairIdentity(fromWeb3JsKeypair(keypair)));
   });
 
   it("should update xMint metadata of stake program", async () => {
