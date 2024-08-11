@@ -13,6 +13,7 @@ program_common: &program_common
 
 sold_contract: &sold_contract
   - *program_common
+  - "programs/pt-staking/**"
   - "programs/sold-issuance/**"
   - "programs/sold-staking/**"
   - "submodules/**"
