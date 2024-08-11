@@ -1,18 +1,18 @@
 use anchor_lang::prelude::*;
 
 pub const GLOBAL_CONFIG_LENGTH: usize =
-    8 + 1 +  (32 * 5) + (1 * 2) + (8 * 3) + 4 * (8 + 8 + 1 + 4) + 4 * (8 + 8 + 4);
+    8 + 1 + (32 * 5) + (1 * 2) + (8 * 3) + 4 * (8 + 8 + 1 + 4) + 4 * (8 + 8 + 4);
 
 #[account]
 pub struct GlobalConfig {
-    pub bump: u8,                                      // 1 byte
-   
+    pub bump: u8, // 1 byte
+
     // Authorities
-    pub owner: Pubkey,                                 // 32 bytes
-    pub pending_owner: Pubkey,                         // 32 bytes
-    pub admin: Pubkey,                                 // 32 bytes
-  
-    pub base_mint: Pubkey,                             // 32 bytes 
+    pub owner: Pubkey,         // 32 bytes
+    pub pending_owner: Pubkey, // 32 bytes
+    pub admin: Pubkey,         // 32 bytes
+
+    pub base_mint: Pubkey,                             // 32 bytes
     pub staking_vault: Pubkey,                         // 32 bytes
     pub base_mint_decimals: u8,                        // 1 byte
     pub baseline_yield: u8,                            // 1 bytes
@@ -77,11 +77,12 @@ mod tests {
     #[test]
     fn test_initialize_global_config() {
         // Create a default GlobalConfig
-        let bump = 0,
-        let owner = Pubkey::default(),
-        let pending_owner Pubkey::default(),
-        let admin Pubkey::default(),
+        let bump = 0;
+        let owner = Pubkey::default();
+        let pending_owner = Pubkey::default();
+        let admin = Pubkey::default();
         let staking_vault = Pubkey::default();
+        let base_mint = Pubkey::default();
         let baseline_yield = 5;
         let staked_supply = 1_000_000;
         let total_points_issued = 50_000;
@@ -101,6 +102,8 @@ mod tests {
             deposit_cap,
             exchange_rate_history: exchange_rate_history.clone(),
             points_history: points_history.clone(),
+            base_mint,
+            base_mint_decimals: 6, // Add this line, adjust the value as needed
         };
 
         // Assertions
@@ -137,6 +140,8 @@ mod tests {
             deposit_cap: 10_000_000,
             exchange_rate_history: create_default_exchange_rate_phases(),
             points_history: create_default_points_earned_phases(),
+            base_mint: Pubkey::default(),
+            base_mint_decimals: 6,
         };
 
         // Update some fields

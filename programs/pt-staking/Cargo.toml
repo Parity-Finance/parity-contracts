@@ -17,3 +17,7 @@ default = []
 
 [dependencies]
 anchor-lang = "0.29.0"
+anchor-spl = { version = "0.29.0", features = ["metadata"] }
+solana-program = "=1.17.0"
+
+

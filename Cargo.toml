@@ -2,6 +2,7 @@
 members = [
     "programs/sold-issuance",
     "programs/sold-staking",
+    "programs/pt-staking",
     "clients/rust"
 ]
 resolver = "2"
