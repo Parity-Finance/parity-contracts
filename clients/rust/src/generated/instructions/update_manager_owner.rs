@@ -41,7 +41,7 @@ impl UpdateManagerOwner {
             .unwrap();
 
         solana_program::instruction::Instruction {
-            program_id: crate::SOLD_ISSUANCE_ID,
+            program_id: crate::PARITY_ISSUANCE_ID,
             accounts,
             data,
         }
@@ -200,7 +200,7 @@ impl<'a, 'b> UpdateManagerOwnerCpi<'a, 'b> {
             .unwrap();
 
         let instruction = solana_program::instruction::Instruction {
-            program_id: crate::SOLD_ISSUANCE_ID,
+            program_id: crate::PARITY_ISSUANCE_ID,
             accounts,
             data,
         };

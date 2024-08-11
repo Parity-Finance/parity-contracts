@@ -6,5 +6,5 @@
  * @see https://github.com/metaplex-foundation/kinobi
  */
 
-export * from './soldIssuance';
-export * from './soldStaking';
+export * from './parityIssuance';
+export * from './parityStaking';

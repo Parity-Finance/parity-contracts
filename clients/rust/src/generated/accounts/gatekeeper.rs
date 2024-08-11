@@ -41,14 +41,14 @@ impl Gatekeeper {
     ) -> Result<solana_program::pubkey::Pubkey, solana_program::pubkey::PubkeyError> {
         solana_program::pubkey::Pubkey::create_program_address(
             &["gatekeeper".as_bytes(), wallet.as_ref(), &[bump]],
-            &crate::SOLD_ISSUANCE_ID,
+            &crate::PARITY_ISSUANCE_ID,
         )
     }
 
     pub fn find_pda(wallet: &Pubkey) -> (solana_program::pubkey::Pubkey, u8) {
         solana_program::pubkey::Pubkey::find_program_address(
             &["gatekeeper".as_bytes(), wallet.as_ref()],
-            &crate::SOLD_ISSUANCE_ID,
+            &crate::PARITY_ISSUANCE_ID,
         )
     }
 

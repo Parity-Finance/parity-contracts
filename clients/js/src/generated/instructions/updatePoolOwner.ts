@@ -68,7 +68,7 @@ export function updatePoolOwner(
 ): TransactionBuilder {
   // Program ID.
   const programId = context.programs.getPublicKey(
-    'soldStaking',
+    'parityStaking',
     '9fQsEayPeUdypEAjyE6HGBkPWqrkMnnJG8Sh5NBXwwAM'
   );
 

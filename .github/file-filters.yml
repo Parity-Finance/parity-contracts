@@ -11,15 +11,15 @@ program_common: &program_common
   - ".github/file-filters.yml"
   - ".github/.env"
 
-sold_contract: &sold_contract
+parity_contract: &parity_contract
   - *program_common
+  - "programs/parity-issuance/**"
+  - "programs/parity-staking/**"
   - "programs/pt-staking/**"
-  - "programs/sold-issuance/**"
-  - "programs/sold-staking/**"
   - "submodules/**"
 
 programs: &programs
-  - *sold_contract
+  - *parity_contract
 
 # Clients.
 

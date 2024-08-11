@@ -7,14 +7,14 @@ const idlDir = path.join(__dirname, "..", "idls");
 
 // Instanciate Kinobi.
 const kinobi = k.createFromIdls([
-  path.join(idlDir, "sold_issuance.json"),
-  path.join(idlDir, "sold_staking.json"),
+  path.join(idlDir, "parity_issuance.json"),
+  path.join(idlDir, "parity_staking.json"),
 ]);
 
 kinobi.update(
   new k.updateProgramsVisitor({
-    soldIssuance: { name: "soldIssuance", prefix: "si" },
-    soldStaking: { name: "soldStaking", prefix: "ss" },
+    parityIssuance: { name: "parityIssuance", prefix: "si" },
+    parityStaking: { name: "parityStaking", prefix: "ss" },
   })
 );
 

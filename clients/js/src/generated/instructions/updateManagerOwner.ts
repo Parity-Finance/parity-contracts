@@ -70,7 +70,7 @@ export function updateManagerOwner(
 ): TransactionBuilder {
   // Program ID.
   const programId = context.programs.getPublicKey(
-    'soldIssuance',
+    'parityIssuance',
     '2EWh1kTyMUgv46FdwJYJP61LXvrhLp5CqDfy5gDoqggf'
   );
 

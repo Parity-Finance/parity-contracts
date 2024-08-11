@@ -6,7 +6,7 @@ import { keypairIdentity, TransactionBuilder } from "@metaplex-foundation/umi";
 import {
   closePoolManager,
   closeTokenManager,
-  createSoldIssuanceProgram,
+  createparityIssuanceProgram,
   findPoolManagerPda,
   findTokenManagerPda,
 } from "../../../clients/js/src";
@@ -18,7 +18,7 @@ async function closeSystem() {
   );
   umi.programs.add(createSplAssociatedTokenProgram());
   umi.programs.add(createSplTokenProgram());
-  umi.programs.add(createSoldIssuanceProgram());
+  umi.programs.add(createparityIssuanceProgram());
   const keypair = umi.eddsa.createKeypairFromSecretKey(
     Uint8Array.from(require("../../../../../../keys/parity.json"))
   );

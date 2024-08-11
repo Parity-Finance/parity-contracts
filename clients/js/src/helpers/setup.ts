@@ -9,8 +9,8 @@ import {
   findTokenManagerPda,
   initializePoolManager,
   initializeTokenManager,
-  SOLD_ISSUANCE_PROGRAM_ID,
-  SOLD_STAKING_PROGRAM_ID,
+  PARITY_ISSUANCE_PROGRAM_ID,
+  PARITY_STAKING_PROGRAM_ID,
 } from '../generated';
 import { getMerkleRoot } from '../utils';
 
@@ -35,13 +35,14 @@ export type SetupOptions = {
   secondsPerInterval: number;
   mintFeeBps: number;
   redeemFeeBps: number;
+  depositCapParityStaking: number;
 };
 
 export async function setup(umi: Umi, setupOptions: SetupOptions) {
-  const baseMint = umi.eddsa.findPda(SOLD_ISSUANCE_PROGRAM_ID, [
+  const baseMint = umi.eddsa.findPda(PARITY_ISSUANCE_PROGRAM_ID, [
     Buffer.from('mint'),
   ])[0];
-  const xMint = umi.eddsa.findPda(SOLD_STAKING_PROGRAM_ID, [
+  const xMint = umi.eddsa.findPda(PARITY_STAKING_PROGRAM_ID, [
     Buffer.from('mint'),
   ])[0];
 
@@ -114,6 +115,7 @@ export async function setup(umi: Umi, setupOptions: SetupOptions) {
         intervalAprRate: setupOptions.intervalAprRate,
         secondsPerInterval: setupOptions.secondsPerInterval,
         initialExchangeRate: setupOptions.stakingInitialExchangeRate,
+        depositCap: setupOptions.depositCapParityStaking,
         owner: umi.identity,
         admin: umi.identity.publicKey,
       })

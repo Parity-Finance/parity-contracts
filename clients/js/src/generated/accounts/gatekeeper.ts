@@ -116,7 +116,7 @@ export function getGatekeeperGpaBuilder(
   context: Pick<Context, 'rpc' | 'programs'>
 ) {
   const programId = context.programs.getPublicKey(
-    'soldIssuance',
+    'parityIssuance',
     '2EWh1kTyMUgv46FdwJYJP61LXvrhLp5CqDfy5gDoqggf'
   );
   return gpaBuilder(context, programId)
@@ -140,7 +140,7 @@ export function findGatekeeperPda(
   }
 ): Pda {
   const programId = context.programs.getPublicKey(
-    'soldIssuance',
+    'parityIssuance',
     '2EWh1kTyMUgv46FdwJYJP61LXvrhLp5CqDfy5gDoqggf'
   );
   return context.eddsa.findPda(programId, [

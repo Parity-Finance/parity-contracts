@@ -7,20 +7,30 @@ const programDir = path.join(__dirname, "..", "programs");
 
 generateIdl({
   generator: "anchor",
-  programName: "sold_issuance",
+  programName: "parity_issuance",
   programId: "2EWh1kTyMUgv46FdwJYJP61LXvrhLp5CqDfy5gDoqggf",
   idlDir,
   binaryInstallDir,
-  programDir: path.join(programDir, "sold-issuance"),
+  programDir: path.join(programDir, "parity-issuance"),
   rustbin: { locked: true },
 });
 
 generateIdl({
   generator: "anchor",
-  programName: "sold_staking",
+  programName: "parity_staking",
   programId: "9fQsEayPeUdypEAjyE6HGBkPWqrkMnnJG8Sh5NBXwwAM",
   idlDir,
   binaryInstallDir,
-  programDir: path.join(programDir, "sold-staking"),
+  programDir: path.join(programDir, "parity-staking"),
+  rustbin: { locked: true },
+});
+
+generateIdl({
+  generator: "anchor",
+  programName: "pt_staking",
+  programId: "5zWkamSdh3S4hELhV1ezx6gzyCinBVi38StJUdi8cfGa",
+  idlDir,
+  binaryInstallDir,
+  programDir: path.join(programDir, "pt-staking"),
   rustbin: { locked: true },
 });

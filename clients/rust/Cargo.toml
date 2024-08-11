@@ -1,9 +1,9 @@
 [package]
-name = "sold-contract"
+name = "parity-contract"
 version = "1.0.0"
-description = "Sold Contract"
+description = "Parity Contract"
 authors = ["Builderz <hello@builderz.dev>"]
-repository = "https://github.com/builderz-dev/sold-contract"
+repository = "https://github.com/builderz-labs/parity-contracts"
 license-file = "../../LICENSE"
 edition = "2021"
 readme = "README.md"

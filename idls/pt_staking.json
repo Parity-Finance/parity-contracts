@@ -1,0 +1,201 @@
+{
+  "version": "0.1.0",
+  "name": "pt_staking",
+  "instructions": [
+    {
+      "name": "initializeGlobalConfig",
+      "accounts": [
+        {
+          "name": "baseMint",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "SPL Token Mint of the underlying token to be deposited for staking"
+          ]
+        },
+        {
+          "name": "globalConfig",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "vault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "associatedTokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "params",
+          "type": {
+            "defined": "InitializeGlobalConfigParams"
+          }
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "GlobalConfig",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "owner",
+            "type": "publicKey"
+          },
+          {
+            "name": "pendingOwner",
+            "type": "publicKey"
+          },
+          {
+            "name": "admin",
+            "type": "publicKey"
+          },
+          {
+            "name": "baseMint",
+            "type": "publicKey"
+          },
+          {
+            "name": "stakingVault",
+            "type": "publicKey"
+          },
+          {
+            "name": "baseMintDecimals",
+            "type": "u8"
+          },
+          {
+            "name": "baselineYield",
+            "type": "u8"
+          },
+          {
+            "name": "stakedSupply",
+            "type": "u64"
+          },
+          {
+            "name": "totalPointsIssued",
+            "type": "u64"
+          },
+          {
+            "name": "depositCap",
+            "type": "u64"
+          },
+          {
+            "name": "exchangeRateHistory",
+            "type": {
+              "vec": {
+                "defined": "ExchangeRatePhase"
+              }
+            }
+          },
+          {
+            "name": "pointsHistory",
+            "type": {
+              "vec": {
+                "defined": "PointsEarnedPhase"
+              }
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "types": [
+    {
+      "name": "InitializeGlobalConfigParams",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "admin",
+            "type": "publicKey"
+          },
+          {
+            "name": "baselineYield",
+            "type": "u8"
+          },
+          {
+            "name": "depositCap",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ExchangeRatePhase",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "exchangeRate",
+            "type": "u64"
+          },
+          {
+            "name": "startDate",
+            "type": "i64"
+          },
+          {
+            "name": "endDate",
+            "type": {
+              "option": "i64"
+            }
+          },
+          {
+            "name": "index",
+            "type": "u32"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PointsEarnedPhase",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "exchangeRate",
+            "type": "u64"
+          },
+          {
+            "name": "points",
+            "type": "u64"
+          },
+          {
+            "name": "index",
+            "type": "u32"
+          }
+        ]
+      }
+    }
+  ],
+  "metadata": {
+    "address": "5zWkamSdh3S4hELhV1ezx6gzyCinBVi38StJUdi8cfGa",
+    "origin": "anchor",
+    "binaryVersion": "0.29.0",
+    "libVersion": "0.29.0"
+  }
+}

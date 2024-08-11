@@ -83,7 +83,7 @@ impl WithdrawFunds {
         let data = WithdrawFundsInstructionData::new().try_to_vec().unwrap();
 
         solana_program::instruction::Instruction {
-            program_id: crate::SOLD_ISSUANCE_ID,
+            program_id: crate::PARITY_ISSUANCE_ID,
             accounts,
             data,
         }
@@ -395,7 +395,7 @@ impl<'a, 'b> WithdrawFundsCpi<'a, 'b> {
         let data = WithdrawFundsInstructionData::new().try_to_vec().unwrap();
 
         let instruction = solana_program::instruction::Instruction {
-            program_id: crate::SOLD_ISSUANCE_ID,
+            program_id: crate::PARITY_ISSUANCE_ID,
             accounts,
             data,
         };

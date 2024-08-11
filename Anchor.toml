@@ -7,8 +7,8 @@ seeds = false
 skip-lint = false
 [programs.devnet]
 pt-staking = "5zWkamSdh3S4hELhV1ezx6gzyCinBVi38StJUdi8cfGa"
-sold_issuance = "2EWh1kTyMUgv46FdwJYJP61LXvrhLp5CqDfy5gDoqggf"
-sold_staking = "9fQsEayPeUdypEAjyE6HGBkPWqrkMnnJG8Sh5NBXwwAM"
+parity-issuance = "2EWh1kTyMUgv46FdwJYJP61LXvrhLp5CqDfy5gDoqggf"
+parity-staking = "9fQsEayPeUdypEAjyE6HGBkPWqrkMnnJG8Sh5NBXwwAM"
 
 [registry]
 url = "https://api.apr.dev"

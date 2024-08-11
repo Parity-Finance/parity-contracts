@@ -81,14 +81,14 @@ impl TokenManager {
     ) -> Result<solana_program::pubkey::Pubkey, solana_program::pubkey::PubkeyError> {
         solana_program::pubkey::Pubkey::create_program_address(
             &["token-manager".as_bytes(), &[bump]],
-            &crate::SOLD_ISSUANCE_ID,
+            &crate::PARITY_ISSUANCE_ID,
         )
     }
 
     pub fn find_pda() -> (solana_program::pubkey::Pubkey, u8) {
         solana_program::pubkey::Pubkey::find_program_address(
             &["token-manager".as_bytes()],
-            &crate::SOLD_ISSUANCE_ID,
+            &crate::PARITY_ISSUANCE_ID,
         )
     }
 

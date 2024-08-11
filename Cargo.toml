@@ -1,7 +1,7 @@
 [workspace]
 members = [
-    "programs/sold-issuance",
-    "programs/sold-staking",
+    "programs/parity-issuance",
+    "programs/parity-staking",
     "programs/pt-staking",
     "clients/rust"
 ]

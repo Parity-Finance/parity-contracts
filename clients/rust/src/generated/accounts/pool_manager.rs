@@ -70,14 +70,14 @@ impl PoolManager {
     ) -> Result<solana_program::pubkey::Pubkey, solana_program::pubkey::PubkeyError> {
         solana_program::pubkey::Pubkey::create_program_address(
             &["pool-manager".as_bytes(), &[bump]],
-            &crate::SOLD_STAKING_ID,
+            &crate::PARITY_STAKING_ID,
         )
     }
 
     pub fn find_pda() -> (solana_program::pubkey::Pubkey, u8) {
         solana_program::pubkey::Pubkey::find_program_address(
             &["pool-manager".as_bytes()],
-            &crate::SOLD_STAKING_ID,
+            &crate::PARITY_STAKING_ID,
         )
     }
 

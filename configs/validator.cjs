@@ -11,14 +11,19 @@ module.exports = {
     commitment: "processed",
     programs: [
       {
-        label: "Sold Issuance",
+        label: "Parity Issuance",
         programId: "2EWh1kTyMUgv46FdwJYJP61LXvrhLp5CqDfy5gDoqggf",
-        deployPath: getProgram("sold_issuance.so"),
+        deployPath: getProgram("parity_issuance.so"),
       },
       {
-        label: "Sold Staking",
+        label: "Parity Staking",
         programId: "9fQsEayPeUdypEAjyE6HGBkPWqrkMnnJG8Sh5NBXwwAM",
-        deployPath: getProgram("sold_staking.so"),
+        deployPath: getProgram("parity_staking.so"),
+      },
+      {
+        label: "PT Staking",
+        programId: "5zWkamSdh3S4hELhV1ezx6gzyCinBVi38StJUdi8cfGa",
+        deployPath: getProgram("pt_staking.so"),
       },
       // Below are external programs that should be included in the local validator.
       // You may configure which ones to fetch from the cluster when building

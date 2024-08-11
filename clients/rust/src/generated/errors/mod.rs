@@ -5,8 +5,8 @@
 //! [https://github.com/metaplex-foundation/kinobi]
 //!
 
-pub(crate) mod sold_issuance;
-pub(crate) mod sold_staking;
+pub(crate) mod parity_issuance;
+pub(crate) mod parity_staking;
 
-pub use self::sold_issuance::SoldIssuanceError;
-pub use self::sold_staking::SoldStakingError;
+pub use self::parity_issuance::ParityIssuanceError;
+pub use self::parity_staking::ParityStakingError;

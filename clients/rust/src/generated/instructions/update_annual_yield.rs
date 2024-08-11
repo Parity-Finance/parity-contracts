@@ -30,7 +30,7 @@ pub struct UpdateAnnualYield {
 
     pub associated_token_program: solana_program::pubkey::Pubkey,
 
-    pub sold_issuance_program: solana_program::pubkey::Pubkey,
+    pub parity_issuance_program: solana_program::pubkey::Pubkey,
 }
 
 impl UpdateAnnualYield {
@@ -82,7 +82,7 @@ impl UpdateAnnualYield {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.sold_issuance_program,
+            self.parity_issuance_program,
             false,
         ));
         accounts.extend_from_slice(remaining_accounts);
@@ -93,7 +93,7 @@ impl UpdateAnnualYield {
         data.append(&mut args);
 
         solana_program::instruction::Instruction {
-            program_id: crate::SOLD_STAKING_ID,
+            program_id: crate::PARITY_STAKING_ID,
             accounts,
             data,
         }
@@ -135,7 +135,7 @@ pub struct UpdateAnnualYieldInstructionArgs {
 ///   6. `[optional]` system_program (default to `11111111111111111111111111111111`)
 ///   7. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
 ///   8. `[]` associated_token_program
-///   9. `[]` sold_issuance_program
+///   9. `[]` parity_issuance_program
 #[derive(Default)]
 pub struct UpdateAnnualYieldBuilder {
     pool_manager: Option<solana_program::pubkey::Pubkey>,
@@ -147,7 +147,7 @@ pub struct UpdateAnnualYieldBuilder {
     system_program: Option<solana_program::pubkey::Pubkey>,
     token_program: Option<solana_program::pubkey::Pubkey>,
     associated_token_program: Option<solana_program::pubkey::Pubkey>,
-    sold_issuance_program: Option<solana_program::pubkey::Pubkey>,
+    parity_issuance_program: Option<solana_program::pubkey::Pubkey>,
     interval_apr_rate: Option<u64>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
@@ -207,11 +207,11 @@ impl UpdateAnnualYieldBuilder {
         self
     }
     #[inline(always)]
-    pub fn sold_issuance_program(
+    pub fn parity_issuance_program(
         &mut self,
-        sold_issuance_program: solana_program::pubkey::Pubkey,
+        parity_issuance_program: solana_program::pubkey::Pubkey,
     ) -> &mut Self {
-        self.sold_issuance_program = Some(sold_issuance_program);
+        self.parity_issuance_program = Some(parity_issuance_program);
         self
     }
     #[inline(always)]
@@ -255,9 +255,9 @@ impl UpdateAnnualYieldBuilder {
             associated_token_program: self
                 .associated_token_program
                 .expect("associated_token_program is not set"),
-            sold_issuance_program: self
-                .sold_issuance_program
-                .expect("sold_issuance_program is not set"),
+            parity_issuance_program: self
+                .parity_issuance_program
+                .expect("parity_issuance_program is not set"),
         };
         let args = UpdateAnnualYieldInstructionArgs {
             interval_apr_rate: self
@@ -290,7 +290,7 @@ pub struct UpdateAnnualYieldCpiAccounts<'a, 'b> {
 
     pub associated_token_program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub sold_issuance_program: &'b solana_program::account_info::AccountInfo<'a>,
+    pub parity_issuance_program: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
 /// `update_annual_yield` CPI instruction.
@@ -316,7 +316,7 @@ pub struct UpdateAnnualYieldCpi<'a, 'b> {
 
     pub associated_token_program: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub sold_issuance_program: &'b solana_program::account_info::AccountInfo<'a>,
+    pub parity_issuance_program: &'b solana_program::account_info::AccountInfo<'a>,
     /// The arguments for the instruction.
     pub __args: UpdateAnnualYieldInstructionArgs,
 }
@@ -338,7 +338,7 @@ impl<'a, 'b> UpdateAnnualYieldCpi<'a, 'b> {
             system_program: accounts.system_program,
             token_program: accounts.token_program,
             associated_token_program: accounts.associated_token_program,
-            sold_issuance_program: accounts.sold_issuance_program,
+            parity_issuance_program: accounts.parity_issuance_program,
             __args: args,
         }
     }
@@ -413,7 +413,7 @@ impl<'a, 'b> UpdateAnnualYieldCpi<'a, 'b> {
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.sold_issuance_program.key,
+            *self.parity_issuance_program.key,
             false,
         ));
         remaining_accounts.iter().for_each(|remaining_account| {
@@ -430,7 +430,7 @@ impl<'a, 'b> UpdateAnnualYieldCpi<'a, 'b> {
         data.append(&mut args);
 
         let instruction = solana_program::instruction::Instruction {
-            program_id: crate::SOLD_STAKING_ID,
+            program_id: crate::PARITY_STAKING_ID,
             accounts,
             data,
         };
@@ -445,7 +445,7 @@ impl<'a, 'b> UpdateAnnualYieldCpi<'a, 'b> {
         account_infos.push(self.system_program.clone());
         account_infos.push(self.token_program.clone());
         account_infos.push(self.associated_token_program.clone());
-        account_infos.push(self.sold_issuance_program.clone());
+        account_infos.push(self.parity_issuance_program.clone());
         remaining_accounts
             .iter()
             .for_each(|remaining_account| account_infos.push(remaining_account.0.clone()));
@@ -471,7 +471,7 @@ impl<'a, 'b> UpdateAnnualYieldCpi<'a, 'b> {
 ///   6. `[]` system_program
 ///   7. `[]` token_program
 ///   8. `[]` associated_token_program
-///   9. `[]` sold_issuance_program
+///   9. `[]` parity_issuance_program
 pub struct UpdateAnnualYieldCpiBuilder<'a, 'b> {
     instruction: Box<UpdateAnnualYieldCpiBuilderInstruction<'a, 'b>>,
 }
@@ -489,7 +489,7 @@ impl<'a, 'b> UpdateAnnualYieldCpiBuilder<'a, 'b> {
             system_program: None,
             token_program: None,
             associated_token_program: None,
-            sold_issuance_program: None,
+            parity_issuance_program: None,
             interval_apr_rate: None,
             __remaining_accounts: Vec::new(),
         });
@@ -562,11 +562,11 @@ impl<'a, 'b> UpdateAnnualYieldCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn sold_issuance_program(
+    pub fn parity_issuance_program(
         &mut self,
-        sold_issuance_program: &'b solana_program::account_info::AccountInfo<'a>,
+        parity_issuance_program: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.sold_issuance_program = Some(sold_issuance_program);
+        self.instruction.parity_issuance_program = Some(parity_issuance_program);
         self
     }
     #[inline(always)]
@@ -658,10 +658,10 @@ impl<'a, 'b> UpdateAnnualYieldCpiBuilder<'a, 'b> {
                 .associated_token_program
                 .expect("associated_token_program is not set"),
 
-            sold_issuance_program: self
+            parity_issuance_program: self
                 .instruction
-                .sold_issuance_program
-                .expect("sold_issuance_program is not set"),
+                .parity_issuance_program
+                .expect("parity_issuance_program is not set"),
             __args: args,
         };
         instruction.invoke_signed_with_remaining_accounts(
@@ -682,7 +682,7 @@ struct UpdateAnnualYieldCpiBuilderInstruction<'a, 'b> {
     system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     associated_token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    sold_issuance_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    parity_issuance_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     interval_apr_rate: Option<u64>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(

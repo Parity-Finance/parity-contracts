@@ -169,7 +169,7 @@ export function getPoolManagerGpaBuilder(
   context: Pick<Context, 'rpc' | 'programs'>
 ) {
   const programId = context.programs.getPublicKey(
-    'soldStaking',
+    'parityStaking',
     '9fQsEayPeUdypEAjyE6HGBkPWqrkMnnJG8Sh5NBXwwAM'
   );
   return gpaBuilder(context, programId)
@@ -222,7 +222,7 @@ export function findPoolManagerPda(
   context: Pick<Context, 'eddsa' | 'programs'>
 ): Pda {
   const programId = context.programs.getPublicKey(
-    'soldStaking',
+    'parityStaking',
     '9fQsEayPeUdypEAjyE6HGBkPWqrkMnnJG8Sh5NBXwwAM'
   );
   return context.eddsa.findPda(programId, [

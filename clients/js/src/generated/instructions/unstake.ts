@@ -41,7 +41,7 @@ export type UnstakeInstructionAccounts = {
   systemProgram?: PublicKey | Pda;
   tokenProgram?: PublicKey | Pda;
   associatedTokenProgram: PublicKey | Pda;
-  soldIssuanceProgram: PublicKey | Pda;
+  parityIssuanceProgram: PublicKey | Pda;
 };
 
 // Data.
@@ -81,7 +81,7 @@ export function unstake(
 ): TransactionBuilder {
   // Program ID.
   const programId = context.programs.getPublicKey(
-    'soldStaking',
+    'parityStaking',
     '9fQsEayPeUdypEAjyE6HGBkPWqrkMnnJG8Sh5NBXwwAM'
   );
 
@@ -142,10 +142,10 @@ export function unstake(
       isWritable: false as boolean,
       value: input.associatedTokenProgram ?? null,
     },
-    soldIssuanceProgram: {
+    parityIssuanceProgram: {
       index: 11,
       isWritable: false as boolean,
-      value: input.soldIssuanceProgram ?? null,
+      value: input.parityIssuanceProgram ?? null,
     },
   } satisfies ResolvedAccountsWithIndices;
 
