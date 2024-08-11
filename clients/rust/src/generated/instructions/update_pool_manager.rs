@@ -73,8 +73,8 @@ impl UpdatePoolManagerInstructionData {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct UpdatePoolManagerInstructionArgs {
-    pub new_owner: Option<Pubkey>,
     pub new_admin: Option<Pubkey>,
+    pub new_deposit_cap: Option<u64>,
 }
 
 /// Instruction builder for `UpdatePoolManager`.
@@ -87,8 +87,8 @@ pub struct UpdatePoolManagerInstructionArgs {
 pub struct UpdatePoolManagerBuilder {
     pool_manager: Option<solana_program::pubkey::Pubkey>,
     owner: Option<solana_program::pubkey::Pubkey>,
-    new_owner: Option<Pubkey>,
     new_admin: Option<Pubkey>,
+    new_deposit_cap: Option<u64>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
@@ -108,14 +108,14 @@ impl UpdatePoolManagerBuilder {
     }
     /// `[optional argument]`
     #[inline(always)]
-    pub fn new_owner(&mut self, new_owner: Pubkey) -> &mut Self {
-        self.new_owner = Some(new_owner);
+    pub fn new_admin(&mut self, new_admin: Pubkey) -> &mut Self {
+        self.new_admin = Some(new_admin);
         self
     }
     /// `[optional argument]`
     #[inline(always)]
-    pub fn new_admin(&mut self, new_admin: Pubkey) -> &mut Self {
-        self.new_admin = Some(new_admin);
+    pub fn new_deposit_cap(&mut self, new_deposit_cap: u64) -> &mut Self {
+        self.new_deposit_cap = Some(new_deposit_cap);
         self
     }
     /// Add an aditional account to the instruction.
@@ -143,8 +143,8 @@ impl UpdatePoolManagerBuilder {
             owner: self.owner.expect("owner is not set"),
         };
         let args = UpdatePoolManagerInstructionArgs {
-            new_owner: self.new_owner.clone(),
             new_admin: self.new_admin.clone(),
+            new_deposit_cap: self.new_deposit_cap.clone(),
         };
 
         accounts.instruction_with_remaining_accounts(args, &self.__remaining_accounts)
@@ -275,8 +275,8 @@ impl<'a, 'b> UpdatePoolManagerCpiBuilder<'a, 'b> {
             __program: program,
             pool_manager: None,
             owner: None,
-            new_owner: None,
             new_admin: None,
+            new_deposit_cap: None,
             __remaining_accounts: Vec::new(),
         });
         Self { instruction }
@@ -296,14 +296,14 @@ impl<'a, 'b> UpdatePoolManagerCpiBuilder<'a, 'b> {
     }
     /// `[optional argument]`
     #[inline(always)]
-    pub fn new_owner(&mut self, new_owner: Pubkey) -> &mut Self {
-        self.instruction.new_owner = Some(new_owner);
+    pub fn new_admin(&mut self, new_admin: Pubkey) -> &mut Self {
+        self.instruction.new_admin = Some(new_admin);
         self
     }
     /// `[optional argument]`
     #[inline(always)]
-    pub fn new_admin(&mut self, new_admin: Pubkey) -> &mut Self {
-        self.instruction.new_admin = Some(new_admin);
+    pub fn new_deposit_cap(&mut self, new_deposit_cap: u64) -> &mut Self {
+        self.instruction.new_deposit_cap = Some(new_deposit_cap);
         self
     }
     /// Add an additional account to the instruction.
@@ -348,8 +348,8 @@ impl<'a, 'b> UpdatePoolManagerCpiBuilder<'a, 'b> {
         signers_seeds: &[&[&[u8]]],
     ) -> solana_program::entrypoint::ProgramResult {
         let args = UpdatePoolManagerInstructionArgs {
-            new_owner: self.instruction.new_owner.clone(),
             new_admin: self.instruction.new_admin.clone(),
+            new_deposit_cap: self.instruction.new_deposit_cap.clone(),
         };
         let instruction = UpdatePoolManagerCpi {
             __program: self.instruction.__program,
@@ -373,8 +373,8 @@ struct UpdatePoolManagerCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     pool_manager: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     owner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    new_owner: Option<Pubkey>,
     new_admin: Option<Pubkey>,
+    new_deposit_cap: Option<u64>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(
         &'b solana_program::account_info::AccountInfo<'a>,

@@ -5,7 +5,6 @@ solana_version = "1.18.15"
 [features]
 seeds = false
 skip-lint = false
-
 [programs.devnet]
 pt-staking = "5zWkamSdh3S4hELhV1ezx6gzyCinBVi38StJUdi8cfGa"
 sold_issuance = "2EWh1kTyMUgv46FdwJYJP61LXvrhLp5CqDfy5gDoqggf"

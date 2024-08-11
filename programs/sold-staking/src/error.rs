@@ -14,6 +14,8 @@ pub enum SoldStakingError {
     TokenManagerStatusUnchanged,
     #[msg("Excessive Deposit, collateral shouldn't exceed 100%")]
     ExcessiveDeposit,
+    #[msg("Deposit cap reached")]
+    DepositCapExceeded,
     #[msg("Excessive Withdrawal, collateral shouldn't be less than collateral threshold")]
     ExcessiveWithdrawal,
     #[msg("Calculation overflow")]

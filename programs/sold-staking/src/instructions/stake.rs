@@ -59,6 +59,11 @@ pub fn handler(ctx: Context<Stake>, quantity: u64) -> Result<()> {
     let pool_manager = &mut ctx.accounts.pool_manager;
 
     let current_timestamp: i64 = Clock::get()?.unix_timestamp;
+    let total_vault_amount = ctx.accounts.vault.amount;
+
+    // Check if deposit exceeds the deposit cap or limit
+    pool_manager.check_excessive_deposit(quantity, total_vault_amount)?;
+    
 
     let x_amount = pool_manager.calculate_output_amount(quantity, current_timestamp, true)?;
     msg!("X amount: {}", x_amount);

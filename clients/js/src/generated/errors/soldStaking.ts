@@ -103,11 +103,24 @@ export class SsExcessiveDepositError extends ProgramError {
 codeToErrorMap.set(0x1775, SsExcessiveDepositError);
 nameToErrorMap.set('ExcessiveDeposit', SsExcessiveDepositError);
 
+/** DepositCapExceeded: Deposit cap reached */
+export class SsDepositCapExceededError extends ProgramError {
+  override readonly name: string = 'DepositCapExceeded';
+
+  readonly code: number = 0x1776; // 6006
+
+  constructor(program: Program, cause?: Error) {
+    super('Deposit cap reached', program, cause);
+  }
+}
+codeToErrorMap.set(0x1776, SsDepositCapExceededError);
+nameToErrorMap.set('DepositCapExceeded', SsDepositCapExceededError);
+
 /** ExcessiveWithdrawal: Excessive Withdrawal, collateral shouldn't be less than collateral threshold */
 export class SsExcessiveWithdrawalError extends ProgramError {
   override readonly name: string = 'ExcessiveWithdrawal';
 
-  readonly code: number = 0x1776; // 6006
+  readonly code: number = 0x1777; // 6007
 
   constructor(program: Program, cause?: Error) {
     super(
@@ -117,59 +130,59 @@ export class SsExcessiveWithdrawalError extends ProgramError {
     );
   }
 }
-codeToErrorMap.set(0x1776, SsExcessiveWithdrawalError);
+codeToErrorMap.set(0x1777, SsExcessiveWithdrawalError);
 nameToErrorMap.set('ExcessiveWithdrawal', SsExcessiveWithdrawalError);
 
 /** CalculationOverflow: Calculation overflow */
 export class SsCalculationOverflowError extends ProgramError {
   override readonly name: string = 'CalculationOverflow';
 
-  readonly code: number = 0x1777; // 6007
+  readonly code: number = 0x1778; // 6008
 
   constructor(program: Program, cause?: Error) {
     super('Calculation overflow', program, cause);
   }
 }
-codeToErrorMap.set(0x1777, SsCalculationOverflowError);
+codeToErrorMap.set(0x1778, SsCalculationOverflowError);
 nameToErrorMap.set('CalculationOverflow', SsCalculationOverflowError);
 
 /** InvalidAdmin: Invalid admin */
 export class SsInvalidAdminError extends ProgramError {
   override readonly name: string = 'InvalidAdmin';
 
-  readonly code: number = 0x1778; // 6008
+  readonly code: number = 0x1779; // 6009
 
   constructor(program: Program, cause?: Error) {
     super('Invalid admin', program, cause);
   }
 }
-codeToErrorMap.set(0x1778, SsInvalidAdminError);
+codeToErrorMap.set(0x1779, SsInvalidAdminError);
 nameToErrorMap.set('InvalidAdmin', SsInvalidAdminError);
 
 /** InvalidOwner: Invalid owner */
 export class SsInvalidOwnerError extends ProgramError {
   override readonly name: string = 'InvalidOwner';
 
-  readonly code: number = 0x1779; // 6009
+  readonly code: number = 0x177a; // 6010
 
   constructor(program: Program, cause?: Error) {
     super('Invalid owner', program, cause);
   }
 }
-codeToErrorMap.set(0x1779, SsInvalidOwnerError);
+codeToErrorMap.set(0x177a, SsInvalidOwnerError);
 nameToErrorMap.set('InvalidOwner', SsInvalidOwnerError);
 
 /** InvalidYieldRate: Invalid yield rate */
 export class SsInvalidYieldRateError extends ProgramError {
   override readonly name: string = 'InvalidYieldRate';
 
-  readonly code: number = 0x177a; // 6010
+  readonly code: number = 0x177b; // 6011
 
   constructor(program: Program, cause?: Error) {
     super('Invalid yield rate', program, cause);
   }
 }
-codeToErrorMap.set(0x177a, SsInvalidYieldRateError);
+codeToErrorMap.set(0x177b, SsInvalidYieldRateError);
 nameToErrorMap.set('InvalidYieldRate', SsInvalidYieldRateError);
 
 /**

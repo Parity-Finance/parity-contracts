@@ -59,6 +59,7 @@ export type InitializePoolManagerInstructionData = {
   secondsPerInterval: number;
   initialExchangeRate: bigint;
   admin: PublicKey;
+  depositCap: bigint;
 };
 
 export type InitializePoolManagerInstructionDataArgs = {
@@ -70,6 +71,7 @@ export type InitializePoolManagerInstructionDataArgs = {
   secondsPerInterval: number;
   initialExchangeRate: number | bigint;
   admin: PublicKey;
+  depositCap: number | bigint;
 };
 
 export function getInitializePoolManagerInstructionDataSerializer(): Serializer<
@@ -92,6 +94,7 @@ export function getInitializePoolManagerInstructionDataSerializer(): Serializer<
         ['secondsPerInterval', i32()],
         ['initialExchangeRate', u64()],
         ['admin', publicKeySerializer()],
+        ['depositCap', u64()],
       ],
       { description: 'InitializePoolManagerInstructionData' }
     ),

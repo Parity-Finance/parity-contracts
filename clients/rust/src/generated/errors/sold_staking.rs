@@ -28,19 +28,22 @@ pub enum SoldStakingError {
     /// 6005 (0x1775) - Excessive Deposit, collateral shouldn't exceed 100%
     #[error("Excessive Deposit, collateral shouldn't exceed 100%")]
     ExcessiveDeposit,
-    /// 6006 (0x1776) - Excessive Withdrawal, collateral shouldn't be less than collateral threshold
+    /// 6006 (0x1776) - Deposit cap reached
+    #[error("Deposit cap reached")]
+    DepositCapExceeded,
+    /// 6007 (0x1777) - Excessive Withdrawal, collateral shouldn't be less than collateral threshold
     #[error("Excessive Withdrawal, collateral shouldn't be less than collateral threshold")]
     ExcessiveWithdrawal,
-    /// 6007 (0x1777) - Calculation overflow
+    /// 6008 (0x1778) - Calculation overflow
     #[error("Calculation overflow")]
     CalculationOverflow,
-    /// 6008 (0x1778) - Invalid admin
+    /// 6009 (0x1779) - Invalid admin
     #[error("Invalid admin")]
     InvalidAdmin,
-    /// 6009 (0x1779) - Invalid owner
+    /// 6010 (0x177A) - Invalid owner
     #[error("Invalid owner")]
     InvalidOwner,
-    /// 6010 (0x177A) - Invalid yield rate
+    /// 6011 (0x177B) - Invalid yield rate
     #[error("Invalid yield rate")]
     InvalidYieldRate,
 }

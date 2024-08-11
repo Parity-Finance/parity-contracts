@@ -443,6 +443,10 @@
           {
             "name": "baseBalance",
             "type": "u64"
+          },
+          {
+            "name": "depositCap",
+            "type": "u64"
           }
         ]
       }
@@ -485,6 +489,10 @@
           {
             "name": "admin",
             "type": "publicKey"
+          },
+          {
+            "name": "depositCap",
+            "type": "u64"
           }
         ]
       }
@@ -507,15 +515,15 @@
         "kind": "struct",
         "fields": [
           {
-            "name": "newOwner",
+            "name": "newAdmin",
             "type": {
               "option": "publicKey"
             }
           },
           {
-            "name": "newAdmin",
+            "name": "newDepositCap",
             "type": {
-              "option": "publicKey"
+              "option": "u64"
             }
           }
         ]
@@ -555,26 +563,31 @@
     },
     {
       "code": 6006,
+      "name": "DepositCapExceeded",
+      "msg": "Deposit cap reached"
+    },
+    {
+      "code": 6007,
       "name": "ExcessiveWithdrawal",
       "msg": "Excessive Withdrawal, collateral shouldn't be less than collateral threshold"
     },
     {
-      "code": 6007,
+      "code": 6008,
       "name": "CalculationOverflow",
       "msg": "Calculation overflow"
     },
     {
-      "code": 6008,
+      "code": 6009,
       "name": "InvalidAdmin",
       "msg": "Invalid admin"
     },
     {
-      "code": 6009,
+      "code": 6010,
       "name": "InvalidOwner",
       "msg": "Invalid owner"
     },
     {
-      "code": 6010,
+      "code": 6011,
       "name": "InvalidYieldRate",
       "msg": "Invalid yield rate"
     }

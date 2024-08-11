@@ -134,6 +134,7 @@ pub struct InitializePoolManagerInstructionArgs {
     pub seconds_per_interval: i32,
     pub initial_exchange_rate: u64,
     pub admin: Pubkey,
+    pub deposit_cap: u64,
 }
 
 /// Instruction builder for `InitializePoolManager`.
@@ -172,6 +173,7 @@ pub struct InitializePoolManagerBuilder {
     seconds_per_interval: Option<i32>,
     initial_exchange_rate: Option<u64>,
     admin: Option<Pubkey>,
+    deposit_cap: Option<u64>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
@@ -285,6 +287,11 @@ impl InitializePoolManagerBuilder {
         self.admin = Some(admin);
         self
     }
+    #[inline(always)]
+    pub fn deposit_cap(&mut self, deposit_cap: u64) -> &mut Self {
+        self.deposit_cap = Some(deposit_cap);
+        self
+    }
     /// Add an aditional account to the instruction.
     #[inline(always)]
     pub fn add_remaining_account(
@@ -347,6 +354,7 @@ impl InitializePoolManagerBuilder {
                 .clone()
                 .expect("initial_exchange_rate is not set"),
             admin: self.admin.clone().expect("admin is not set"),
+            deposit_cap: self.deposit_cap.clone().expect("deposit_cap is not set"),
         };
 
         accounts.instruction_with_remaining_accounts(args, &self.__remaining_accounts)
@@ -594,6 +602,7 @@ impl<'a, 'b> InitializePoolManagerCpiBuilder<'a, 'b> {
             seconds_per_interval: None,
             initial_exchange_rate: None,
             admin: None,
+            deposit_cap: None,
             __remaining_accounts: Vec::new(),
         });
         Self { instruction }
@@ -718,6 +727,11 @@ impl<'a, 'b> InitializePoolManagerCpiBuilder<'a, 'b> {
         self.instruction.admin = Some(admin);
         self
     }
+    #[inline(always)]
+    pub fn deposit_cap(&mut self, deposit_cap: u64) -> &mut Self {
+        self.instruction.deposit_cap = Some(deposit_cap);
+        self
+    }
     /// Add an additional account to the instruction.
     #[inline(always)]
     pub fn add_remaining_account(
@@ -784,6 +798,11 @@ impl<'a, 'b> InitializePoolManagerCpiBuilder<'a, 'b> {
                 .clone()
                 .expect("initial_exchange_rate is not set"),
             admin: self.instruction.admin.clone().expect("admin is not set"),
+            deposit_cap: self
+                .instruction
+                .deposit_cap
+                .clone()
+                .expect("deposit_cap is not set"),
         };
         let instruction = InitializePoolManagerCpi {
             __program: self.instruction.__program,
@@ -854,6 +873,7 @@ struct InitializePoolManagerCpiBuilderInstruction<'a, 'b> {
     seconds_per_interval: Option<i32>,
     initial_exchange_rate: Option<u64>,
     admin: Option<Pubkey>,
+    deposit_cap: Option<u64>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(
         &'b solana_program::account_info::AccountInfo<'a>,
