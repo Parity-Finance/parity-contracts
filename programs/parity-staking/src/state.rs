@@ -343,11 +343,11 @@ mod tests {
         pool_manager.deposit_cap = 1000000;
 
         // Test case where deposit is within limit
-        let result = pool_manager.check_excessive_deposit(500000, 1000000);
+        let result = pool_manager.check_excessive_deposit(500000, 500000);
         assert!(result.is_ok());
 
         // Test case where deposit exceeds limit
-        let result = pool_manager.check_excessive_deposit(1000001, 1000000);
+        let result = pool_manager.check_excessive_deposit(500000, 1000000);
         assert!(result.is_err());
     }
 }

@@ -1222,9 +1222,9 @@ describe.only("parity-issuance", () => {
         await txBuilder.sendAndConfirm(umi);
       },
       (err) => {
-        return (err as Error).message.includes("Deposit cap reached");
+        return (err as Error).message.includes("Deposit cap exceeded");
       },
-      "Expected staking to fail because Deposit cap reached"
+      "Expected staking to fail because Deposit cap exceeded"
     );
   });
 
@@ -1631,9 +1631,9 @@ describe.only("parity-issuance", () => {
         await txBuilder.sendAndConfirm(umi);
       },
       (err) => {
-        return (err as Error).message.includes("Deposit cap reached");
+        return (err as Error).message.includes("Deposit cap exceeded");
       },
-      "Expected staking to fail because Deposit cap reached"
+      "Expected staking to fail because Deposit cap exceeded"
     );
   });
 
