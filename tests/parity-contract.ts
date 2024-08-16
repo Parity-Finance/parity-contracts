@@ -1026,10 +1026,10 @@ describe.only("parity-issuance", () => {
       Number(
         ((baseMintAcc.supply / BigInt(10 ** baseMintDecimals)) *
           BigInt(exchangeRate)) /
-        BigInt(10 ** exchangeRateDecimals) -
-        tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals)
+          BigInt(10 ** exchangeRateDecimals) -
+          tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals)
       ) *
-      10 ** quoteMintDecimals +
+        10 ** quoteMintDecimals +
       1;
     if (quantity < 0) {
       quantity = 1;
@@ -1073,14 +1073,14 @@ describe.only("parity-issuance", () => {
       Number(
         ((baseMintAcc.supply / BigInt(10 ** baseMintDecimals)) *
           BigInt(exchangeRate)) /
-        BigInt(10 ** exchangeRateDecimals) -
-        tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals)
+          BigInt(10 ** exchangeRateDecimals) -
+          tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals)
       ) *
       10 ** quoteMintDecimals;
 
     const maxCollateral = Number(
       (baseMintAcc.supply / BigInt(10 ** baseMintDecimals)) *
-      BigInt(exchangeRate)
+        BigInt(exchangeRate)
     );
     quantity = maxCollateral - Number(_tokenManagerAcc.totalCollateral);
     // console.log("Max Collateral: ", maxCollateral);
