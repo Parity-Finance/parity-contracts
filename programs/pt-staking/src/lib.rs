@@ -3,10 +3,12 @@ use anchor_lang::prelude::*;
 pub mod instructions;
 pub mod state;
 pub mod error;
+pub mod u64x64_math;
 
 pub use instructions::*;
 pub use state::*;
 pub use error::*;
+pub use u64x64_math::*;
 
 declare_id!("5zWkamSdh3S4hELhV1ezx6gzyCinBVi38StJUdi8cfGa");
 
@@ -21,12 +23,12 @@ pub mod pt_staking {
         initialize_global_config::handler(ctx, params)
     }
 
-    pub fn stake(ctx: Context<Stake>, quantity: u64) -> Result<()> {
-        stake::handler(ctx, quantity)
+    pub fn pt_stake(ctx: Context<PtStake>, quantity: u64) -> Result<()> {
+        pt_stake::handler(ctx, quantity)
     }
 
-    pub fn unstake(ctx: Context<Unstake>, quantity: u64) -> Result<()> {
-        unstake::handler(ctx, quantity)
+    pub fn pt_unstake(ctx: Context<PtUnstake>, quantity: u64) -> Result<()> {
+        pt_unstake::handler(ctx, quantity)
     }
 
     pub fn update_global_config(ctx: Context<UpdateGlobalConfig>, params: UpdateGlobalConfigParams) -> Result<()> {

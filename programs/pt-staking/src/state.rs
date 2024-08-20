@@ -3,7 +3,7 @@ use anchor_lang::prelude::*;
 use crate::PtStakingError;
 
 pub const GLOBAL_CONFIG_LENGTH: usize =
-    8 + 1 + (32 * 5) + (1 * 2) + (8 * 3) + 4 * (8 + 8 + 1 + 4) + 4 * (8 + 8 + 4);
+    8 + 1 + (32 * 5) + (1) + (8 * 4) + 4 * (8 + 8 + 1 + 4) + 4 * (8 + 8 + 4);
 
 pub const USER_STAKE_LENGTH: usize = 8 + 32 + 8 + 8 + 8 + 4 * (8 + 8 + 4);
 
@@ -19,7 +19,7 @@ pub struct GlobalConfig {
     pub base_mint: Pubkey,                             // 32 bytes
     pub staking_vault: Pubkey,                         // 32 bytes
     pub base_mint_decimals: u8,                        // 1 byte
-    pub baseline_yield: u8,                            // 1 bytes
+    pub baseline_yield: u64,                            // 8 bytes
     pub staked_supply: u64,                            // 8 bytes
     pub total_points_issued: u64,                      // 8 bytes
     pub deposit_cap: u64,                              // 8 bytes
@@ -76,30 +76,97 @@ impl GlobalConfig {
         }
     }
 
-    pub fn calculate_points(&self, staked_amount: u64, staking_duration: i64) -> Result<u64> {
-        let mut total_points: u64 = 0;
+    pub fn calculate_points(
+        &self,
+        staked_amount: u64,
+        staking_duration: i64,
+    ) -> Result<Vec<PointsEarnedPhase>> {
+        let mut points_history = Vec::new();
+        let mut remaining_duration = staking_duration;
 
-        for rate_phase in &self.exchange_rate_history {
-            let phase_start = rate_phase.start_date;
-            let phase_end = rate_phase.end_date.unwrap_or(staking_duration);
-            let phase_duration = phase_end - phase_start;
+        // Iterate over exchange rate phases from most recent to oldest
+        for phase in self.exchange_rate_history.iter().rev() {
+            if remaining_duration == 0 {
+                break;
+            }
 
-            let duration_in_years = (phase_duration as f64) / 31_536_000.0; // Convert seconds to years
+            // Determine the duration for this phase
+            let phase_duration = match phase.end_date {
+                Some(end_date) => end_date.checked_sub(phase.start_date).unwrap_or(0),
+                None => remaining_duration,
+            };
 
+            let applicable_duration = phase_duration.min(remaining_duration);
+            remaining_duration = remaining_duration.checked_sub(applicable_duration).unwrap();
 
-            // Calculate points earned in this phase
-            let points_for_phase = ((staked_amount as f64)
-                * (self.baseline_yield as f64 / 100.0)
-                * duration_in_years
-                * rate_phase.exchange_rate as f64)
-                .round() as u64;
+            // Calculate the points for this phase
+            let baseline_yield_percentage = self.baseline_yield as u64;
+            let reward = staked_amount
+                .checked_mul(baseline_yield_percentage)
+                .unwrap()
+                .checked_mul(applicable_duration as u64)
+                .unwrap()
+                .checked_div(100)
+                .unwrap(); // Divide by 100 to apply percentage
+            let points = reward.checked_div(phase.exchange_rate).unwrap();
 
-            total_points = total_points
-                .checked_add(points_for_phase)
-                .ok_or(PtStakingError::CalculationOverflow)?;
+            msg!("staked_amount: {}", staked_amount);
+            msg!("baseline_yield: {}", self.baseline_yield);
+            msg!("applicable_duration: {}", applicable_duration);
+            msg!("exchange_rate: {}", phase.exchange_rate);
+            msg!("calculated points: {}", points);
+
+            points_history.push(PointsEarnedPhase {
+                exchange_rate: phase.exchange_rate,
+                points,
+                index: phase.index,
+            });
         }
+        Ok(points_history)
+    }
 
-        Ok(total_points)
+    pub fn update_global_points(&mut self, points_history: Vec<PointsEarnedPhase>) {
+        for new_phase in points_history {
+            if let Some(existing_phase) = self
+                .points_history
+                .iter_mut()
+                .find(|p| p.index == new_phase.index)
+            {
+                existing_phase.points =
+                    existing_phase.points.checked_add(new_phase.points).unwrap();
+
+                //store the global total points
+                self.total_points_issued = self
+                    .total_points_issued
+                    .checked_add(new_phase.points)
+                    .unwrap();
+            } else {
+                self.points_history.push(new_phase.clone());
+
+                //store the global total points
+                self.total_points_issued = self
+                    .total_points_issued
+                    .checked_add(new_phase.points)
+                    .unwrap();
+            }
+        }
+    }
+}
+
+impl UserStake {
+    pub fn update_points_history(&mut self, points_history: Vec<PointsEarnedPhase>) {
+        for new_phase in points_history {
+            if let Some(existing_phase) = self
+                .points_history
+                .iter_mut()
+                .find(|p| p.index == new_phase.index)
+            {
+                existing_phase.points =
+                    existing_phase.points.checked_add(new_phase.points).unwrap();
+            } else {
+                self.points_history.push(new_phase);
+            }
+        }
     }
 }
 
@@ -284,39 +351,79 @@ mod tests {
     #[test]
     fn test_calculate_points() {
         let global_config = default_global_config();
-    
+
         // Calculate points for a given staked amount and duration
         let staked_amount = 1_000_000;
         let staking_duration = 3_000_000; // Matching the end_date of the last phase
-    
-        // Log the exchange rate history for debugging
-        for (i, phase) in global_config.exchange_rate_history.iter().enumerate() {
-            msg!(
-                "Phase {}: start={}, end={:?}, rate={}",
-                i,
-                phase.start_date,
-                phase.end_date,
-                phase.exchange_rate
-            );
-        }
 
-    
         let points = global_config.calculate_points(staked_amount, staking_duration);
         assert!(points.is_ok());
-        
-        let calculated_points = points.unwrap(); // Unwrap once and store in a variable
-        msg!("Calculated Points: {}", calculated_points);
-        assert_eq!(calculated_points, 71347); // Points calculation as per phases
-    
-        // Test with no exchange rate history
-        let mut global_config_empty = default_global_config();
-        global_config_empty.exchange_rate_history.clear();
-    
-        let points_empty = global_config_empty.calculate_points(staked_amount, staking_duration);
-        assert!(points_empty.is_ok());
-        
-        let calculated_points_empty = points_empty.unwrap(); // Unwrap once for empty case
-        assert_eq!(calculated_points_empty, 0); // No points should be earned
+
+        let points_phases = points.unwrap();
+
+        // Assert that we have the correct number of phases in the result
+        assert_eq!(points_phases.len(), 2);
+
+        // Recalculate the expected values based on the input data.
+        // let expected_points_phase_1 = (1_000_000 * 1 * 2_000_000) / 100_000; // Example rate and duration
+        // let expected_points_phase_0 = (1_000_000 * 1 * 1_000_000) / 500_000; // Example rate and duration
+
+        // Phase 1 (most recent)
+        assert_eq!(points_phases[0].index, 1);
+        assert_eq!(points_phases[0].points, 2_000_000_000);
+
+        // Phase 0 (older)
+        assert_eq!(points_phases[1].index, 0);
+        assert_eq!(points_phases[1].points, 2_500_000_000);
     }
-    
+
+    #[test]
+    fn test_user_stake_update_points_history() {
+        let mut user_stake = default_user_stake();
+
+        let new_points = vec![
+            PointsEarnedPhase {
+                exchange_rate: 25,
+                points: 50,
+                index: 1,
+            },
+            PointsEarnedPhase {
+                exchange_rate: 30,
+                points: 100,
+                index: 2,
+            },
+        ];
+
+        user_stake.update_points_history(new_points);
+
+        // Check that points were updated correctly
+        assert_eq!(user_stake.points_history.len(), 3);
+        assert_eq!(user_stake.points_history[1].points, 250); // Updated existing phase
+        assert_eq!(user_stake.points_history[2].points, 100); // New phase added
+    }
+
+    #[test]
+    fn test_global_config_update_global_points() {
+        let mut global_config = default_global_config();
+
+        let new_points = vec![
+            PointsEarnedPhase {
+                exchange_rate: 25,
+                points: 100,
+                index: 1,
+            },
+            PointsEarnedPhase {
+                exchange_rate: 30,
+                points: 150,
+                index: 2,
+            },
+        ];
+
+        global_config.update_global_points(new_points);
+
+        // Check that global points were updated correctly
+        assert_eq!(global_config.points_history.len(), 3);
+        assert_eq!(global_config.points_history[1].points, 300); // Updated existing phase
+        assert_eq!(global_config.points_history[2].points, 150); // New phase added
+    }
 }

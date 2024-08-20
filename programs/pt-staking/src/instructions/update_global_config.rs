@@ -4,7 +4,7 @@ use crate::{ExchangeRatePhase, GlobalConfig, PtStakingError};
 
 #[derive(AnchorSerialize, AnchorDeserialize, Debug, Clone)]
 pub struct UpdateGlobalConfigParams {
-    pub new_baseline_yield: Option<u8>,
+    pub new_baseline_yield: Option<u64>,
     pub new_exchange_rate: Option<u64>,
     pub new_deposit_cap: Option<u64>,
 }

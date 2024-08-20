@@ -19,12 +19,17 @@
           "isSigner": false
         },
         {
+          "name": "userStake",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "vault",
           "isMut": true,
           "isSigner": false
         },
         {
-          "name": "payer",
+          "name": "user",
           "isMut": true,
           "isSigner": true
         },
@@ -52,6 +57,178 @@
           }
         }
       ]
+    },
+    {
+      "name": "ptStake",
+      "accounts": [
+        {
+          "name": "globalConfig",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "userStake",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "baseMint",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "userBaseMintAta",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "vault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "user",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "associatedTokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "quantity",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "ptUnstake",
+      "accounts": [
+        {
+          "name": "globalConfig",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "userStake",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "baseMint",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "userBaseMintAta",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "vault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "user",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "associatedTokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "quantity",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "updateGlobalConfig",
+      "accounts": [
+        {
+          "name": "globalConfig",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": true
+        }
+      ],
+      "args": [
+        {
+          "name": "params",
+          "type": {
+            "defined": "UpdateGlobalConfigParams"
+          }
+        }
+      ]
+    },
+    {
+      "name": "initiateUpdateGlobalConfigOwner",
+      "accounts": [
+        {
+          "name": "globalConfig",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": true
+        }
+      ],
+      "args": [
+        {
+          "name": "newOwner",
+          "type": "publicKey"
+        }
+      ]
+    },
+    {
+      "name": "updateGlobalConfigOwner",
+      "accounts": [
+        {
+          "name": "globalConfig",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "newOwner",
+          "isMut": true,
+          "isSigner": true
+        }
+      ],
+      "args": []
     }
   ],
   "accounts": [
@@ -90,7 +267,7 @@
           },
           {
             "name": "baselineYield",
-            "type": "u8"
+            "type": "u64"
           },
           {
             "name": "stakedSupply",
@@ -122,6 +299,38 @@
           }
         ]
       }
+    },
+    {
+      "name": "UserStake",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "userPubkey",
+            "type": "publicKey"
+          },
+          {
+            "name": "stakedAmount",
+            "type": "u64"
+          },
+          {
+            "name": "stakingTimestamp",
+            "type": "i64"
+          },
+          {
+            "name": "lastClaimTimestamp",
+            "type": "i64"
+          },
+          {
+            "name": "pointsHistory",
+            "type": {
+              "vec": {
+                "defined": "PointsEarnedPhase"
+              }
+            }
+          }
+        ]
+      }
     }
   ],
   "types": [
@@ -136,11 +345,41 @@
           },
           {
             "name": "baselineYield",
-            "type": "u8"
+            "type": "u64"
           },
           {
             "name": "depositCap",
             "type": "u64"
+          },
+          {
+            "name": "initialExchangeRate",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UpdateGlobalConfigParams",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "newBaselineYield",
+            "type": {
+              "option": "u64"
+            }
+          },
+          {
+            "name": "newExchangeRate",
+            "type": {
+              "option": "u64"
+            }
+          },
+          {
+            "name": "newDepositCap",
+            "type": {
+              "option": "u64"
+            }
           }
         ]
       }
@@ -190,6 +429,43 @@
           }
         ]
       }
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "CalculationOverflow",
+      "msg": "Calculation overflow"
+    },
+    {
+      "code": 6001,
+      "name": "InvalidAdmin",
+      "msg": "Invalid admin"
+    },
+    {
+      "code": 6002,
+      "name": "InvalidOwner",
+      "msg": "Invalid owner"
+    },
+    {
+      "code": 6003,
+      "name": "InvalidYieldRate",
+      "msg": "Invalid yield rate"
+    },
+    {
+      "code": 6004,
+      "name": "DepositCapExceeded",
+      "msg": "Deposit cap exceeded"
+    },
+    {
+      "code": 6005,
+      "name": "NoExchangeRateAvailable",
+      "msg": "No exchange rate avaliable"
+    },
+    {
+      "code": 6006,
+      "name": "InsufficientStakedAmount",
+      "msg": "Insufficient staked amount"
     }
   ],
   "metadata": {

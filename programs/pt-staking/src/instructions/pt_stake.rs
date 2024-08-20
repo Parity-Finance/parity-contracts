@@ -4,10 +4,10 @@ use anchor_spl::{
     token::{transfer_checked, Mint, Token, TokenAccount, TransferChecked},
 };
 
-use crate::{GlobalConfig, PointsEarnedPhase, PtStakingError, UserStake};
+use crate::{GlobalConfig, PtStakingError, UserStake};
 
 #[derive(Accounts)]
-pub struct Stake<'info> {
+pub struct PtStake<'info> {
     #[account(
         mut,
         seeds = [b"global-config"],
@@ -16,7 +16,7 @@ pub struct Stake<'info> {
     pub global_config: Account<'info, GlobalConfig>,
     #[account(
         mut,
-        seeds = [b"user-stake", user.key().as_ref()],
+        seeds = [b"user-stake"],
         bump
     )]
     pub user_stake: Account<'info, UserStake>,
@@ -49,7 +49,7 @@ pub struct Stake<'info> {
     pub associated_token_program: Program<'info, AssociatedToken>,
 }
 
-pub fn handler(ctx: Context<Stake>, quantity: u64) -> Result<()> {
+pub fn handler(ctx: Context<PtStake>, quantity: u64) -> Result<()> {
     let global_config = &mut ctx.accounts.global_config;
     let user_stake = &mut ctx.accounts.user_stake;
     let user_base_mint_ata = &ctx.accounts.user_base_mint_ata;
@@ -81,25 +81,24 @@ pub fn handler(ctx: Context<Stake>, quantity: u64) -> Result<()> {
     } else {
         // Calculate points earned since the last stake/unstake.
         let duration = current_timestamp - user_stake.staking_timestamp;
-        let points_earned = global_config.calculate_points(user_stake.staked_amount, duration)?;
+        let points_earned_phases =
+            global_config.calculate_points(user_stake.staked_amount, duration)?;
 
-        // Add the earned points to the global config total points.
-        global_config.total_points_issued = global_config
-            .total_points_issued
-            .checked_add(points_earned)
-            .ok_or(PtStakingError::CalculationOverflow)?;
+        // Update user's points history
+        user_stake.update_points_history(points_earned_phases.clone());
 
-        // Record the points earned in this phase for tracking.
-        let points_phase = PointsEarnedPhase {
-            exchange_rate: global_config.get_current_exchange_rate()?,
-            points: points_earned,
-            index: user_stake.points_history.len() as u32,
-        };
-        user_stake.points_history.push(points_phase);
+        // Update global points history
+        global_config.update_global_points(points_earned_phases);
 
         // Update the staking timestamp to the current time.
         user_stake.staking_timestamp = current_timestamp;
     }
+
+    // Update the global staked supply
+    global_config.staked_supply = global_config
+        .staked_supply
+        .checked_add(quantity)
+        .ok_or(PtStakingError::CalculationOverflow)?;
 
     //Update the user's staked amount.
     user_stake.staked_amount = user_stake

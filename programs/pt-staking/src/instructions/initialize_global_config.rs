@@ -8,7 +8,7 @@ use anchor_spl::{
 #[derive(AnchorSerialize, AnchorDeserialize, Debug, Clone)]
 pub struct InitializeGlobalConfigParams {
     pub admin: Pubkey,
-    pub baseline_yield: u8,
+    pub baseline_yield: u64,
     pub deposit_cap: u64,
     pub initial_exchange_rate: u64,
 }
@@ -28,7 +28,7 @@ pub struct InitializeGlobalConfig<'info> {
 
     #[account(
         init,
-        seeds = [b"user-stake", user.key().as_ref()],
+        seeds = [b"user-stake"],
         bump,
         payer = user,
         space = USER_STAKE_LENGTH,

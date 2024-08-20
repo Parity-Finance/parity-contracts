@@ -7,5 +7,7 @@
  */
 
 export * from './gatekeeper';
+export * from './globalConfig';
 export * from './poolManager';
 export * from './tokenManager';
+export * from './userStake';

@@ -7,6 +7,8 @@
 
 pub(crate) mod parity_issuance;
 pub(crate) mod parity_staking;
+pub(crate) mod pt_staking;
 
 pub use self::parity_issuance::ParityIssuanceError;
 pub use self::parity_staking::ParityStakingError;
+pub use self::pt_staking::PtStakingError;

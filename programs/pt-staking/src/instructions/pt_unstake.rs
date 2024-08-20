@@ -1,4 +1,4 @@
-use crate::{GlobalConfig, PointsEarnedPhase, PtStakingError, UserStake};
+use crate::{GlobalConfig, PtStakingError, UserStake};
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
@@ -6,7 +6,7 @@ use anchor_spl::{
 };
 
 #[derive(Accounts)]
-pub struct Unstake<'info> {
+pub struct PtUnstake<'info> {
     #[account(
         mut,
         seeds = [b"global-config"],
@@ -16,7 +16,7 @@ pub struct Unstake<'info> {
 
     #[account(
         mut,
-        seeds = [b"user-stake", user.key().as_ref()],
+        seeds = [b"user-stake"],
         bump
     )]
     pub user_stake: Account<'info, UserStake>,
@@ -49,7 +49,7 @@ pub struct Unstake<'info> {
     pub associated_token_program: Program<'info, AssociatedToken>,
 }
 
-pub fn handler(ctx: Context<Unstake>, quantity: u64) -> Result<()> {
+pub fn handler(ctx: Context<PtUnstake>, quantity: u64) -> Result<()> {
     let global_config = &mut ctx.accounts.global_config;
     let user_stake = &mut ctx.accounts.user_stake;
     let user_base_mint_ata = &ctx.accounts.user_base_mint_ata;
@@ -81,15 +81,14 @@ pub fn handler(ctx: Context<Unstake>, quantity: u64) -> Result<()> {
 
     // Calculate points earned until now
     let staking_duration = Clock::get()?.unix_timestamp - user_stake.staking_timestamp;
-    let points_earned =
+    let points_earned_phases =
         global_config.calculate_points(user_stake.staked_amount, staking_duration)?;
 
-    // Record the points earned in this phase
-    user_stake.points_history.push(PointsEarnedPhase {
-        exchange_rate: global_config.get_current_exchange_rate()?,
-        points: points_earned,
-        index: global_config.exchange_rate_history.len() as u32,
-    });
+    // Update user's points history
+    user_stake.update_points_history(points_earned_phases.clone());
+
+    // Update global points history
+    global_config.update_global_points(points_earned_phases);
 
     // Update the global staked supply
     global_config.staked_supply = global_config

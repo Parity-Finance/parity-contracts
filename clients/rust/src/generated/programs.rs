@@ -12,3 +12,6 @@ pub const PARITY_ISSUANCE_ID: Pubkey = pubkey!("2EWh1kTyMUgv46FdwJYJP61LXvrhLp5C
 
 /// `parity_staking` program ID.
 pub const PARITY_STAKING_ID: Pubkey = pubkey!("9fQsEayPeUdypEAjyE6HGBkPWqrkMnnJG8Sh5NBXwwAM");
+
+/// `pt_staking` program ID.
+pub const PT_STAKING_ID: Pubkey = pubkey!("5zWkamSdh3S4hELhV1ezx6gzyCinBVi38StJUdi8cfGa");

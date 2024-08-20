@@ -5,10 +5,8 @@
 //! [https://github.com/metaplex-foundation/kinobi]
 //!
 
-pub mod accounts;
-pub mod errors;
-pub mod instructions;
-pub mod programs;
-pub mod types;
+pub(crate) mod r#exchange_rate_phase;
+pub(crate) mod r#points_earned_phase;
 
-pub(crate) use programs::*;
+pub use self::r#exchange_rate_phase::*;
+pub use self::r#points_earned_phase::*;

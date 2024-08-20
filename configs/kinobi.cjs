@@ -9,12 +9,14 @@ const idlDir = path.join(__dirname, "..", "idls");
 const kinobi = k.createFromIdls([
   path.join(idlDir, "parity_issuance.json"),
   path.join(idlDir, "parity_staking.json"),
+  path.join(idlDir, "pt_staking.json"),
 ]);
 
 kinobi.update(
   new k.updateProgramsVisitor({
     parityIssuance: { name: "parityIssuance", prefix: "si" },
     parityStaking: { name: "parityStaking", prefix: "ss" },
+    ptStaking: {name: "ptStaking", prefix: "ps"},
   })
 );
 
@@ -41,6 +43,16 @@ kinobi.update(
         ),
       ],
     },
+    globalConfig: {
+      seeds: [
+        k.constantPdaSeedNodeFromString("global-config")
+      ]
+    },
+    userStake: {
+      seeds: [
+        k.constantPdaSeedNodeFromString("user-stake")
+      ]
+    }
   })
 );
 

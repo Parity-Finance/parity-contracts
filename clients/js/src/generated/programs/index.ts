@@ -8,3 +8,4 @@
 
 export * from './parityIssuance';
 export * from './parityStaking';
+export * from './ptStaking';
