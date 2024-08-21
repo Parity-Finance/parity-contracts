@@ -266,7 +266,7 @@
             "type": "u8"
           },
           {
-            "name": "baselineYield",
+            "name": "baselineYieldBps",
             "type": "u64"
           },
           {
@@ -344,7 +344,7 @@
             "type": "publicKey"
           },
           {
-            "name": "baselineYield",
+            "name": "baselineYieldBps",
             "type": "u64"
           },
           {
@@ -364,7 +364,7 @@
         "kind": "struct",
         "fields": [
           {
-            "name": "newBaselineYield",
+            "name": "newBaselineYieldBps",
             "type": {
               "option": "u64"
             }

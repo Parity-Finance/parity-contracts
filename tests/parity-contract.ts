@@ -81,7 +81,7 @@ import assert from "assert";
 import chai, { assert as chaiAssert } from "chai";
 import { bs58 } from "@coral-xyz/anchor/dist/cjs/utils/bytes";
 import { calculateMaxWithdrawableAmount } from "../clients/js/src/utils/maxWithdrawable";
-import { findUserStakePda, initializeGlobalConfig, PT_STAKING_PROGRAM_ID, ptStake, safeFetchGlobalConfig, safeFetchUserStake } from "../clients/js/src/generated";
+import { findUserStakePda, initializeGlobalConfig, PT_STAKING_PROGRAM_ID, ptStake, ptUnstake, safeFetchGlobalConfig, safeFetchUserStake } from "../clients/js/src/generated";
 
 describe.only("parity-issuance", () => {
   let umi = createUmi("http://localhost:8899");
@@ -165,8 +165,7 @@ describe.only("parity-issuance", () => {
     mint: baseMint[0],
   });
 
-  const baselineYield = 5
-
+  const baselineYield = 2000 // For 20%
 
   before(async () => {
     try {
@@ -377,7 +376,7 @@ describe.only("parity-issuance", () => {
         user: umi.identity,
         associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
         admin: umi.identity.publicKey,
-        baselineYield: baselineYield,
+        baselineYieldBps: baselineYield,
         depositCap: testDepositCapAmount,
         initialExchangeRate: 20
       })
@@ -389,7 +388,7 @@ describe.only("parity-issuance", () => {
 
     assert.equal(globalConfigAcc.baseMint, baseMint[0]);
     assert.equal(globalConfigAcc.baseMintDecimals, baseMintDecimals);
-    assert.equal(globalConfigAcc.baselineYield, baselineYield);
+    assert.equal(globalConfigAcc.baselineYieldBps, baselineYield);
     assert.equal(globalConfigAcc.admin, umi.identity.publicKey);
     assert.equal(globalConfigAcc.depositCap, testDepositCapAmount);
     assert.equal(globalConfigAcc.exchangeRateHistory[0].exchangeRate, 20);
@@ -479,7 +478,7 @@ describe.only("parity-issuance", () => {
     );
   });
 
-  it.only("pUSD can be redeemed for Quote", async () => {
+  it("pUSD can be redeemed for Quote", async () => {
     const quantity = 1000 * 10 ** baseMintDecimals;
 
     const proof = getMerkleProof(allowedWallets, keypair.publicKey.toBase58());
@@ -1277,7 +1276,7 @@ describe.only("parity-issuance", () => {
   });
 
   //Pt Stake Program 
-  it.only("baseMint can be staked to earn points", async () => {
+  it.only("baseMint can be staked in PT Staking", async () => {
     let quantity = 1000 * 10 ** baseMintDecimals;
 
     let txBuilder = new TransactionBuilder();
@@ -1298,8 +1297,12 @@ describe.only("parity-issuance", () => {
     await txBuilder.sendAndConfirm(umi, { send: { skipPreflight: true } });
 
     const globalConfigAcc = await safeFetchGlobalConfig(umi, globalConfig);
-    const userStakeAcc = await safeFetchUserStake(umi,userStake);
+    const userStakeAcc = await safeFetchUserStake(umi, userStake);
     const vaultAcc = await safeFetchToken(umi, vaultStakingPDA);
+
+    console.log("Vault Acc: ", vaultAcc);
+    console.log("User Stake Acc: ", userStakeAcc);
+    console.log("Global Config Acc: ", globalConfigAcc);
 
     assert.equal(vaultAcc.amount, quantity);
     assert.equal(userStakeAcc.stakedAmount, quantity);
@@ -1308,6 +1311,51 @@ describe.only("parity-issuance", () => {
 
 
   })
+
+  it.only("baseMint can be unstaked in PT Staking", async () => {
+    // First, we need to stake some tokens
+    let quantity = 1000 * 10 ** baseMintDecimals;
+
+    let txBuilder = new TransactionBuilder();
+
+    txBuilder = txBuilder.add(
+      ptUnstake(umi, {
+        globalConfig,
+        userStake: userStake,
+        baseMint: baseMint,
+        userBaseMintAta: userBase,
+        user: umi.identity,
+        vault: vaultStakingPDA,
+        associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
+        quantity
+      })
+    );
+
+    await txBuilder.sendAndConfirm(umi, { send: { skipPreflight: true } });
+
+    // Fetch accounts after unstaking
+    const globalConfigAcc = await safeFetchGlobalConfig(umi, globalConfig);
+    const userStakeAcc = await safeFetchUserStake(umi, userStake);
+    const vaultAcc = await safeFetchToken(umi, vaultStakingPDA);
+    const userBaseAcc = await safeFetchToken(umi, userBase);
+
+
+    console.log("Vault Acc: ", vaultAcc);
+    console.log("User Stake Acc: ", userStakeAcc);
+    console.log("Global Config Acc: ", globalConfigAcc);
+    console.log("User Base Acc: ", userBaseAcc);
+
+    // Assert the changes
+    // assert.equal(vaultAcc.amount, stakeQuantity - unstakeQuantity, "Vault balance should decrease by unstaked amount");
+    // assert.equal(userStakeAcc.stakedAmount, stakeQuantity - unstakeQuantity, "User staked amount should decrease");
+    // assert.equal(globalConfigAcc.stakedSupply, stakeQuantity - unstakeQuantity, "Global staked supply should decrease");
+
+    // // Check if user received the unstaked tokens
+    // const expectedUserBalance = userBaseAcc.amount + unstakeQuantity;
+    // assert.equal(userBaseAcc.amount, expectedUserBalance, "User should receive unstaked tokens");
+
+    // // TODO: Add assertions for points calculation if applicable
+  });
 
   it("baseMint can be unstaked by redeeming xMint", async () => {
     // const quantity = 10000 * 10 ** baseMintDecimals;

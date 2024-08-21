@@ -19,7 +19,7 @@ pub struct GlobalConfig {
     pub base_mint: Pubkey,                             // 32 bytes
     pub staking_vault: Pubkey,                         // 32 bytes
     pub base_mint_decimals: u8,                        // 1 byte
-    pub baseline_yield: u64,                            // 8 bytes
+    pub baseline_yield_bps: u64,                       // 8 bytes
     pub staked_supply: u64,                            // 8 bytes
     pub total_points_issued: u64,                      // 8 bytes
     pub deposit_cap: u64,                              // 8 bytes
@@ -36,7 +36,7 @@ pub struct UserStake {
     pub points_history: Vec<PointsEarnedPhase>, // 4 bytes (Vec length) + N * size of PointsEarnedPhase
 }
 
-#[derive(AnchorSerialize, AnchorDeserialize, Clone)]
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug)]
 pub struct ExchangeRatePhase {
     pub exchange_rate: u64,    // 8 bytes
     pub start_date: i64,       // 8 bytes
@@ -44,7 +44,7 @@ pub struct ExchangeRatePhase {
     pub index: u32,            // 4 bytes
 }
 
-#[derive(AnchorSerialize, AnchorDeserialize, Clone)]
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug)]
 pub struct PointsEarnedPhase {
     pub exchange_rate: u64, // 8 bytes
     pub points: u64,        // 8 bytes
@@ -79,49 +79,59 @@ impl GlobalConfig {
     pub fn calculate_points(
         &self,
         staked_amount: u64,
-        staking_duration: i64,
+        staking_timestamp: i64,
+        current_timestamp: i64,
     ) -> Result<Vec<PointsEarnedPhase>> {
-        let mut points_history = Vec::new();
-        let mut remaining_duration = staking_duration;
+        const SECONDS_PER_YEAR: u128 = 31_536_000;
+        const PRECISION: u128 = 1_000_000_000_000;
 
-        // Iterate over exchange rate phases from most recent to oldest
+        let mut points_history = Vec::new();
+        let mut remaining_duration = current_timestamp.saturating_sub(staking_timestamp);
+
         for phase in self.exchange_rate_history.iter().rev() {
-            if remaining_duration == 0 {
+            if remaining_duration <= 0 {
                 break;
             }
 
-            // Determine the duration for this phase
-            let phase_duration = match phase.end_date {
-                Some(end_date) => end_date.checked_sub(phase.start_date).unwrap_or(0),
-                None => remaining_duration,
-            };
+            let phase_end = phase.end_date.unwrap_or(current_timestamp);
+            let phase_duration = phase_end.saturating_sub(phase.start_date);
+            let applicable_duration = remaining_duration.min(phase_duration);
 
-            let applicable_duration = phase_duration.min(remaining_duration);
-            remaining_duration = remaining_duration.checked_sub(applicable_duration).unwrap();
+            msg!(
+                "Applicable duration for phase index {}: {}",
+                phase.index,
+                applicable_duration
+            );
 
-            // Calculate the points for this phase
-            let baseline_yield_percentage = self.baseline_yield as u64;
-            let reward = staked_amount
-                .checked_mul(baseline_yield_percentage)
+            let duration_in_years = (applicable_duration as u128)
+                .checked_mul(PRECISION)
                 .unwrap()
-                .checked_mul(applicable_duration as u64)
-                .unwrap()
-                .checked_div(100)
-                .unwrap(); // Divide by 100 to apply percentage
-            let points = reward.checked_div(phase.exchange_rate).unwrap();
+                .checked_div(SECONDS_PER_YEAR)
+                .unwrap();
 
-            msg!("staked_amount: {}", staked_amount);
-            msg!("baseline_yield: {}", self.baseline_yield);
-            msg!("applicable_duration: {}", applicable_duration);
-            msg!("exchange_rate: {}", phase.exchange_rate);
-            msg!("calculated points: {}", points);
+            let points = (staked_amount as u128)
+                .checked_mul(self.baseline_yield_bps as u128)
+                .unwrap()
+                .checked_mul(duration_in_years)
+                .unwrap()
+                .checked_mul(phase.exchange_rate as u128)
+                .unwrap()
+                .checked_div(PRECISION)
+                .unwrap()
+                .checked_div(10000)
+                .unwrap()
+                .checked_div(10u128.pow(self.base_mint_decimals as u32)) // Divide by base_mint_decimals to account for the decimal places in exchange_rate
+                .unwrap();
 
             points_history.push(PointsEarnedPhase {
                 exchange_rate: phase.exchange_rate,
-                points,
+                points: points as u64,
                 index: phase.index,
             });
+
+            remaining_duration -= applicable_duration;
         }
+
         Ok(points_history)
     }
 
@@ -182,7 +192,7 @@ mod tests {
             pending_owner: Pubkey::default(),
             admin: Pubkey::default(),
             staking_vault: Pubkey::default(),
-            baseline_yield: 5,
+            baseline_yield_bps: 5,
             staked_supply: 1_000_000,
             total_points_issued: 50_000,
             deposit_cap: 10_000_000,
@@ -246,7 +256,7 @@ mod tests {
 
         // Assertions
         assert_eq!(global_config.staking_vault, Pubkey::default());
-        assert_eq!(global_config.baseline_yield, 5);
+        assert_eq!(global_config.baseline_yield_bps, 5);
         assert_eq!(global_config.staked_supply, 1_000_000);
         assert_eq!(global_config.total_points_issued, 50_000);
         assert_eq!(global_config.deposit_cap, 10_000_000);
@@ -278,12 +288,12 @@ mod tests {
         let mut global_config = default_global_config();
 
         // Update some fields
-        global_config.baseline_yield = 7;
+        global_config.baseline_yield_bps = 7;
         global_config.staked_supply = 2_000_000;
         global_config.total_points_issued = 100_000;
 
         // Assertions after update
-        assert_eq!(global_config.baseline_yield, 7);
+        assert_eq!(global_config.baseline_yield_bps, 7);
         assert_eq!(global_config.staked_supply, 2_000_000);
         assert_eq!(global_config.total_points_issued, 100_000);
     }
@@ -350,31 +360,114 @@ mod tests {
 
     #[test]
     fn test_calculate_points() {
-        let global_config = default_global_config();
+        let mut global_config = default_global_config();
+        global_config.baseline_yield_bps = 2000; // 20% annual yield
 
-        // Calculate points for a given staked amount and duration
-        let staked_amount = 1_000_000;
-        let staking_duration = 3_000_000; // Matching the end_date of the last phase
+        // Update exchange rate history for the test
+        global_config.exchange_rate_history = vec![
+            ExchangeRatePhase {
+                exchange_rate: 20_000_000, // 1 / 0.05 = 20 (50M FDV)
+                start_date: 0,
+                end_date: Some(1_000_000),
+                index: 0,
+            },
+            ExchangeRatePhase {
+                exchange_rate: 16_666_667, // ~1 / 0.06 ≈ 16.67 (rounded to 17 for simplicity) (60M FDV)
+                start_date: 1_000_000,
+                end_date: None,
+                index: 1,
+            },
+        ];
 
-        let points = global_config.calculate_points(staked_amount, staking_duration);
-        assert!(points.is_ok());
+        // Test case 1: Staking across multiple phases
 
-        let points_phases = points.unwrap();
+        //         Phase 1 (60M FDV):
+        // Exchange rate: 16,666,667
+        // Duration: 500,000 seconds
+        // Duration in years: 500,000 / 31,536,000 ≈ 0.015855
+        // Points = (1000 * 0.2 * 0.015855) * 16.666667 ≈ 52.85 points
 
-        // Assert that we have the correct number of phases in the result
-        assert_eq!(points_phases.len(), 2);
+        // Phase 0 (50M FDV):
+        // Exchange rate: 20,000,000
+        // Duration: 500,000 seconds
+        // Duration in years: 500,000 / 31,536,000 ≈ 0.015855
+        // Points = (1000 * 0.2 * 0.015855) * 20 ≈ 63.42 points
 
-        // Recalculate the expected values based on the input data.
-        // let expected_points_phase_1 = (1_000_000 * 1 * 2_000_000) / 100_000; // Example rate and duration
-        // let expected_points_phase_0 = (1_000_000 * 1 * 1_000_000) / 500_000; // Example rate and duration
+        // Total points: 52.85 + 63.42 ≈ 116.27 points
+        let staked_amount = 1_000_000_000; // 1000 Tokens with 6 decimals
+        let staking_timestamp = 500_000;
+        let current_timestamp = 1_500_000;
+
+        let points = global_config
+            .calculate_points(staked_amount, staking_timestamp, current_timestamp)
+            .unwrap();
+
+        // Log the points array
+        msg!("Calculated points: {:?}", points);
+
+        assert_eq!(points.len(), 2);
 
         // Phase 1 (most recent)
-        assert_eq!(points_phases[0].index, 1);
-        assert_eq!(points_phases[0].points, 2_000_000_000);
+        assert_eq!(points[0].index, 1);
+        assert_eq!(points[0].points, 52849654); // ~52.84 points
 
         // Phase 0 (older)
-        assert_eq!(points_phases[1].index, 0);
-        assert_eq!(points_phases[1].points, 2_500_000_000);
+        assert_eq!(points[1].index, 0);
+        assert_eq!(points[1].points, 63419583); // ~63.42 points
+
+        // Test case 2: Staking within a single phase
+
+        //         Phase 1 (60M FDV):
+        // Exchange rate: 16,666,667
+        // Duration: 300,000 seconds
+        // Duration in years: 300,000 / 31,536,000 ≈ 0.009513
+        // Points = (1000 * 0.2 * 0.009513) * 16.666667 ≈ 31.71 points
+        let staking_timestamp = 1_200_000;
+        let current_timestamp = 1_500_000;
+
+        let points = global_config
+            .calculate_points(staked_amount, staking_timestamp, current_timestamp)
+            .unwrap();
+
+        assert_eq!(points.len(), 1);
+        assert_eq!(points[0].index, 1);
+        assert_eq!(points[0].points, 31709792); // ~31.71 points
+
+        // Test case 3: Staking for exactly one week in each phase
+
+        //         Phase 1 (60M FDV):
+        // Exchange rate: 16,666,667
+        // Duration: 604,800 seconds (1 week)
+        // Duration in years: 604,800 / 31,536,000 ≈ 0.019178
+        // Points = (1000 * 0.2 * 0.019178) * 16.666667 ≈ 63.93 points
+
+        // Phase 0 (50M FDV):
+        // Exchange rate: 20,000,000
+        // Duration: 604,800 seconds (1 week)
+        // Duration in years: 604,800 / 31,536,000 ≈ 0.019178
+        // Points = (1000 * 0.2 * 0.019178) * 20 ≈ 76.71 points
+
+        // Total points: 63.93 + 76.71 ≈ 140.64 points
+        let staking_timestamp = 395_200; // 1,000,000 - 604,800
+        let current_timestamp = 1_604_800; // 1,000,000 + 604,800
+
+        let points = global_config
+            .calculate_points(staked_amount, staking_timestamp, current_timestamp)
+            .unwrap();
+
+        assert_eq!(points.len(), 2);
+
+        // Phase 1 (60M FDV, one week)
+        assert_eq!(points[0].index, 1);
+        assert_eq!(points[0].points, 63926941); // ~63.93 points
+
+        // Phase 0 (50M FDV, one week)
+        assert_eq!(points[1].index, 0);
+        assert_eq!(points[1].points, 76712328); // ~76.71 points
+
+        // Total points
+        let total_points = points[0].points + points[1].points;
+        assert_eq!(total_points, 140639269); // ~140.64 points
     }
 
     #[test]

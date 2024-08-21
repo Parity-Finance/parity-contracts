@@ -8,7 +8,7 @@ use anchor_spl::{
 #[derive(AnchorSerialize, AnchorDeserialize, Debug, Clone)]
 pub struct InitializeGlobalConfigParams {
     pub admin: Pubkey,
-    pub baseline_yield: u64,
+    pub baseline_yield_bps: u64,
     pub deposit_cap: u64,
     pub initial_exchange_rate: u64,
 }
@@ -69,7 +69,7 @@ pub fn handler(
     global_config.staking_vault = ctx.accounts.vault.key();
 
     //Other
-    global_config.baseline_yield = params.baseline_yield;
+    global_config.baseline_yield_bps = params.baseline_yield_bps;
     global_config.staked_supply = 0;
     global_config.total_points_issued = 0;
     global_config.deposit_cap = params.deposit_cap;

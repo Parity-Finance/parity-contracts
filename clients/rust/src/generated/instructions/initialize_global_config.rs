@@ -110,7 +110,7 @@ impl InitializeGlobalConfigInstructionData {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct InitializeGlobalConfigInstructionArgs {
     pub admin: Pubkey,
-    pub baseline_yield: u64,
+    pub baseline_yield_bps: u64,
     pub deposit_cap: u64,
     pub initial_exchange_rate: u64,
 }
@@ -138,7 +138,7 @@ pub struct InitializeGlobalConfigBuilder {
     token_program: Option<solana_program::pubkey::Pubkey>,
     associated_token_program: Option<solana_program::pubkey::Pubkey>,
     admin: Option<Pubkey>,
-    baseline_yield: Option<u64>,
+    baseline_yield_bps: Option<u64>,
     deposit_cap: Option<u64>,
     initial_exchange_rate: Option<u64>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
@@ -200,8 +200,8 @@ impl InitializeGlobalConfigBuilder {
         self
     }
     #[inline(always)]
-    pub fn baseline_yield(&mut self, baseline_yield: u64) -> &mut Self {
-        self.baseline_yield = Some(baseline_yield);
+    pub fn baseline_yield_bps(&mut self, baseline_yield_bps: u64) -> &mut Self {
+        self.baseline_yield_bps = Some(baseline_yield_bps);
         self
     }
     #[inline(always)]
@@ -252,10 +252,10 @@ impl InitializeGlobalConfigBuilder {
         };
         let args = InitializeGlobalConfigInstructionArgs {
             admin: self.admin.clone().expect("admin is not set"),
-            baseline_yield: self
-                .baseline_yield
+            baseline_yield_bps: self
+                .baseline_yield_bps
                 .clone()
-                .expect("baseline_yield is not set"),
+                .expect("baseline_yield_bps is not set"),
             deposit_cap: self.deposit_cap.clone().expect("deposit_cap is not set"),
             initial_exchange_rate: self
                 .initial_exchange_rate
@@ -465,7 +465,7 @@ impl<'a, 'b> InitializeGlobalConfigCpiBuilder<'a, 'b> {
             token_program: None,
             associated_token_program: None,
             admin: None,
-            baseline_yield: None,
+            baseline_yield_bps: None,
             deposit_cap: None,
             initial_exchange_rate: None,
             __remaining_accounts: Vec::new(),
@@ -537,8 +537,8 @@ impl<'a, 'b> InitializeGlobalConfigCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn baseline_yield(&mut self, baseline_yield: u64) -> &mut Self {
-        self.instruction.baseline_yield = Some(baseline_yield);
+    pub fn baseline_yield_bps(&mut self, baseline_yield_bps: u64) -> &mut Self {
+        self.instruction.baseline_yield_bps = Some(baseline_yield_bps);
         self
     }
     #[inline(always)]
@@ -594,11 +594,11 @@ impl<'a, 'b> InitializeGlobalConfigCpiBuilder<'a, 'b> {
     ) -> solana_program::entrypoint::ProgramResult {
         let args = InitializeGlobalConfigInstructionArgs {
             admin: self.instruction.admin.clone().expect("admin is not set"),
-            baseline_yield: self
+            baseline_yield_bps: self
                 .instruction
-                .baseline_yield
+                .baseline_yield_bps
                 .clone()
-                .expect("baseline_yield is not set"),
+                .expect("baseline_yield_bps is not set"),
             deposit_cap: self
                 .instruction
                 .deposit_cap
@@ -660,7 +660,7 @@ struct InitializeGlobalConfigCpiBuilderInstruction<'a, 'b> {
     token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     associated_token_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     admin: Option<Pubkey>,
-    baseline_yield: Option<u64>,
+    baseline_yield_bps: Option<u64>,
     deposit_cap: Option<u64>,
     initial_exchange_rate: Option<u64>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.

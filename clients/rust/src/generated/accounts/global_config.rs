@@ -46,7 +46,7 @@ pub struct GlobalConfig {
     )]
     pub staking_vault: Pubkey,
     pub base_mint_decimals: u8,
-    pub baseline_yield: u64,
+    pub baseline_yield_bps: u64,
     pub staked_supply: u64,
     pub total_points_issued: u64,
     pub deposit_cap: u64,

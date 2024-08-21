@@ -49,7 +49,7 @@ export type GlobalConfigAccountData = {
   baseMint: PublicKey;
   stakingVault: PublicKey;
   baseMintDecimals: number;
-  baselineYield: bigint;
+  baselineYieldBps: bigint;
   stakedSupply: bigint;
   totalPointsIssued: bigint;
   depositCap: bigint;
@@ -65,7 +65,7 @@ export type GlobalConfigAccountDataArgs = {
   baseMint: PublicKey;
   stakingVault: PublicKey;
   baseMintDecimals: number;
-  baselineYield: number | bigint;
+  baselineYieldBps: number | bigint;
   stakedSupply: number | bigint;
   totalPointsIssued: number | bigint;
   depositCap: number | bigint;
@@ -92,7 +92,7 @@ export function getGlobalConfigAccountDataSerializer(): Serializer<
         ['baseMint', publicKeySerializer()],
         ['stakingVault', publicKeySerializer()],
         ['baseMintDecimals', u8()],
-        ['baselineYield', u64()],
+        ['baselineYieldBps', u64()],
         ['stakedSupply', u64()],
         ['totalPointsIssued', u64()],
         ['depositCap', u64()],
@@ -183,7 +183,7 @@ export function getGlobalConfigGpaBuilder(
       baseMint: PublicKey;
       stakingVault: PublicKey;
       baseMintDecimals: number;
-      baselineYield: number | bigint;
+      baselineYieldBps: number | bigint;
       stakedSupply: number | bigint;
       totalPointsIssued: number | bigint;
       depositCap: number | bigint;
@@ -198,7 +198,7 @@ export function getGlobalConfigGpaBuilder(
       baseMint: [105, publicKeySerializer()],
       stakingVault: [137, publicKeySerializer()],
       baseMintDecimals: [169, u8()],
-      baselineYield: [170, u64()],
+      baselineYieldBps: [170, u64()],
       stakedSupply: [178, u64()],
       totalPointsIssued: [186, u64()],
       depositCap: [194, u64()],

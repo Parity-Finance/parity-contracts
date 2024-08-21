@@ -40,13 +40,13 @@ export type UpdateGlobalConfigInstructionAccounts = {
 // Data.
 export type UpdateGlobalConfigInstructionData = {
   discriminator: Array<number>;
-  newBaselineYield: Option<bigint>;
+  newBaselineYieldBps: Option<bigint>;
   newExchangeRate: Option<bigint>;
   newDepositCap: Option<bigint>;
 };
 
 export type UpdateGlobalConfigInstructionDataArgs = {
-  newBaselineYield: OptionOrNullable<number | bigint>;
+  newBaselineYieldBps: OptionOrNullable<number | bigint>;
   newExchangeRate: OptionOrNullable<number | bigint>;
   newDepositCap: OptionOrNullable<number | bigint>;
 };
@@ -63,7 +63,7 @@ export function getUpdateGlobalConfigInstructionDataSerializer(): Serializer<
     struct<UpdateGlobalConfigInstructionData>(
       [
         ['discriminator', array(u8(), { size: 8 })],
-        ['newBaselineYield', option(u64())],
+        ['newBaselineYieldBps', option(u64())],
         ['newExchangeRate', option(u64())],
         ['newDepositCap', option(u64())],
       ],

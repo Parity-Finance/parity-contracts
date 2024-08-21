@@ -4,7 +4,7 @@ use crate::{ExchangeRatePhase, GlobalConfig, PtStakingError};
 
 #[derive(AnchorSerialize, AnchorDeserialize, Debug, Clone)]
 pub struct UpdateGlobalConfigParams {
-    pub new_baseline_yield: Option<u64>,
+    pub new_baseline_yield_bps: Option<u64>,
     pub new_exchange_rate: Option<u64>,
     pub new_deposit_cap: Option<u64>,
 }
@@ -26,8 +26,8 @@ pub fn handler(ctx: Context<UpdateGlobalConfig>, params: UpdateGlobalConfigParam
     let global_config = &mut ctx.accounts.global_config;
 
     // Update the baseline yield if provided
-    if let Some(new_yield) = params.new_baseline_yield {
-        global_config.baseline_yield = new_yield;
+    if let Some(new_yield) = params.new_baseline_yield_bps {
+        global_config.baseline_yield_bps = new_yield;
     }
 
     // Update the deposit cap if provided

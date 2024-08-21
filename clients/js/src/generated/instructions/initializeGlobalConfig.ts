@@ -46,14 +46,14 @@ export type InitializeGlobalConfigInstructionAccounts = {
 export type InitializeGlobalConfigInstructionData = {
   discriminator: Array<number>;
   admin: PublicKey;
-  baselineYield: bigint;
+  baselineYieldBps: bigint;
   depositCap: bigint;
   initialExchangeRate: bigint;
 };
 
 export type InitializeGlobalConfigInstructionDataArgs = {
   admin: PublicKey;
-  baselineYield: number | bigint;
+  baselineYieldBps: number | bigint;
   depositCap: number | bigint;
   initialExchangeRate: number | bigint;
 };
@@ -71,7 +71,7 @@ export function getInitializeGlobalConfigInstructionDataSerializer(): Serializer
       [
         ['discriminator', array(u8(), { size: 8 })],
         ['admin', publicKeySerializer()],
-        ['baselineYield', u64()],
+        ['baselineYieldBps', u64()],
         ['depositCap', u64()],
         ['initialExchangeRate', u64()],
       ],

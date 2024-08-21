@@ -72,7 +72,7 @@ impl UpdateGlobalConfigInstructionData {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct UpdateGlobalConfigInstructionArgs {
-    pub new_baseline_yield: Option<u64>,
+    pub new_baseline_yield_bps: Option<u64>,
     pub new_exchange_rate: Option<u64>,
     pub new_deposit_cap: Option<u64>,
 }
@@ -87,7 +87,7 @@ pub struct UpdateGlobalConfigInstructionArgs {
 pub struct UpdateGlobalConfigBuilder {
     global_config: Option<solana_program::pubkey::Pubkey>,
     owner: Option<solana_program::pubkey::Pubkey>,
-    new_baseline_yield: Option<u64>,
+    new_baseline_yield_bps: Option<u64>,
     new_exchange_rate: Option<u64>,
     new_deposit_cap: Option<u64>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
@@ -109,8 +109,8 @@ impl UpdateGlobalConfigBuilder {
     }
     /// `[optional argument]`
     #[inline(always)]
-    pub fn new_baseline_yield(&mut self, new_baseline_yield: u64) -> &mut Self {
-        self.new_baseline_yield = Some(new_baseline_yield);
+    pub fn new_baseline_yield_bps(&mut self, new_baseline_yield_bps: u64) -> &mut Self {
+        self.new_baseline_yield_bps = Some(new_baseline_yield_bps);
         self
     }
     /// `[optional argument]`
@@ -150,7 +150,7 @@ impl UpdateGlobalConfigBuilder {
             owner: self.owner.expect("owner is not set"),
         };
         let args = UpdateGlobalConfigInstructionArgs {
-            new_baseline_yield: self.new_baseline_yield.clone(),
+            new_baseline_yield_bps: self.new_baseline_yield_bps.clone(),
             new_exchange_rate: self.new_exchange_rate.clone(),
             new_deposit_cap: self.new_deposit_cap.clone(),
         };
@@ -283,7 +283,7 @@ impl<'a, 'b> UpdateGlobalConfigCpiBuilder<'a, 'b> {
             __program: program,
             global_config: None,
             owner: None,
-            new_baseline_yield: None,
+            new_baseline_yield_bps: None,
             new_exchange_rate: None,
             new_deposit_cap: None,
             __remaining_accounts: Vec::new(),
@@ -305,8 +305,8 @@ impl<'a, 'b> UpdateGlobalConfigCpiBuilder<'a, 'b> {
     }
     /// `[optional argument]`
     #[inline(always)]
-    pub fn new_baseline_yield(&mut self, new_baseline_yield: u64) -> &mut Self {
-        self.instruction.new_baseline_yield = Some(new_baseline_yield);
+    pub fn new_baseline_yield_bps(&mut self, new_baseline_yield_bps: u64) -> &mut Self {
+        self.instruction.new_baseline_yield_bps = Some(new_baseline_yield_bps);
         self
     }
     /// `[optional argument]`
@@ -363,7 +363,7 @@ impl<'a, 'b> UpdateGlobalConfigCpiBuilder<'a, 'b> {
         signers_seeds: &[&[&[u8]]],
     ) -> solana_program::entrypoint::ProgramResult {
         let args = UpdateGlobalConfigInstructionArgs {
-            new_baseline_yield: self.instruction.new_baseline_yield.clone(),
+            new_baseline_yield_bps: self.instruction.new_baseline_yield_bps.clone(),
             new_exchange_rate: self.instruction.new_exchange_rate.clone(),
             new_deposit_cap: self.instruction.new_deposit_cap.clone(),
         };
@@ -389,7 +389,7 @@ struct UpdateGlobalConfigCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     global_config: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     owner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    new_baseline_yield: Option<u64>,
+    new_baseline_yield_bps: Option<u64>,
     new_exchange_rate: Option<u64>,
     new_deposit_cap: Option<u64>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.

@@ -80,10 +80,12 @@ pub fn handler(ctx: Context<PtUnstake>, quantity: u64) -> Result<()> {
     )?;
 
     // Calculate points earned until now
-    let staking_duration = Clock::get()?.unix_timestamp - user_stake.staking_timestamp;
-    let points_earned_phases =
-        global_config.calculate_points(user_stake.staked_amount, staking_duration)?;
-
+    let current_timestamp = Clock::get()?.unix_timestamp;
+    let points_earned_phases = global_config.calculate_points(
+        user_stake.staked_amount,
+        user_stake.last_claim_timestamp,
+        current_timestamp,
+    )?;
     // Update user's points history
     user_stake.update_points_history(points_earned_phases.clone());
 

@@ -80,9 +80,11 @@ pub fn handler(ctx: Context<PtStake>, quantity: u64) -> Result<()> {
         user_stake.staking_timestamp = current_timestamp;
     } else {
         // Calculate points earned since the last stake/unstake.
-        let duration = current_timestamp - user_stake.staking_timestamp;
-        let points_earned_phases =
-            global_config.calculate_points(user_stake.staked_amount, duration)?;
+        let points_earned_phases = global_config.calculate_points(
+            user_stake.staked_amount,
+            user_stake.last_claim_timestamp,
+            current_timestamp,
+        )?;
 
         // Update user's points history
         user_stake.update_points_history(points_earned_phases.clone());
