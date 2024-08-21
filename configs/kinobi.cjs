@@ -50,7 +50,12 @@ kinobi.update(
     },
     userStake: {
       seeds: [
-        k.constantPdaSeedNodeFromString("user-stake")
+        k.constantPdaSeedNodeFromString("user-stake"),
+        k.variablePdaSeedNode(
+          "user",
+          k.publicKeyTypeNode(),
+          "The address of the user wallet"
+        ),
       ]
     }
   })

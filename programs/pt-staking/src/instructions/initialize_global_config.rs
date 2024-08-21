@@ -1,4 +1,4 @@
-use crate::{ExchangeRatePhase, GlobalConfig, UserStake, GLOBAL_CONFIG_LENGTH, USER_STAKE_LENGTH};
+use crate::{ExchangeRatePhase, GlobalConfig, GLOBAL_CONFIG_LENGTH};
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
@@ -25,16 +25,6 @@ pub struct InitializeGlobalConfig<'info> {
         space = GLOBAL_CONFIG_LENGTH,
     )]
     pub global_config: Box<Account<'info, GlobalConfig>>,
-
-    #[account(
-        init,
-        seeds = [b"user-stake"],
-        bump,
-        payer = user,
-        space = USER_STAKE_LENGTH,
-    )]
-    pub user_stake: Box<Account<'info, UserStake>>,
-
     #[account(
         init,
         payer = user,
@@ -55,7 +45,6 @@ pub fn handler(
     params: InitializeGlobalConfigParams,
 ) -> Result<()> {
     let global_config = &mut ctx.accounts.global_config;
-    let user_stake = &mut ctx.accounts.user_stake;
     let bump = ctx.bumps.global_config;
 
     // Authorities
@@ -85,12 +74,7 @@ pub fn handler(
     global_config.exchange_rate_history = vec![initial_phase];
     global_config.points_history = Vec::new();
 
-    //UserStake PDA
-    user_stake.user_pubkey = ctx.accounts.user.key();
-    user_stake.staked_amount = 0;
-    user_stake.staking_timestamp = 0;
-    user_stake.last_claim_timestamp = 0;
-    user_stake.points_history = Vec::new();
+
 
     Ok(())
 }

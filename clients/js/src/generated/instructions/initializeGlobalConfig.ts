@@ -34,7 +34,6 @@ export type InitializeGlobalConfigInstructionAccounts = {
   /** SPL Token Mint of the underlying token to be deposited for staking */
   baseMint: PublicKey | Pda;
   globalConfig: PublicKey | Pda;
-  userStake: PublicKey | Pda;
   vault: PublicKey | Pda;
   user: Signer;
   systemProgram?: PublicKey | Pda;
@@ -115,29 +114,24 @@ export function initializeGlobalConfig(
       isWritable: true as boolean,
       value: input.globalConfig ?? null,
     },
-    userStake: {
-      index: 2,
-      isWritable: true as boolean,
-      value: input.userStake ?? null,
-    },
     vault: {
-      index: 3,
+      index: 2,
       isWritable: true as boolean,
       value: input.vault ?? null,
     },
-    user: { index: 4, isWritable: true as boolean, value: input.user ?? null },
+    user: { index: 3, isWritable: true as boolean, value: input.user ?? null },
     systemProgram: {
-      index: 5,
+      index: 4,
       isWritable: false as boolean,
       value: input.systemProgram ?? null,
     },
     tokenProgram: {
-      index: 6,
+      index: 5,
       isWritable: false as boolean,
       value: input.tokenProgram ?? null,
     },
     associatedTokenProgram: {
-      index: 7,
+      index: 6,
       isWritable: false as boolean,
       value: input.associatedTokenProgram ?? null,
     },

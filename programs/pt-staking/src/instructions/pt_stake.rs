@@ -4,7 +4,7 @@ use anchor_spl::{
     token::{transfer_checked, Mint, Token, TokenAccount, TransferChecked},
 };
 
-use crate::{GlobalConfig, PtStakingError, UserStake};
+use crate::{GlobalConfig, PtStakingError, UserStake, USER_STAKE_LENGTH};
 
 #[derive(Accounts)]
 pub struct PtStake<'info> {
@@ -15,9 +15,11 @@ pub struct PtStake<'info> {
     )]
     pub global_config: Account<'info, GlobalConfig>,
     #[account(
-        mut,
-        seeds = [b"user-stake"],
-        bump
+        init_if_needed,
+        seeds = [b"user-stake",user.key().as_ref()],
+        bump,
+        payer = user,
+        space = USER_STAKE_LENGTH,
     )]
     pub user_stake: Account<'info, UserStake>,
 
@@ -75,9 +77,12 @@ pub fn handler(ctx: Context<PtStake>, quantity: u64) -> Result<()> {
         global_config.base_mint_decimals,
     )?;
 
-    if user_stake.staking_timestamp == 0 {
+    if user_stake.initial_staking_timestamp == 0 {
         // First time staking, set the initial staking timestamp, no points calculated.
-        user_stake.staking_timestamp = current_timestamp;
+        user_stake.user_pubkey = ctx.accounts.user.key();
+        user_stake.initial_staking_timestamp = current_timestamp;
+        user_stake.last_claim_timestamp = 0;
+        user_stake.points_history = Vec::new();
     } else {
         // Calculate points earned since the last stake/unstake.
         let points_earned_phases = global_config.calculate_points(
@@ -92,8 +97,8 @@ pub fn handler(ctx: Context<PtStake>, quantity: u64) -> Result<()> {
         // Update global points history
         global_config.update_global_points(points_earned_phases);
 
-        // Update the staking timestamp to the current time.
-        user_stake.staking_timestamp = current_timestamp;
+        // Update the  staking timestamp to the current time.
+        user_stake.initial_staking_timestamp = current_timestamp;
     }
 
     // Update the global staked supply

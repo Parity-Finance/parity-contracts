@@ -42,7 +42,7 @@ export type UserStakeAccountData = {
   discriminator: Array<number>;
   userPubkey: PublicKey;
   stakedAmount: bigint;
-  stakingTimestamp: bigint;
+  initialStakingTimestamp: bigint;
   lastClaimTimestamp: bigint;
   pointsHistory: Array<PointsEarnedPhase>;
 };
@@ -50,7 +50,7 @@ export type UserStakeAccountData = {
 export type UserStakeAccountDataArgs = {
   userPubkey: PublicKey;
   stakedAmount: number | bigint;
-  stakingTimestamp: number | bigint;
+  initialStakingTimestamp: number | bigint;
   lastClaimTimestamp: number | bigint;
   pointsHistory: Array<PointsEarnedPhaseArgs>;
 };
@@ -65,7 +65,7 @@ export function getUserStakeAccountDataSerializer(): Serializer<
         ['discriminator', array(u8(), { size: 8 })],
         ['userPubkey', publicKeySerializer()],
         ['stakedAmount', u64()],
-        ['stakingTimestamp', i64()],
+        ['initialStakingTimestamp', i64()],
         ['lastClaimTimestamp', i64()],
         ['pointsHistory', array(getPointsEarnedPhaseSerializer())],
       ],
@@ -148,14 +148,14 @@ export function getUserStakeGpaBuilder(
       discriminator: Array<number>;
       userPubkey: PublicKey;
       stakedAmount: number | bigint;
-      stakingTimestamp: number | bigint;
+      initialStakingTimestamp: number | bigint;
       lastClaimTimestamp: number | bigint;
       pointsHistory: Array<PointsEarnedPhaseArgs>;
     }>({
       discriminator: [0, array(u8(), { size: 8 })],
       userPubkey: [8, publicKeySerializer()],
       stakedAmount: [40, u64()],
-      stakingTimestamp: [48, i64()],
+      initialStakingTimestamp: [48, i64()],
       lastClaimTimestamp: [56, i64()],
       pointsHistory: [64, array(getPointsEarnedPhaseSerializer())],
     })
@@ -164,7 +164,11 @@ export function getUserStakeGpaBuilder(
 }
 
 export function findUserStakePda(
-  context: Pick<Context, 'eddsa' | 'programs'>
+  context: Pick<Context, 'eddsa' | 'programs'>,
+  seeds: {
+    /** The address of the user wallet */
+    user: PublicKey;
+  }
 ): Pda {
   const programId = context.programs.getPublicKey(
     'ptStaking',
@@ -172,19 +176,22 @@ export function findUserStakePda(
   );
   return context.eddsa.findPda(programId, [
     string({ size: 'variable' }).serialize('user-stake'),
+    publicKeySerializer().serialize(seeds.user),
   ]);
 }
 
 export async function fetchUserStakeFromSeeds(
   context: Pick<Context, 'eddsa' | 'programs' | 'rpc'>,
+  seeds: Parameters<typeof findUserStakePda>[1],
   options?: RpcGetAccountOptions
 ): Promise<UserStake> {
-  return fetchUserStake(context, findUserStakePda(context), options);
+  return fetchUserStake(context, findUserStakePda(context, seeds), options);
 }
 
 export async function safeFetchUserStakeFromSeeds(
   context: Pick<Context, 'eddsa' | 'programs' | 'rpc'>,
+  seeds: Parameters<typeof findUserStakePda>[1],
   options?: RpcGetAccountOptions
 ): Promise<UserStake | null> {
-  return safeFetchUserStake(context, findUserStakePda(context), options);
+  return safeFetchUserStake(context, findUserStakePda(context, seeds), options);
 }

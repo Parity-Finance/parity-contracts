@@ -19,11 +19,6 @@
           "isSigner": false
         },
         {
-          "name": "userStake",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
           "name": "vault",
           "isMut": true,
           "isSigner": false
@@ -314,7 +309,7 @@
             "type": "u64"
           },
           {
-            "name": "stakingTimestamp",
+            "name": "initialStakingTimestamp",
             "type": "i64"
           },
           {

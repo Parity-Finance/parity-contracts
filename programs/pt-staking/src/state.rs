@@ -31,7 +31,7 @@ pub struct GlobalConfig {
 pub struct UserStake {
     pub user_pubkey: Pubkey,                    // 32 bytes
     pub staked_amount: u64,                     // 8 bytes
-    pub staking_timestamp: i64,                 // 8 bytes
+    pub initial_staking_timestamp: i64,                 // 8 bytes
     pub last_claim_timestamp: i64,              // 8 bytes
     pub points_history: Vec<PointsEarnedPhase>, // 4 bytes (Vec length) + N * size of PointsEarnedPhase
 }
@@ -212,7 +212,7 @@ mod tests {
         UserStake {
             user_pubkey: Pubkey::new_unique(),
             staked_amount: 1_000_000,
-            staking_timestamp: timestamp,
+            initial_staking_timestamp: timestamp,
             last_claim_timestamp: timestamp,
             points_history: create_default_points_earned_phases(),
         }

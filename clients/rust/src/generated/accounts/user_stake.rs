@@ -24,7 +24,7 @@ pub struct UserStake {
     )]
     pub user_pubkey: Pubkey,
     pub staked_amount: u64,
-    pub staking_timestamp: i64,
+    pub initial_staking_timestamp: i64,
     pub last_claim_timestamp: i64,
     pub points_history: Vec<PointsEarnedPhase>,
 }
@@ -35,20 +35,22 @@ impl UserStake {
     /// Values are positional and appear in the following order:
     ///
     ///   0. `UserStake::PREFIX`
+    ///   1. user (`Pubkey`)
     pub const PREFIX: &'static [u8] = "user-stake".as_bytes();
 
     pub fn create_pda(
+        user: Pubkey,
         bump: u8,
     ) -> Result<solana_program::pubkey::Pubkey, solana_program::pubkey::PubkeyError> {
         solana_program::pubkey::Pubkey::create_program_address(
-            &["user-stake".as_bytes(), &[bump]],
+            &["user-stake".as_bytes(), user.as_ref(), &[bump]],
             &crate::PT_STAKING_ID,
         )
     }
 
-    pub fn find_pda() -> (solana_program::pubkey::Pubkey, u8) {
+    pub fn find_pda(user: &Pubkey) -> (solana_program::pubkey::Pubkey, u8) {
         solana_program::pubkey::Pubkey::find_program_address(
-            &["user-stake".as_bytes()],
+            &["user-stake".as_bytes(), user.as_ref()],
             &crate::PT_STAKING_ID,
         )
     }

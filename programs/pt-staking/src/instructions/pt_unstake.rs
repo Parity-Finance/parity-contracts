@@ -16,8 +16,9 @@ pub struct PtUnstake<'info> {
 
     #[account(
         mut,
-        seeds = [b"user-stake"],
-        bump
+        seeds = [b"user-stake",user.key().as_ref()],
+        bump,
+        constraint = user_stake.user_pubkey == user.key() @ PtStakingError::InvalidOwner
     )]
     pub user_stake: Account<'info, UserStake>,
 
@@ -105,8 +106,14 @@ pub fn handler(ctx: Context<PtUnstake>, quantity: u64) -> Result<()> {
         .ok_or(PtStakingError::CalculationOverflow)?;
 
     // Update the staking timestamp to the current time
-    user_stake.staking_timestamp = Clock::get()?.unix_timestamp;
-    user_stake.last_claim_timestamp = Clock::get()?.unix_timestamp;
+    user_stake.last_claim_timestamp = current_timestamp;
+
+    // If all tokens are unstaked, reset the initial_staking_timestamp
+    if user_stake.staked_amount == 0 {
+        user_stake.initial_staking_timestamp = 0;
+    } else {
+        user_stake.initial_staking_timestamp = current_timestamp;
+    }
 
     Ok(())
 }

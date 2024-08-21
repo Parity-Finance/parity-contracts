@@ -81,7 +81,9 @@ import assert from "assert";
 import chai, { assert as chaiAssert } from "chai";
 import { bs58 } from "@coral-xyz/anchor/dist/cjs/utils/bytes";
 import { calculateMaxWithdrawableAmount } from "../clients/js/src/utils/maxWithdrawable";
-import { findUserStakePda, initializeGlobalConfig, PT_STAKING_PROGRAM_ID, ptStake, ptUnstake, safeFetchGlobalConfig, safeFetchUserStake } from "../clients/js/src/generated";
+import { findUserStakePda, initializeGlobalConfig, initiateUpdateGlobalConfigOwner, PT_STAKING_PROGRAM_ID, ptStake, ptUnstake, safeFetchGlobalConfig, safeFetchUserStake, updateGlobalConfig, updateGlobalConfigOwner } from "../clients/js/src/generated";
+import { ProgramTestContext, start } from "solana-bankrun";
+import { fastForward } from "./utils/utilts";
 
 describe.only("parity-issuance", () => {
   let umi = createUmi("http://localhost:8899");
@@ -156,10 +158,9 @@ describe.only("parity-issuance", () => {
 
   // Pt staking program
   let globalConfig = findGlobalConfigPda(umi)[0]
-  // let userStakePDA: Pda = umi.eddsa.findPda(PT_STAKING_PROGRAM_ID, [
-  //   Buffer.from("user-stake"),
-  // ]);
-  let userStake = findUserStakePda(umi)[0]
+  let userStakePDA = findUserStakePda(umi, {
+    user: umi.identity.publicKey,
+  });
   let vaultStakingPDA = findAssociatedTokenPda(umi, {
     owner: globalConfig,
     mint: baseMint[0],
@@ -168,6 +169,8 @@ describe.only("parity-issuance", () => {
   const baselineYield = 2000 // For 20%
   const initialExchangeRatePtStaking = 20 * 10 ** baseMintDecimals
 
+  let context: ProgramTestContext;
+
   before(async () => {
     try {
       await umi.rpc.airdrop(
@@ -175,6 +178,8 @@ describe.only("parity-issuance", () => {
         createAmount(100_000 * 10 ** 9, "SOL", 9),
         { commitment: "finalized" }
       );
+
+      context = await start([], []);
 
       const quoteMintWeb3js = await createMint(
         connection,
@@ -371,7 +376,6 @@ describe.only("parity-issuance", () => {
     txBuilder = txBuilder.add(
       initializeGlobalConfig(umi, {
         globalConfig,
-        userStake: userStake,
         baseMint: baseMint,
         vault: vaultStakingPDA,
         user: umi.identity,
@@ -1276,7 +1280,7 @@ describe.only("parity-issuance", () => {
     );
   });
 
-  //Pt Stake Program 
+
   it.only("baseMint can be staked in PT Staking", async () => {
     let quantity = 1000 * 10 ** baseMintDecimals;
 
@@ -1285,7 +1289,7 @@ describe.only("parity-issuance", () => {
     txBuilder = txBuilder.add(
       ptStake(umi, {
         globalConfig,
-        userStake: userStake,
+        userStake: userStakePDA,
         baseMint: baseMint,
         userBaseMintAta: userBase,
         user: umi.identity,
@@ -1298,12 +1302,12 @@ describe.only("parity-issuance", () => {
     await txBuilder.sendAndConfirm(umi, { send: { skipPreflight: true } });
 
     const globalConfigAcc = await safeFetchGlobalConfig(umi, globalConfig);
-    const userStakeAcc = await safeFetchUserStake(umi, userStake);
+    const userStakeAcc = await safeFetchUserStake(umi, userStakePDA);
     const vaultAcc = await safeFetchToken(umi, vaultStakingPDA);
 
-    console.log("Vault Acc: ", vaultAcc);
-    console.log("User Stake Acc: ", userStakeAcc);
-    console.log("Global Config Acc: ", globalConfigAcc);
+    // console.log("Vault Acc: ", vaultAcc);
+    // console.log("User Stake Acc: ", userStakeAcc);
+    // console.log("Global Config Acc: ", globalConfigAcc);
 
     assert.equal(vaultAcc.amount, quantity);
     assert.equal(userStakeAcc.stakedAmount, quantity);
@@ -1314,15 +1318,23 @@ describe.only("parity-issuance", () => {
   })
 
   it.only("baseMint can be unstaked in PT Staking", async () => {
+    // Simulate time passing to 1,500,000
+    await fastForward(context, BigInt(604_800));
     // First, we need to stake some tokens
     let quantity = 1000 * 10 ** baseMintDecimals;
+
+    // Fetch accounts before unstaking
+    const globalConfigAcc = await safeFetchGlobalConfig(umi, globalConfig);
+    const userStakeAcc = await safeFetchUserStake(umi, userStakePDA);
+    const vaultAcc = await safeFetchToken(umi, vaultStakingPDA);
+    const userBaseAcc = await safeFetchToken(umi, userBase);
 
     let txBuilder = new TransactionBuilder();
 
     txBuilder = txBuilder.add(
       ptUnstake(umi, {
         globalConfig,
-        userStake: userStake,
+        userStake: userStakePDA,
         baseMint: baseMint,
         userBaseMintAta: userBase,
         user: umi.identity,
@@ -1332,30 +1344,82 @@ describe.only("parity-issuance", () => {
       })
     );
 
-    await txBuilder.sendAndConfirm(umi, { send: { skipPreflight: true } });
+    await txBuilder.sendAndConfirm(umi);
 
     // Fetch accounts after unstaking
-    const globalConfigAcc = await safeFetchGlobalConfig(umi, globalConfig);
-    const userStakeAcc = await safeFetchUserStake(umi, userStake);
-    const vaultAcc = await safeFetchToken(umi, vaultStakingPDA);
-    const userBaseAcc = await safeFetchToken(umi, userBase);
+    const _globalConfigAcc = await safeFetchGlobalConfig(umi, globalConfig);
+    const _userStakeAcc = await safeFetchUserStake(umi, userStakePDA);
+    const _vaultAcc = await safeFetchToken(umi, vaultStakingPDA);
+    const _userBaseAcc = await safeFetchToken(umi, userBase);
 
+    const pointsHistory = _userStakeAcc.pointsHistory;
 
-    console.log("Vault Acc: ", vaultAcc);
-    console.log("User Stake Acc: ", userStakeAcc);
-    console.log("Global Config Acc: ", globalConfigAcc);
-    console.log("User Base Acc: ", userBaseAcc);
+    console.log("Points History: ", pointsHistory);
+
+    // console.log("Vault Acc: ", vaultAcc);
+    // console.log("User Stake Acc: ", userStakeAcc);
+    // console.log("Global Config Acc: ", globalConfigAcc);
+    // console.log("User Base Acc: ", userBaseAcc);
 
     // Assert the changes
-    // assert.equal(vaultAcc.amount, stakeQuantity - unstakeQuantity, "Vault balance should decrease by unstaked amount");
-    // assert.equal(userStakeAcc.stakedAmount, stakeQuantity - unstakeQuantity, "User staked amount should decrease");
-    // assert.equal(globalConfigAcc.stakedSupply, stakeQuantity - unstakeQuantity, "Global staked supply should decrease");
+    assert.equal(_vaultAcc.amount, vaultAcc.amount - BigInt(quantity), "Vault balance should decrease by unstaked amount");
+    assert.equal(_userStakeAcc.stakedAmount, userStakeAcc.stakedAmount - BigInt(quantity), "User staked amount should decrease");
+    assert.equal(_globalConfigAcc.stakedSupply, globalConfigAcc.stakedSupply - BigInt(quantity), "Global staked supply should decrease");
 
-    // // Check if user received the unstaked tokens
-    // const expectedUserBalance = userBaseAcc.amount + unstakeQuantity;
-    // assert.equal(userBaseAcc.amount, expectedUserBalance, "User should receive unstaked tokens");
+    // Check if user received the unstaked tokens
+    const expectedUserBalance = userBaseAcc.amount + BigInt(quantity);
+    assert.equal(_userBaseAcc.amount, expectedUserBalance, "User should receive unstaked tokens");
 
     // // TODO: Add assertions for points calculation if applicable
+    // Check that the points were calculated within a single phase
+    assert.equal(pointsHistory.length, 1, "Only one phase should be involved");
+    assert.equal(pointsHistory[0].index, 0, "The phase index should be 0 (initial phase)");
+    //assert.equal(pointsHistory[0].points, 38.052, " ~31.71 points (for 50M FDV phase)"); 
+
+
+    // Attempt unstaking with a user thats not the owner
+    // which should fail
+
+    const newUser = umi.eddsa.generateKeypair();
+
+    await umi.rpc.airdrop(
+      newUser.publicKey,
+      createAmount(100_000 * 10 ** 9, "SOL", 9),
+      {
+        commitment: "finalized",
+      }
+    );
+
+    umi.use(keypairIdentity(newUser))
+
+    txBuilder = new TransactionBuilder();
+
+    txBuilder = txBuilder.add(
+      ptUnstake(umi, {
+        globalConfig,
+        userStake: userStakePDA,
+        baseMint: baseMint,
+        userBaseMintAta: userBase,
+        user: umi.identity,
+        vault: vaultStakingPDA,
+        associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
+        quantity
+      })
+    );
+
+
+    await assert.rejects(
+      async () => {
+        await txBuilder.sendAndConfirm(umi);
+      },
+      (err) => {
+        return (err as Error).message.includes(" A seeds constraint was violated");
+      },
+      "Expected unstaking error as user isnt the owner of PDA"
+    );
+
+    umi.use(keypairIdentity(fromWeb3JsKeypair(keypair))); // Switch back to  admin
+
   });
 
   it("baseMint can be unstaked by redeeming xMint", async () => {
@@ -1646,6 +1710,92 @@ describe.only("parity-issuance", () => {
       "Admin should be reverted back to original admin"
     );
   });
+  it.only("should initiate and accept global config owner update", async () => {
+    const newOwner = umi.eddsa.generateKeypair();
+
+    await umi.rpc.airdrop(
+      newOwner.publicKey,
+      createAmount(100_000 * 10 ** 9, "SOL", 9),
+      {
+        commitment: "finalized",
+      }
+    );
+    umi.use(keypairIdentity(fromWeb3JsKeypair(keypair))); // Switch to new admin
+
+    // Initiate update of tokenManager owner
+    let txBuilder = new TransactionBuilder();
+    txBuilder = txBuilder.add(
+      initiateUpdateGlobalConfigOwner(umi, {
+        globalConfig,
+        newOwner: newOwner.publicKey,
+        owner: umi.identity,
+      })
+    );
+    await txBuilder.sendAndConfirm(umi);
+
+    // Check if the update initiation was successful
+    let globalConfigAcc = await safeFetchGlobalConfig(umi, globalConfig);
+
+    assert.equal(
+      globalConfigAcc.pendingOwner,
+      newOwner.publicKey,
+      "Pending owner should be set to new admin"
+    );
+
+    // Accept update of manager owner
+    umi.use(keypairIdentity(newOwner)); // Switch to new admin
+    txBuilder = new TransactionBuilder();
+    txBuilder = txBuilder.add(
+      updateGlobalConfigOwner(umi, {
+        globalConfig,
+        newOwner: umi.identity,
+      })
+    );
+    await txBuilder.sendAndConfirm(umi);
+
+    // Verify the new owner is set
+    globalConfigAcc = await safeFetchGlobalConfig(umi, globalConfig);
+    assert.equal(
+      globalConfigAcc.owner,
+      newOwner.publicKey,
+      "owner should be updated to new owner"
+    );
+    assert.equal(
+      globalConfigAcc.pendingOwner,
+      publicKey("11111111111111111111111111111111"),
+      "Pending owner should be set to default pubkey"
+    );
+
+    // Change back
+    txBuilder = new TransactionBuilder();
+    txBuilder = txBuilder.add(
+      initiateUpdateGlobalConfigOwner(umi, {
+        globalConfig,
+        newOwner: fromWeb3JsKeypair(keypair).publicKey,
+        owner: umi.identity,
+      })
+    );
+    await txBuilder.sendAndConfirm(umi);
+
+    // Accept update back to original admin
+    umi.use(keypairIdentity(fromWeb3JsKeypair(keypair))); // Switch back to original admin
+    txBuilder = new TransactionBuilder();
+    txBuilder = txBuilder.add(
+      updateGlobalConfigOwner(umi, {
+        globalConfig,
+        newOwner: umi.identity,
+      })
+    );
+    await txBuilder.sendAndConfirm(umi);
+
+    // Verify the admin is set back to original
+    globalConfigAcc = await safeFetchGlobalConfig(umi, globalConfig);
+    assert.equal(
+      globalConfigAcc.admin,
+      publicKey(keypair.publicKey),
+      "Admin should be reverted back to original admin"
+    );
+  });
 
   it("should update deposit cap", async () => {
     const notOwner = umi.eddsa.generateKeypair();
@@ -1753,6 +1903,130 @@ describe.only("parity-issuance", () => {
         vault: vaultStaking,
         associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
         quantity,
+      })
+    );
+
+    await assert.rejects(
+      async () => {
+        await txBuilder.sendAndConfirm(umi);
+      },
+      (err) => {
+        return (err as Error).message.includes("Deposit cap exceeded");
+      },
+      "Expected staking to fail because Deposit cap exceeded"
+    );
+  });
+
+  it.only("should update Pt Staking global config", async () => {
+    const notOwner = umi.eddsa.generateKeypair();
+    const newBaselineYield = 5000 // For 50%
+    const newExchangeRatePtStaking = 30 * 10 ** baseMintDecimals
+    const newDespositCap = testDepositCapAmount;
+
+    await umi.rpc.airdrop(
+      notOwner.publicKey,
+      createAmount(100_000 * 10 ** 9, "SOL", 9),
+      {
+        commitment: "finalized",
+      }
+    );
+
+    //Attempt trying to update with a signer that's not the Owner
+    umi.use(keypairIdentity(notOwner));
+
+    let txBuilder = new TransactionBuilder();
+    txBuilder = txBuilder.add(
+      updateGlobalConfig(umi, {
+        globalConfig,
+        owner: umi.identity,
+        newBaselineYieldBps: newBaselineYield,
+        newExchangeRate: newExchangeRatePtStaking,
+        newDepositCap: newDespositCap
+      })
+    )
+
+    await assert.rejects(
+      async () => {
+        await txBuilder.sendAndConfirm(umi);
+      },
+      (err) => {
+        return (err as Error).message.includes("Invalid owner");
+      },
+      "Expected updating global config to fail because of Invalid owner"
+    );
+
+    //Attempt trying to change update  with the right Owner
+
+    umi.use(keypairIdentity(fromWeb3JsKeypair(keypair)));
+
+    txBuilder = new TransactionBuilder();
+    txBuilder = txBuilder.add(
+      updateGlobalConfig(umi, {
+        globalConfig,
+        owner: umi.identity,
+        newBaselineYieldBps: newBaselineYield,
+        newExchangeRate: newExchangeRatePtStaking,
+        newDepositCap: newDespositCap
+      })
+    );
+
+    await txBuilder.sendAndConfirm(umi);
+
+    //verify the updated global config is set
+    const globalConfigAcc = await safeFetchGlobalConfig(umi, globalConfig);
+
+    assert.equal(globalConfigAcc.baselineYieldBps, newBaselineYield, "base line yield should be updated");
+    assert.equal(globalConfigAcc.depositCap, newDespositCap, "deposit cap should be updated");
+    assert.equal(globalConfigAcc.exchangeRateHistory[1].exchangeRate, newExchangeRatePtStaking, "exchange rate should be updated");
+
+   
+
+    let quantity = 1000 * 10 ** baseMintDecimals;
+
+    //Attempt  staking to test if deposit cap works
+    //This should work since deposit cap variable has been increased
+    txBuilder = new TransactionBuilder();
+
+    const userXAtaAcc = await safeFetchToken(umi, userX);
+
+    if (!userXAtaAcc) {
+      txBuilder = txBuilder.add(
+        createAssociatedToken(umi, {
+          mint: xMint,
+        })
+      );
+    }
+
+    txBuilder = txBuilder.add(
+      ptStake(umi, {
+        globalConfig,
+        userStake: userStakePDA,
+        baseMint: baseMint,
+        userBaseMintAta: userBase,
+        user: umi.identity,
+        vault: vaultStakingPDA,
+        associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
+        quantity: quantity
+      })
+    );
+
+    await txBuilder.sendAndConfirm(umi);
+
+    //Attempt to try and stake again which should fail because of deposit cap reached
+    quantity = 1001 * 10 ** baseMintDecimals;
+
+    txBuilder = new TransactionBuilder();
+
+    txBuilder = txBuilder.add(
+      ptStake(umi, {
+        globalConfig,
+        userStake: userStakePDA,
+        baseMint: baseMint,
+        userBaseMintAta: userBase,
+        user: umi.identity,
+        vault: vaultStakingPDA,
+        associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
+        quantity: quantity
       })
     );
 
