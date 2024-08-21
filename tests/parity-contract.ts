@@ -151,7 +151,7 @@ describe.only("parity-issuance", () => {
   // Stake Pool Controls
   const xMintDecimals = 6;
   const stakeExchangeRateDecimals = xMintDecimals;
-  const initialExchangeRate = 1 * 10 ** stakeExchangeRateDecimals;
+  const initialExchangeRateParityStaking = 1 * 10 ** stakeExchangeRateDecimals;
   const allowedWallets = [keypair.publicKey.toBase58()];
 
   // Pt staking program
@@ -166,6 +166,7 @@ describe.only("parity-issuance", () => {
   });
 
   const baselineYield = 2000 // For 20%
+  const initialExchangeRatePtStaking = 20 * 10 ** baseMintDecimals
 
   before(async () => {
     try {
@@ -341,7 +342,7 @@ describe.only("parity-issuance", () => {
         symbol: "xSOLD",
         uri: "https://builderz.dev/_next/image?url=%2Fimages%2Fheader-gif.gif&w=3840&q=75",
         decimals: xMintDecimals,
-        initialExchangeRate,
+        initialExchangeRate: initialExchangeRateParityStaking,
         secondsPerInterval,
         intervalAprRate,
         owner: umi.identity,
@@ -359,7 +360,7 @@ describe.only("parity-issuance", () => {
     assert.equal(stakePoolAcc.baseMintDecimals, baseMintDecimals);
     assert.equal(stakePoolAcc.xMint, xMint);
     assert.equal(stakePoolAcc.xMintDecimals, xMintDecimals);
-    assert.equal(stakePoolAcc.initialExchangeRate, BigInt(initialExchangeRate));
+    assert.equal(stakePoolAcc.initialExchangeRate, BigInt(initialExchangeRateParityStaking));
     assert.equal(stakePoolAcc.baseBalance, 0n);
     assert.equal(xMintAcc.supply, 0n);
   });
@@ -378,7 +379,7 @@ describe.only("parity-issuance", () => {
         admin: umi.identity.publicKey,
         baselineYieldBps: baselineYield,
         depositCap: testDepositCapAmount,
-        initialExchangeRate: 20
+        initialExchangeRate: initialExchangeRatePtStaking
       })
     );
 
@@ -391,7 +392,7 @@ describe.only("parity-issuance", () => {
     assert.equal(globalConfigAcc.baselineYieldBps, baselineYield);
     assert.equal(globalConfigAcc.admin, umi.identity.publicKey);
     assert.equal(globalConfigAcc.depositCap, testDepositCapAmount);
-    assert.equal(globalConfigAcc.exchangeRateHistory[0].exchangeRate, 20);
+    assert.equal(globalConfigAcc.exchangeRateHistory[0].exchangeRate, initialExchangeRatePtStaking);
     assert.equal(globalConfigAcc.stakedSupply, 0);
 
   })
