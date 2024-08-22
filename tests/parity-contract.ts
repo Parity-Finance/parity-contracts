@@ -81,7 +81,18 @@ import assert from "assert";
 import chai, { assert as chaiAssert } from "chai";
 import { bs58 } from "@coral-xyz/anchor/dist/cjs/utils/bytes";
 import { calculateMaxWithdrawableAmount } from "../clients/js/src/utils/maxWithdrawable";
-import { findUserStakePda, initializeGlobalConfig, initiateUpdateGlobalConfigOwner, PT_STAKING_PROGRAM_ID, ptStake, ptUnstake, safeFetchGlobalConfig, safeFetchUserStake, updateGlobalConfig, updateGlobalConfigOwner } from "../clients/js/src/generated";
+import {
+  findUserStakePda,
+  initializeGlobalConfig,
+  initiateUpdateGlobalConfigOwner,
+  PT_STAKING_PROGRAM_ID,
+  ptStake,
+  ptUnstake,
+  safeFetchGlobalConfig,
+  safeFetchUserStake,
+  updateGlobalConfig,
+  updateGlobalConfigOwner,
+} from "../clients/js/src/generated";
 import { ProgramTestContext, start } from "solana-bankrun";
 import { fastForward } from "./utils/utilts";
 
@@ -157,7 +168,7 @@ describe.only("parity-issuance", () => {
   const allowedWallets = [keypair.publicKey.toBase58()];
 
   // Pt staking program
-  let globalConfig = findGlobalConfigPda(umi)[0]
+  let globalConfig = findGlobalConfigPda(umi)[0];
   let userStakePDA = findUserStakePda(umi, {
     user: umi.identity.publicKey,
   });
@@ -166,8 +177,8 @@ describe.only("parity-issuance", () => {
     mint: baseMint[0],
   });
 
-  const baselineYield = 2000 // For 20%
-  const initialExchangeRatePtStaking = 20 * 10 ** baseMintDecimals
+  const baselineYield = 2000; // For 20%
+  const initialExchangeRatePtStaking = 20 * 10 ** baseMintDecimals;
 
   let context: ProgramTestContext;
 
@@ -365,7 +376,10 @@ describe.only("parity-issuance", () => {
     assert.equal(stakePoolAcc.baseMintDecimals, baseMintDecimals);
     assert.equal(stakePoolAcc.xMint, xMint);
     assert.equal(stakePoolAcc.xMintDecimals, xMintDecimals);
-    assert.equal(stakePoolAcc.initialExchangeRate, BigInt(initialExchangeRateParityStaking));
+    assert.equal(
+      stakePoolAcc.initialExchangeRate,
+      BigInt(initialExchangeRateParityStaking)
+    );
     assert.equal(stakePoolAcc.baseBalance, 0n);
     assert.equal(xMintAcc.supply, 0n);
   });
@@ -383,23 +397,25 @@ describe.only("parity-issuance", () => {
         admin: umi.identity.publicKey,
         baselineYieldBps: baselineYield,
         depositCap: testDepositCapAmount,
-        initialExchangeRate: initialExchangeRatePtStaking
+        initialExchangeRate: initialExchangeRatePtStaking,
       })
     );
 
     await txBuilder.sendAndConfirm(umi, { send: { skipPreflight: true } });
 
-    const globalConfigAcc = await safeFetchGlobalConfig(umi, globalConfig)
+    const globalConfigAcc = await safeFetchGlobalConfig(umi, globalConfig);
 
     assert.equal(globalConfigAcc.baseMint, baseMint[0]);
     assert.equal(globalConfigAcc.baseMintDecimals, baseMintDecimals);
     assert.equal(globalConfigAcc.baselineYieldBps, baselineYield);
     assert.equal(globalConfigAcc.admin, umi.identity.publicKey);
     assert.equal(globalConfigAcc.depositCap, testDepositCapAmount);
-    assert.equal(globalConfigAcc.exchangeRateHistory[0].exchangeRate, initialExchangeRatePtStaking);
+    assert.equal(
+      globalConfigAcc.exchangeRateHistory[0].exchangeRate,
+      initialExchangeRatePtStaking
+    );
     assert.equal(globalConfigAcc.stakedSupply, 0);
-
-  })
+  });
 
   it.only("pUSD can be minted for USDC", async () => {
     const quantity = 10000 * 10 ** baseMintDecimals;
@@ -1078,10 +1094,10 @@ describe.only("parity-issuance", () => {
       Number(
         ((baseMintAcc.supply / BigInt(10 ** baseMintDecimals)) *
           BigInt(exchangeRate)) /
-        BigInt(10 ** exchangeRateDecimals) -
-        tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals)
+          BigInt(10 ** exchangeRateDecimals) -
+          tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals)
       ) *
-      10 ** quoteMintDecimals +
+        10 ** quoteMintDecimals +
       1;
     if (quantity < 0) {
       quantity = 1;
@@ -1125,14 +1141,14 @@ describe.only("parity-issuance", () => {
       Number(
         ((baseMintAcc.supply / BigInt(10 ** baseMintDecimals)) *
           BigInt(exchangeRate)) /
-        BigInt(10 ** exchangeRateDecimals) -
-        tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals)
+          BigInt(10 ** exchangeRateDecimals) -
+          tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals)
       ) *
       10 ** quoteMintDecimals;
 
     const maxCollateral = Number(
       (baseMintAcc.supply / BigInt(10 ** baseMintDecimals)) *
-      BigInt(exchangeRate)
+        BigInt(exchangeRate)
     );
     quantity = maxCollateral - Number(_tokenManagerAcc.totalCollateral);
     // console.log("Max Collateral: ", maxCollateral);
@@ -1280,7 +1296,7 @@ describe.only("parity-issuance", () => {
     );
   });
 
-
+  // PT Staking program
   it.only("baseMint can be staked in PT Staking", async () => {
     let quantity = 1000 * 10 ** baseMintDecimals;
 
@@ -1295,7 +1311,7 @@ describe.only("parity-issuance", () => {
         user: umi.identity,
         vault: vaultStakingPDA,
         associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
-        quantity: quantity
+        quantity: quantity,
       })
     );
 
@@ -1313,9 +1329,7 @@ describe.only("parity-issuance", () => {
     assert.equal(userStakeAcc.stakedAmount, quantity);
     assert.equal(globalConfigAcc.stakedSupply, quantity);
     assert.equal(globalConfigAcc.stakingVault, vaultAcc.publicKey);
-
-
-  })
+  });
 
   it.only("baseMint can be unstaked in PT Staking", async () => {
     // Simulate time passing to 1,500,000
@@ -1340,7 +1354,7 @@ describe.only("parity-issuance", () => {
         user: umi.identity,
         vault: vaultStakingPDA,
         associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
-        quantity
+        quantity,
       })
     );
 
@@ -1362,20 +1376,39 @@ describe.only("parity-issuance", () => {
     // console.log("User Base Acc: ", userBaseAcc);
 
     // Assert the changes
-    assert.equal(_vaultAcc.amount, vaultAcc.amount - BigInt(quantity), "Vault balance should decrease by unstaked amount");
-    assert.equal(_userStakeAcc.stakedAmount, userStakeAcc.stakedAmount - BigInt(quantity), "User staked amount should decrease");
-    assert.equal(_globalConfigAcc.stakedSupply, globalConfigAcc.stakedSupply - BigInt(quantity), "Global staked supply should decrease");
+    assert.equal(
+      _vaultAcc.amount,
+      vaultAcc.amount - BigInt(quantity),
+      "Vault balance should decrease by unstaked amount"
+    );
+    assert.equal(
+      _userStakeAcc.stakedAmount,
+      userStakeAcc.stakedAmount - BigInt(quantity),
+      "User staked amount should decrease"
+    );
+    assert.equal(
+      _globalConfigAcc.stakedSupply,
+      globalConfigAcc.stakedSupply - BigInt(quantity),
+      "Global staked supply should decrease"
+    );
 
     // Check if user received the unstaked tokens
     const expectedUserBalance = userBaseAcc.amount + BigInt(quantity);
-    assert.equal(_userBaseAcc.amount, expectedUserBalance, "User should receive unstaked tokens");
+    assert.equal(
+      _userBaseAcc.amount,
+      expectedUserBalance,
+      "User should receive unstaked tokens"
+    );
 
     // // TODO: Add assertions for points calculation if applicable
     // Check that the points were calculated within a single phase
     assert.equal(pointsHistory.length, 1, "Only one phase should be involved");
-    assert.equal(pointsHistory[0].index, 0, "The phase index should be 0 (initial phase)");
-    //assert.equal(pointsHistory[0].points, 38.052, " ~31.71 points (for 50M FDV phase)"); 
-
+    assert.equal(
+      pointsHistory[0].index,
+      0,
+      "The phase index should be 0 (initial phase)"
+    );
+    //assert.equal(pointsHistory[0].points, 38.052, " ~31.71 points (for 50M FDV phase)");
 
     // Attempt unstaking with a user thats not the owner
     // which should fail
@@ -1390,7 +1423,7 @@ describe.only("parity-issuance", () => {
       }
     );
 
-    umi.use(keypairIdentity(newUser))
+    umi.use(keypairIdentity(newUser));
 
     txBuilder = new TransactionBuilder();
 
@@ -1403,23 +1436,23 @@ describe.only("parity-issuance", () => {
         user: umi.identity,
         vault: vaultStakingPDA,
         associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
-        quantity
+        quantity,
       })
     );
-
 
     await assert.rejects(
       async () => {
         await txBuilder.sendAndConfirm(umi);
       },
       (err) => {
-        return (err as Error).message.includes(" A seeds constraint was violated");
+        return (err as Error).message.includes(
+          " A seeds constraint was violated"
+        );
       },
       "Expected unstaking error as user isnt the owner of PDA"
     );
 
     umi.use(keypairIdentity(fromWeb3JsKeypair(keypair))); // Switch back to  admin
-
   });
 
   it("baseMint can be unstaked by redeeming xMint", async () => {
@@ -1919,8 +1952,8 @@ describe.only("parity-issuance", () => {
 
   it.only("should update Pt Staking global config", async () => {
     const notOwner = umi.eddsa.generateKeypair();
-    const newBaselineYield = 5000 // For 50%
-    const newExchangeRatePtStaking = 30 * 10 ** baseMintDecimals
+    const newBaselineYield = 5000; // For 50%
+    const newExchangeRatePtStaking = 30 * 10 ** baseMintDecimals;
     const newDespositCap = testDepositCapAmount;
 
     await umi.rpc.airdrop(
@@ -1941,9 +1974,9 @@ describe.only("parity-issuance", () => {
         owner: umi.identity,
         newBaselineYieldBps: newBaselineYield,
         newExchangeRate: newExchangeRatePtStaking,
-        newDepositCap: newDespositCap
+        newDepositCap: newDespositCap,
       })
-    )
+    );
 
     await assert.rejects(
       async () => {
@@ -1954,7 +1987,6 @@ describe.only("parity-issuance", () => {
       },
       "Expected updating global config to fail because of Invalid owner"
     );
-
     //Attempt trying to change update  with the right Owner
 
     umi.use(keypairIdentity(fromWeb3JsKeypair(keypair)));
@@ -1966,7 +1998,7 @@ describe.only("parity-issuance", () => {
         owner: umi.identity,
         newBaselineYieldBps: newBaselineYield,
         newExchangeRate: newExchangeRatePtStaking,
-        newDepositCap: newDespositCap
+        newDepositCap: newDespositCap,
       })
     );
 
@@ -1975,27 +2007,27 @@ describe.only("parity-issuance", () => {
     //verify the updated global config is set
     const globalConfigAcc = await safeFetchGlobalConfig(umi, globalConfig);
 
-    assert.equal(globalConfigAcc.baselineYieldBps, newBaselineYield, "base line yield should be updated");
-    assert.equal(globalConfigAcc.depositCap, newDespositCap, "deposit cap should be updated");
-    assert.equal(globalConfigAcc.exchangeRateHistory[1].exchangeRate, newExchangeRatePtStaking, "exchange rate should be updated");
-
-   
+    assert.equal(
+      globalConfigAcc.baselineYieldBps,
+      newBaselineYield,
+      "base line yield should be updated"
+    );
+    assert.equal(
+      globalConfigAcc.depositCap,
+      newDespositCap,
+      "deposit cap should be updated"
+    );
+    assert.equal(
+      globalConfigAcc.exchangeRateHistory[1].exchangeRate,
+      newExchangeRatePtStaking,
+      "exchange rate should be updated"
+    );
 
     let quantity = 1000 * 10 ** baseMintDecimals;
 
     //Attempt  staking to test if deposit cap works
     //This should work since deposit cap variable has been increased
     txBuilder = new TransactionBuilder();
-
-    const userXAtaAcc = await safeFetchToken(umi, userX);
-
-    if (!userXAtaAcc) {
-      txBuilder = txBuilder.add(
-        createAssociatedToken(umi, {
-          mint: xMint,
-        })
-      );
-    }
 
     txBuilder = txBuilder.add(
       ptStake(umi, {
@@ -2006,7 +2038,7 @@ describe.only("parity-issuance", () => {
         user: umi.identity,
         vault: vaultStakingPDA,
         associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
-        quantity: quantity
+        quantity: quantity,
       })
     );
 
@@ -2026,7 +2058,7 @@ describe.only("parity-issuance", () => {
         user: umi.identity,
         vault: vaultStakingPDA,
         associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
-        quantity: quantity
+        quantity: quantity,
       })
     );
 

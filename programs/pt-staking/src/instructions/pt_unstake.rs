@@ -18,7 +18,7 @@ pub struct PtUnstake<'info> {
         mut,
         seeds = [b"user-stake",user.key().as_ref()],
         bump,
-        constraint = user_stake.user_pubkey == user.key() @ PtStakingError::InvalidOwner
+        constraint = user_stake.user_pubkey == user.key() @ PtStakingError::InvalidOwner,
     )]
     pub user_stake: Account<'info, UserStake>,
 

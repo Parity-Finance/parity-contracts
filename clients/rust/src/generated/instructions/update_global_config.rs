@@ -15,6 +15,8 @@ pub struct UpdateGlobalConfig {
     pub global_config: solana_program::pubkey::Pubkey,
 
     pub owner: solana_program::pubkey::Pubkey,
+
+    pub system_program: solana_program::pubkey::Pubkey,
 }
 
 impl UpdateGlobalConfig {
@@ -30,13 +32,17 @@ impl UpdateGlobalConfig {
         args: UpdateGlobalConfigInstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(2 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(3 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.global_config,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.owner, true,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            self.system_program,
+            false,
         ));
         accounts.extend_from_slice(remaining_accounts);
         let mut data = UpdateGlobalConfigInstructionData::new()
@@ -83,10 +89,12 @@ pub struct UpdateGlobalConfigInstructionArgs {
 ///
 ///   0. `[writable]` global_config
 ///   1. `[writable, signer]` owner
+///   2. `[optional]` system_program (default to `11111111111111111111111111111111`)
 #[derive(Default)]
 pub struct UpdateGlobalConfigBuilder {
     global_config: Option<solana_program::pubkey::Pubkey>,
     owner: Option<solana_program::pubkey::Pubkey>,
+    system_program: Option<solana_program::pubkey::Pubkey>,
     new_baseline_yield_bps: Option<u64>,
     new_exchange_rate: Option<u64>,
     new_deposit_cap: Option<u64>,
@@ -105,6 +113,12 @@ impl UpdateGlobalConfigBuilder {
     #[inline(always)]
     pub fn owner(&mut self, owner: solana_program::pubkey::Pubkey) -> &mut Self {
         self.owner = Some(owner);
+        self
+    }
+    /// `[optional account, default to '11111111111111111111111111111111']`
+    #[inline(always)]
+    pub fn system_program(&mut self, system_program: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.system_program = Some(system_program);
         self
     }
     /// `[optional argument]`
@@ -148,6 +162,9 @@ impl UpdateGlobalConfigBuilder {
         let accounts = UpdateGlobalConfig {
             global_config: self.global_config.expect("global_config is not set"),
             owner: self.owner.expect("owner is not set"),
+            system_program: self
+                .system_program
+                .unwrap_or(solana_program::pubkey!("11111111111111111111111111111111")),
         };
         let args = UpdateGlobalConfigInstructionArgs {
             new_baseline_yield_bps: self.new_baseline_yield_bps.clone(),
@@ -164,6 +181,8 @@ pub struct UpdateGlobalConfigCpiAccounts<'a, 'b> {
     pub global_config: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub owner: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
 /// `update_global_config` CPI instruction.
@@ -174,6 +193,8 @@ pub struct UpdateGlobalConfigCpi<'a, 'b> {
     pub global_config: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub owner: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub system_program: &'b solana_program::account_info::AccountInfo<'a>,
     /// The arguments for the instruction.
     pub __args: UpdateGlobalConfigInstructionArgs,
 }
@@ -188,6 +209,7 @@ impl<'a, 'b> UpdateGlobalConfigCpi<'a, 'b> {
             __program: program,
             global_config: accounts.global_config,
             owner: accounts.owner,
+            system_program: accounts.system_program,
             __args: args,
         }
     }
@@ -224,7 +246,7 @@ impl<'a, 'b> UpdateGlobalConfigCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(2 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(3 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.global_config.key,
             false,
@@ -232,6 +254,10 @@ impl<'a, 'b> UpdateGlobalConfigCpi<'a, 'b> {
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.owner.key,
             true,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            *self.system_program.key,
+            false,
         ));
         remaining_accounts.iter().for_each(|remaining_account| {
             accounts.push(solana_program::instruction::AccountMeta {
@@ -251,10 +277,11 @@ impl<'a, 'b> UpdateGlobalConfigCpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(2 + 1 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(3 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.global_config.clone());
         account_infos.push(self.owner.clone());
+        account_infos.push(self.system_program.clone());
         remaining_accounts
             .iter()
             .for_each(|remaining_account| account_infos.push(remaining_account.0.clone()));
@@ -273,6 +300,7 @@ impl<'a, 'b> UpdateGlobalConfigCpi<'a, 'b> {
 ///
 ///   0. `[writable]` global_config
 ///   1. `[writable, signer]` owner
+///   2. `[]` system_program
 pub struct UpdateGlobalConfigCpiBuilder<'a, 'b> {
     instruction: Box<UpdateGlobalConfigCpiBuilderInstruction<'a, 'b>>,
 }
@@ -283,6 +311,7 @@ impl<'a, 'b> UpdateGlobalConfigCpiBuilder<'a, 'b> {
             __program: program,
             global_config: None,
             owner: None,
+            system_program: None,
             new_baseline_yield_bps: None,
             new_exchange_rate: None,
             new_deposit_cap: None,
@@ -301,6 +330,14 @@ impl<'a, 'b> UpdateGlobalConfigCpiBuilder<'a, 'b> {
     #[inline(always)]
     pub fn owner(&mut self, owner: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
         self.instruction.owner = Some(owner);
+        self
+    }
+    #[inline(always)]
+    pub fn system_program(
+        &mut self,
+        system_program: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.system_program = Some(system_program);
         self
     }
     /// `[optional argument]`
@@ -376,6 +413,11 @@ impl<'a, 'b> UpdateGlobalConfigCpiBuilder<'a, 'b> {
                 .expect("global_config is not set"),
 
             owner: self.instruction.owner.expect("owner is not set"),
+
+            system_program: self
+                .instruction
+                .system_program
+                .expect("system_program is not set"),
             __args: args,
         };
         instruction.invoke_signed_with_remaining_accounts(
@@ -389,6 +431,7 @@ struct UpdateGlobalConfigCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     global_config: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     owner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    system_program: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     new_baseline_yield_bps: Option<u64>,
     new_exchange_rate: Option<u64>,
     new_deposit_cap: Option<u64>,

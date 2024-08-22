@@ -4,7 +4,7 @@ use anchor_spl::{
     token::{transfer_checked, Mint, Token, TokenAccount, TransferChecked},
 };
 
-use crate::{GlobalConfig, PtStakingError, UserStake, USER_STAKE_LENGTH};
+use crate::{GlobalConfig, PtStakingError, UserStake};
 
 #[derive(Accounts)]
 pub struct PtStake<'info> {
@@ -19,7 +19,7 @@ pub struct PtStake<'info> {
         seeds = [b"user-stake",user.key().as_ref()],
         bump,
         payer = user,
-        space = USER_STAKE_LENGTH,
+        space = 8 + UserStake::INIT_SPACE,
     )]
     pub user_stake: Account<'info, UserStake>,
 

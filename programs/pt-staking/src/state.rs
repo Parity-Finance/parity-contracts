@@ -8,6 +8,7 @@ pub const GLOBAL_CONFIG_LENGTH: usize =
 pub const USER_STAKE_LENGTH: usize = 8 + 32 + 8 + 8 + 8 + 4 * (8 + 8 + 4);
 
 #[account]
+#[derive(InitSpace, Debug)]
 pub struct GlobalConfig {
     pub bump: u8, // 1 byte
 
@@ -22,21 +23,25 @@ pub struct GlobalConfig {
     pub baseline_yield_bps: u64,                       // 8 bytes
     pub staked_supply: u64,                            // 8 bytes
     pub total_points_issued: u64,                      // 8 bytes
-    pub deposit_cap: u64,                              // 8 bytes
+    pub deposit_cap: u64,
+    #[max_len(20)]                              // 8 bytes
     pub exchange_rate_history: Vec<ExchangeRatePhase>, // 4 bytes (Vec length) + N * size of ExchangeRatePhase
+    #[max_len(20)] 
     pub points_history: Vec<PointsEarnedPhase>, // 4 bytes (Vec length) + N * size of PointsEarnedPhase
 }
 
 #[account]
+#[derive(InitSpace, Debug)]
 pub struct UserStake {
     pub user_pubkey: Pubkey,                    // 32 bytes
     pub staked_amount: u64,                     // 8 bytes
     pub initial_staking_timestamp: i64,                 // 8 bytes
     pub last_claim_timestamp: i64,              // 8 bytes
+    #[max_len(20)] 
     pub points_history: Vec<PointsEarnedPhase>, // 4 bytes (Vec length) + N * size of PointsEarnedPhase
 }
 
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug)]
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, InitSpace)]
 pub struct ExchangeRatePhase {
     pub exchange_rate: u64,    // 8 bytes
     pub start_date: i64,       // 8 bytes
@@ -44,7 +49,7 @@ pub struct ExchangeRatePhase {
     pub index: u32,            // 4 bytes
 }
 
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug)]
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, InitSpace)]
 pub struct PointsEarnedPhase {
     pub exchange_rate: u64, // 8 bytes
     pub points: u64,        // 8 bytes
@@ -52,6 +57,29 @@ pub struct PointsEarnedPhase {
 }
 
 impl GlobalConfig {
+
+    pub fn get_size(&self) -> usize {
+        let base_size: usize = 1 + 32 * 5 + 1 + 8 * 4;
+        let exchange_rate_size = 4 + self.exchange_rate_history.len() * std::mem::size_of::<ExchangeRatePhase>();
+        let points_history_size = 4 + self.points_history.len() * std::mem::size_of::<PointsEarnedPhase>();
+       
+        base_size
+        .checked_add(exchange_rate_size)
+        .and_then(|v| v.checked_add(points_history_size))
+        .expect("Overflow when calculating GlobalConfig size")
+    }
+
+    pub fn calculate_new_size(&self, additional_phases: usize) -> usize {
+        let current_size = self.get_size();
+        let additional_size = additional_phases
+            .checked_mul(std::mem::size_of::<ExchangeRatePhase>())
+            .expect("Overflow when calculating additional size for GlobalConfig");
+
+        current_size
+            .checked_add(additional_size)
+            .expect("Overflow when calculating new GlobalConfig size")
+    }
+
     pub fn check_excessive_deposit(&self, quote_amount: u64, vault_amount: u64) -> Result<()> {
         let new_vault_amount = (vault_amount as u128)
             .checked_add(quote_amount as u128)
@@ -164,6 +192,27 @@ impl GlobalConfig {
 }
 
 impl UserStake {
+
+    pub fn get_size(&self) -> usize {
+        let base_size: usize= 32 + 8 * 3;
+        let points_history_size = 4 + self.points_history.len() * std::mem::size_of::<PointsEarnedPhase>();
+
+        base_size
+            .checked_add(points_history_size)
+            .expect("Overflow when calculating UserStake size")
+    }
+
+    pub fn calculate_new_size(&self, additional_phases: usize) -> usize {
+        let current_size = self.get_size();
+        let additional_size = additional_phases
+            .checked_mul(std::mem::size_of::<PointsEarnedPhase>())
+            .expect("Overflow when calculating additional size for UserStake");
+
+        current_size
+            .checked_add(additional_size)
+            .expect("Overflow when calculating new UserStake size")
+    }
+
     pub fn update_points_history(&mut self, points_history: Vec<PointsEarnedPhase>) {
         for new_phase in points_history {
             if let Some(existing_phase) = self

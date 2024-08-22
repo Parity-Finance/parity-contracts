@@ -35,6 +35,7 @@ import {
 export type UpdateGlobalConfigInstructionAccounts = {
   globalConfig: PublicKey | Pda;
   owner: Signer;
+  systemProgram?: PublicKey | Pda;
 };
 
 // Data.
@@ -107,10 +108,24 @@ export function updateGlobalConfig(
       isWritable: true as boolean,
       value: input.owner ?? null,
     },
+    systemProgram: {
+      index: 2,
+      isWritable: false as boolean,
+      value: input.systemProgram ?? null,
+    },
   } satisfies ResolvedAccountsWithIndices;
 
   // Arguments.
   const resolvedArgs: UpdateGlobalConfigInstructionArgs = { ...input };
+
+  // Default values.
+  if (!resolvedAccounts.systemProgram.value) {
+    resolvedAccounts.systemProgram.value = context.programs.getPublicKey(
+      'splSystem',
+      '11111111111111111111111111111111'
+    );
+    resolvedAccounts.systemProgram.isWritable = false;
+  }
 
   // Accounts in order.
   const orderedAccounts: ResolvedAccount[] = Object.values(

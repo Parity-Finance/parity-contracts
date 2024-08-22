@@ -14,12 +14,16 @@ pub struct UpdateGlobalConfig<'info> {
     #[account(
         mut,
         seeds = [b"global-config"],
-        bump
+        bump,
+        realloc = 8 + GlobalConfig::INIT_SPACE * 2, 
+        realloc::payer = owner,
+        realloc::zero = false
     )]
     pub global_config: Account<'info, GlobalConfig>,
 
     #[account(mut, address = global_config.owner @ PtStakingError::InvalidOwner)]
     pub owner: Signer<'info>,
+    pub system_program: Program<'info, System>,
 }
 
 pub fn handler(ctx: Context<UpdateGlobalConfig>, params: UpdateGlobalConfigParams) -> Result<()> {

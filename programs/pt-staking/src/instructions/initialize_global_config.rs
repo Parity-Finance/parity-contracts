@@ -1,4 +1,4 @@
-use crate::{ExchangeRatePhase, GlobalConfig, GLOBAL_CONFIG_LENGTH};
+use crate::{ExchangeRatePhase, GlobalConfig};
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
@@ -22,7 +22,7 @@ pub struct InitializeGlobalConfig<'info> {
         seeds = [b"global-config"],
         bump,
         payer = user,
-        space = GLOBAL_CONFIG_LENGTH,
+        space = 8 + GlobalConfig::INIT_SPACE,
     )]
     pub global_config: Box<Account<'info, GlobalConfig>>,
     #[account(
