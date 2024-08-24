@@ -106,6 +106,32 @@ export class PsInsufficientStakedAmountError extends ProgramError {
 codeToErrorMap.set(0x1776, PsInsufficientStakedAmountError);
 nameToErrorMap.set('InsufficientStakedAmount', PsInsufficientStakedAmountError);
 
+/** AlreadyInitialized: Already Initialized */
+export class PsAlreadyInitializedError extends ProgramError {
+  override readonly name: string = 'AlreadyInitialized';
+
+  readonly code: number = 0x1777; // 6007
+
+  constructor(program: Program, cause?: Error) {
+    super('Already Initialized', program, cause);
+  }
+}
+codeToErrorMap.set(0x1777, PsAlreadyInitializedError);
+nameToErrorMap.set('AlreadyInitialized', PsAlreadyInitializedError);
+
+/** NotInitialized: Not Initialized */
+export class PsNotInitializedError extends ProgramError {
+  override readonly name: string = 'NotInitialized';
+
+  readonly code: number = 0x1778; // 6008
+
+  constructor(program: Program, cause?: Error) {
+    super('Not Initialized', program, cause);
+  }
+}
+codeToErrorMap.set(0x1778, PsNotInitializedError);
+nameToErrorMap.set('NotInitialized', PsNotInitializedError);
+
 /**
  * Attempts to resolve a custom program error from the provided error code.
  * @category Errors

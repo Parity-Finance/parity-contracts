@@ -11,15 +11,19 @@ pub struct PtStake<'info> {
     #[account(
         mut,
         seeds = [b"global-config"],
+        constraint = global_config.initialized == true @ PtStakingError::NotInitialized,
         bump
     )]
     pub global_config: Account<'info, GlobalConfig>,
     #[account(
-        init_if_needed,
+        mut,
         seeds = [b"user-stake",user.key().as_ref()],
+        constraint = user_stake.initialized == true @ PtStakingError::NotInitialized,
+        constraint = user_stake.user_pubkey == user.key() @ PtStakingError::InvalidOwner,
         bump,
-        payer = user,
-        space = 8 + UserStake::INIT_SPACE,
+        realloc = 8 + UserStake::INIT_SPACE * 2, 
+        realloc::payer = user,
+        realloc::zero = false
     )]
     pub user_stake: Account<'info, UserStake>,
 
@@ -51,7 +55,9 @@ pub struct PtStake<'info> {
     pub associated_token_program: Program<'info, AssociatedToken>,
 }
 
-pub fn handler(ctx: Context<PtStake>, quantity: u64) -> Result<()> {
+
+impl PtStake<'_> {
+  pub fn handler(ctx: Context<PtStake>, quantity: u64) -> Result<()> {
     let global_config = &mut ctx.accounts.global_config;
     let user_stake = &mut ctx.accounts.user_stake;
     let user_base_mint_ata = &ctx.accounts.user_base_mint_ata;
@@ -79,10 +85,9 @@ pub fn handler(ctx: Context<PtStake>, quantity: u64) -> Result<()> {
 
     if user_stake.initial_staking_timestamp == 0 {
         // First time staking, set the initial staking timestamp, no points calculated.
-        user_stake.user_pubkey = ctx.accounts.user.key();
         user_stake.initial_staking_timestamp = current_timestamp;
-        user_stake.last_claim_timestamp = 0;
-        user_stake.points_history = Vec::new();
+        // we set this cause it''ll be used to calculate points in the next staking/unstaking action
+        user_stake.last_claim_timestamp = current_timestamp;
     } else {
         // Calculate points earned since the last stake/unstake.
         let points_earned_phases = global_config.calculate_points(
@@ -114,4 +119,5 @@ pub fn handler(ctx: Context<PtStake>, quantity: u64) -> Result<()> {
         .ok_or(PtStakingError::CalculationOverflow)?;
 
     Ok(())
+   }
 }

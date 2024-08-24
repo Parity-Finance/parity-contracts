@@ -2,83 +2,59 @@ use anchor_lang::prelude::*;
 
 use crate::PtStakingError;
 
-pub const GLOBAL_CONFIG_LENGTH: usize =
-    8 + 1 + (32 * 5) + (1) + (8 * 4) + 4 * (8 + 8 + 1 + 4) + 4 * (8 + 8 + 4);
-
-pub const USER_STAKE_LENGTH: usize = 8 + 32 + 8 + 8 + 8 + 4 * (8 + 8 + 4);
 
 #[account]
 #[derive(InitSpace, Debug)]
 pub struct GlobalConfig {
-    pub bump: u8, // 1 byte
+    pub bump: u8, 
 
     // Authorities
-    pub owner: Pubkey,         // 32 bytes
-    pub pending_owner: Pubkey, // 32 bytes
-    pub admin: Pubkey,         // 32 bytes
+    pub owner: Pubkey,         
+    pub pending_owner: Pubkey, 
+    pub admin: Pubkey,         
+    pub initialized: bool,
 
-    pub base_mint: Pubkey,                             // 32 bytes
-    pub staking_vault: Pubkey,                         // 32 bytes
-    pub base_mint_decimals: u8,                        // 1 byte
-    pub baseline_yield_bps: u64,                       // 8 bytes
-    pub staked_supply: u64,                            // 8 bytes
-    pub total_points_issued: u64,                      // 8 bytes
+    pub base_mint: Pubkey,                            
+    pub staking_vault: Pubkey,                        
+    pub base_mint_decimals: u8,                        
+    pub baseline_yield_bps: u64,                       
+    pub staked_supply: u64,                            
+    pub total_points_issued: u64,                     
     pub deposit_cap: u64,
-    #[max_len(20)]                              // 8 bytes
-    pub exchange_rate_history: Vec<ExchangeRatePhase>, // 4 bytes (Vec length) + N * size of ExchangeRatePhase
-    #[max_len(20)] 
-    pub points_history: Vec<PointsEarnedPhase>, // 4 bytes (Vec length) + N * size of PointsEarnedPhase
+    #[max_len(10)]                              
+    pub exchange_rate_history: Vec<ExchangeRatePhase>, 
+    #[max_len(10)] 
+    pub points_history: Vec<PointsEarnedPhase>, 
 }
 
 #[account]
 #[derive(InitSpace, Debug)]
 pub struct UserStake {
-    pub user_pubkey: Pubkey,                    // 32 bytes
-    pub staked_amount: u64,                     // 8 bytes
-    pub initial_staking_timestamp: i64,                 // 8 bytes
-    pub last_claim_timestamp: i64,              // 8 bytes
-    #[max_len(20)] 
-    pub points_history: Vec<PointsEarnedPhase>, // 4 bytes (Vec length) + N * size of PointsEarnedPhase
+    pub user_pubkey: Pubkey, 
+    pub initialized: bool,                 
+    pub staked_amount: u64,                  
+    pub initial_staking_timestamp: i64,                
+    pub last_claim_timestamp: i64,              
+    #[max_len(10)] 
+    pub points_history: Vec<PointsEarnedPhase>, 
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, InitSpace)]
 pub struct ExchangeRatePhase {
-    pub exchange_rate: u64,    // 8 bytes
-    pub start_date: i64,       // 8 bytes
-    pub end_date: Option<i64>, // 1 byte (Option) + 8 bytes (i64) = 9 bytes
-    pub index: u32,            // 4 bytes
+    pub exchange_rate: u64,   
+    pub start_date: i64,      
+    pub end_date: Option<i64>,
+    pub index: u32,            
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, InitSpace)]
 pub struct PointsEarnedPhase {
-    pub exchange_rate: u64, // 8 bytes
-    pub points: u64,        // 8 bytes
-    pub index: u32,         // 4 bytes
+    pub exchange_rate: u64,
+    pub points: u64,      
+    pub index: u32,        
 }
 
 impl GlobalConfig {
-
-    pub fn get_size(&self) -> usize {
-        let base_size: usize = 1 + 32 * 5 + 1 + 8 * 4;
-        let exchange_rate_size = 4 + self.exchange_rate_history.len() * std::mem::size_of::<ExchangeRatePhase>();
-        let points_history_size = 4 + self.points_history.len() * std::mem::size_of::<PointsEarnedPhase>();
-       
-        base_size
-        .checked_add(exchange_rate_size)
-        .and_then(|v| v.checked_add(points_history_size))
-        .expect("Overflow when calculating GlobalConfig size")
-    }
-
-    pub fn calculate_new_size(&self, additional_phases: usize) -> usize {
-        let current_size = self.get_size();
-        let additional_size = additional_phases
-            .checked_mul(std::mem::size_of::<ExchangeRatePhase>())
-            .expect("Overflow when calculating additional size for GlobalConfig");
-
-        current_size
-            .checked_add(additional_size)
-            .expect("Overflow when calculating new GlobalConfig size")
-    }
 
     pub fn check_excessive_deposit(&self, quote_amount: u64, vault_amount: u64) -> Result<()> {
         let new_vault_amount = (vault_amount as u128)
@@ -193,26 +169,6 @@ impl GlobalConfig {
 
 impl UserStake {
 
-    pub fn get_size(&self) -> usize {
-        let base_size: usize= 32 + 8 * 3;
-        let points_history_size = 4 + self.points_history.len() * std::mem::size_of::<PointsEarnedPhase>();
-
-        base_size
-            .checked_add(points_history_size)
-            .expect("Overflow when calculating UserStake size")
-    }
-
-    pub fn calculate_new_size(&self, additional_phases: usize) -> usize {
-        let current_size = self.get_size();
-        let additional_size = additional_phases
-            .checked_mul(std::mem::size_of::<PointsEarnedPhase>())
-            .expect("Overflow when calculating additional size for UserStake");
-
-        current_size
-            .checked_add(additional_size)
-            .expect("Overflow when calculating new UserStake size")
-    }
-
     pub fn update_points_history(&mut self, points_history: Vec<PointsEarnedPhase>) {
         for new_phase in points_history {
             if let Some(existing_phase) = self
@@ -240,6 +196,7 @@ mod tests {
             owner: Pubkey::default(),
             pending_owner: Pubkey::default(),
             admin: Pubkey::default(),
+            initialized: true,
             staking_vault: Pubkey::default(),
             baseline_yield_bps: 5,
             staked_supply: 1_000_000,
@@ -260,6 +217,7 @@ mod tests {
 
         UserStake {
             user_pubkey: Pubkey::new_unique(),
+            initialized: true,
             staked_amount: 1_000_000,
             initial_staking_timestamp: timestamp,
             last_claim_timestamp: timestamp,

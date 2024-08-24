@@ -22,6 +22,7 @@ import {
 import {
   Serializer,
   array,
+  bool,
   mapSerializer,
   publicKey as publicKeySerializer,
   string,
@@ -46,6 +47,7 @@ export type GlobalConfigAccountData = {
   owner: PublicKey;
   pendingOwner: PublicKey;
   admin: PublicKey;
+  initialized: boolean;
   baseMint: PublicKey;
   stakingVault: PublicKey;
   baseMintDecimals: number;
@@ -62,6 +64,7 @@ export type GlobalConfigAccountDataArgs = {
   owner: PublicKey;
   pendingOwner: PublicKey;
   admin: PublicKey;
+  initialized: boolean;
   baseMint: PublicKey;
   stakingVault: PublicKey;
   baseMintDecimals: number;
@@ -89,6 +92,7 @@ export function getGlobalConfigAccountDataSerializer(): Serializer<
         ['owner', publicKeySerializer()],
         ['pendingOwner', publicKeySerializer()],
         ['admin', publicKeySerializer()],
+        ['initialized', bool()],
         ['baseMint', publicKeySerializer()],
         ['stakingVault', publicKeySerializer()],
         ['baseMintDecimals', u8()],
@@ -180,6 +184,7 @@ export function getGlobalConfigGpaBuilder(
       owner: PublicKey;
       pendingOwner: PublicKey;
       admin: PublicKey;
+      initialized: boolean;
       baseMint: PublicKey;
       stakingVault: PublicKey;
       baseMintDecimals: number;
@@ -195,14 +200,15 @@ export function getGlobalConfigGpaBuilder(
       owner: [9, publicKeySerializer()],
       pendingOwner: [41, publicKeySerializer()],
       admin: [73, publicKeySerializer()],
-      baseMint: [105, publicKeySerializer()],
-      stakingVault: [137, publicKeySerializer()],
-      baseMintDecimals: [169, u8()],
-      baselineYieldBps: [170, u64()],
-      stakedSupply: [178, u64()],
-      totalPointsIssued: [186, u64()],
-      depositCap: [194, u64()],
-      exchangeRateHistory: [202, array(getExchangeRatePhaseSerializer())],
+      initialized: [105, bool()],
+      baseMint: [106, publicKeySerializer()],
+      stakingVault: [138, publicKeySerializer()],
+      baseMintDecimals: [170, u8()],
+      baselineYieldBps: [171, u64()],
+      stakedSupply: [179, u64()],
+      totalPointsIssued: [187, u64()],
+      depositCap: [195, u64()],
+      exchangeRateHistory: [203, array(getExchangeRatePhaseSerializer())],
       pointsHistory: [null, array(getPointsEarnedPhaseSerializer())],
     })
     .deserializeUsing<GlobalConfig>((account) =>

@@ -31,6 +31,12 @@ pub enum PtStakingError {
     /// 6006 (0x1776) - Insufficient staked amount
     #[error("Insufficient staked amount")]
     InsufficientStakedAmount,
+    /// 6007 (0x1777) - Already Initialized
+    #[error("Already Initialized")]
+    AlreadyInitialized,
+    /// 6008 (0x1778) - Not Initialized
+    #[error("Not Initialized")]
+    NotInitialized,
 }
 
 impl solana_program::program_error::PrintProgramError for PtStakingError {

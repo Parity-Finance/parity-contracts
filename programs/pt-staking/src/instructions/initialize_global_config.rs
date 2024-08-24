@@ -1,4 +1,4 @@
-use crate::{ExchangeRatePhase, GlobalConfig};
+use crate::{ExchangeRatePhase, GlobalConfig, PtStakingError};
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
@@ -23,6 +23,7 @@ pub struct InitializeGlobalConfig<'info> {
         bump,
         payer = user,
         space = 8 + GlobalConfig::INIT_SPACE,
+        constraint = global_config.initialized != true @ PtStakingError::AlreadyInitialized
     )]
     pub global_config: Box<Account<'info, GlobalConfig>>,
     #[account(
@@ -40,6 +41,8 @@ pub struct InitializeGlobalConfig<'info> {
     pub associated_token_program: Program<'info, AssociatedToken>,
 }
 
+
+impl InitializeGlobalConfig<'_> {
 pub fn handler(
     ctx: Context<InitializeGlobalConfig>,
     params: InitializeGlobalConfigParams,
@@ -51,6 +54,7 @@ pub fn handler(
     global_config.owner = ctx.accounts.user.key();
     global_config.admin = params.admin;
     global_config.bump = bump;
+    global_config.initialized = true;
 
     //Token
     global_config.base_mint = ctx.accounts.base_mint.key();
@@ -77,4 +81,5 @@ pub fn handler(
 
 
     Ok(())
+}
 }

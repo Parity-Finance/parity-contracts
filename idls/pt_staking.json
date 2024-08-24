@@ -54,6 +54,27 @@
       ]
     },
     {
+      "name": "initPtStake",
+      "accounts": [
+        {
+          "name": "userStake",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "user",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "ptStake",
       "accounts": [
         {
@@ -254,6 +275,10 @@
             "type": "publicKey"
           },
           {
+            "name": "initialized",
+            "type": "bool"
+          },
+          {
             "name": "baseMint",
             "type": "publicKey"
           },
@@ -308,6 +333,10 @@
           {
             "name": "userPubkey",
             "type": "publicKey"
+          },
+          {
+            "name": "initialized",
+            "type": "bool"
           },
           {
             "name": "stakedAmount",
@@ -466,6 +495,16 @@
       "code": 6006,
       "name": "InsufficientStakedAmount",
       "msg": "Insufficient staked amount"
+    },
+    {
+      "code": 6007,
+      "name": "AlreadyInitialized",
+      "msg": "Already Initialized"
+    },
+    {
+      "code": 6008,
+      "name": "NotInitialized",
+      "msg": "Not Initialized"
     }
   ],
   "metadata": {

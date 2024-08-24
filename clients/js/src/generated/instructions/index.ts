@@ -15,6 +15,7 @@ export * from './initializeWithdrawFunds';
 export * from './initiateUpdateGlobalConfigOwner';
 export * from './initiateUpdateManagerOwner';
 export * from './initiateUpdatePoolOwner';
+export * from './initPtStake';
 export * from './mint';
 export * from './mintAdmin';
 export * from './ptStake';

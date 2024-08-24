@@ -25,7 +25,8 @@
         "@metaplex-foundation/umi-bundle-defaults": "^0.9.1",
         "@metaplex-foundation/umi-web3js-adapters": "^0.9.1",
         "@solana/spl-token": "^0.4.6",
-        "@solana/web3.js": "^1.95.2"
+        "@solana/web3.js": "^1.95.2",
+        "anchor-bankrun": "^0.4.0"
     },
     "devDependencies": {
         "@metaplex-foundation/amman": "^0.12.1",

@@ -85,6 +85,7 @@ import {
   findUserStakePda,
   initializeGlobalConfig,
   initiateUpdateGlobalConfigOwner,
+  initPtStake,
   PT_STAKING_PROGRAM_ID,
   ptStake,
   ptUnstake,
@@ -1300,6 +1301,9 @@ describe.only("parity-issuance", () => {
   it.only("baseMint can be staked in PT Staking", async () => {
     let quantity = 1000 * 10 ** baseMintDecimals;
 
+
+    //Attempt staking without creating the userStake acccount
+    //This should fail
     let txBuilder = new TransactionBuilder();
 
     txBuilder = txBuilder.add(
@@ -1315,14 +1319,62 @@ describe.only("parity-issuance", () => {
       })
     );
 
-    await txBuilder.sendAndConfirm(umi, { send: { skipPreflight: true } });
+    await assert.rejects(
+      async () => {
+        await txBuilder.sendAndConfirm(umi);
+      },
+      (err) => {
+        return (err as Error).message.includes("The program expected this account to be already initialized.");
+      },
+      "Expected staking to fail because account isnt initialized"
+    );
+
+    // Create userStake acccount    
+    txBuilder = new TransactionBuilder();
+
+    txBuilder = txBuilder.add(
+      initPtStake(umi, {
+        userStake: userStakePDA,
+        user: umi.identity,
+      })
+    );
+
+    await txBuilder.sendAndConfirm(umi);
+
+    const _userStakeAcc = await safeFetchUserStake(umi, userStakePDA);
+
+    assert.equal(_userStakeAcc.userPubkey, umi.identity.publicKey);
+    assert.equal(_userStakeAcc.stakedAmount, 0,"Staked amount should be zero");
+    assert.equal(_userStakeAcc.initialized, true, "userstake account should be initialized");
+    assert.equal(_userStakeAcc.initialStakingTimestamp, 0, "initial staking time should be zero");
+
+
+     //Attempt staking after userStake acccount has been created
+     //This should succeed
+
+      txBuilder = new TransactionBuilder();
+
+     txBuilder = txBuilder.add(
+       ptStake(umi, {
+         globalConfig,
+         userStake: userStakePDA,
+         baseMint: baseMint,
+         userBaseMintAta: userBase,
+         user: umi.identity,
+         vault: vaultStakingPDA,
+         associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
+         quantity: quantity,
+       })
+     );
+
+     await txBuilder.sendAndConfirm(umi);
 
     const globalConfigAcc = await safeFetchGlobalConfig(umi, globalConfig);
     const userStakeAcc = await safeFetchUserStake(umi, userStakePDA);
     const vaultAcc = await safeFetchToken(umi, vaultStakingPDA);
 
     // console.log("Vault Acc: ", vaultAcc);
-    // console.log("User Stake Acc: ", userStakeAcc);
+     //console.log("User Stake Acc: ", userStakeAcc);
     // console.log("Global Config Acc: ", globalConfigAcc);
 
     assert.equal(vaultAcc.amount, quantity);
@@ -2071,6 +2123,98 @@ describe.only("parity-issuance", () => {
       },
       "Expected staking to fail because Deposit cap exceeded"
     );
+  });
+
+  it.only("dynamically increases account size for exchange rate and points history, and verifies PT staking reallocation", async () => {
+    const maxPhases = 15;
+    let quantity = 100 * 10 ** baseMintDecimals;
+
+
+    //We first of all increase the deposit cap 
+    let newDepositCap = testDepositCapAmount * 100;
+    let txBuilder = new TransactionBuilder();
+    txBuilder = txBuilder.add(
+      updateGlobalConfig(umi, {
+        globalConfig,
+        owner: umi.identity,
+        newBaselineYieldBps: null,
+        newExchangeRate: null,
+        newDepositCap: newDepositCap,
+      })
+    );
+
+    await txBuilder.sendAndConfirm(umi);
+  
+    // Function to create a new exchange rate phase
+    const createExchangeRatePhase = (index: number) => 
+      (index + 2) * 10 ** baseMintDecimals; // Increase exchange rate each time
+  
+    // Add phases and stake sequentially
+    for (let i = 3; i < maxPhases; i++) {
+      const newExchangeRate = createExchangeRatePhase(i);
+      
+      // Update global config (exchange rate)
+      let updateConfigTxBuilder = new TransactionBuilder();
+      updateConfigTxBuilder = updateConfigTxBuilder.add(
+        updateGlobalConfig(umi, {
+          globalConfig,
+          owner: umi.identity,
+          newBaselineYieldBps: null,
+          newExchangeRate: newExchangeRate,
+          newDepositCap: null,
+        })
+      );
+      await updateConfigTxBuilder.sendAndConfirm(umi);
+  
+      // Add a delay to ensure clock advances
+      await new Promise(resolve => setTimeout(resolve, 10000));
+  
+      // Fetch and log global config after update
+      let globalConfigAcc = await safeFetchGlobalConfig(umi, globalConfig);
+      console.log(`Phase ${i} added. Current exchange rate history size:`, 
+        globalConfigAcc.exchangeRateHistory.length);
+      //console.log("Last exchange rate phase:", globalConfigAcc.exchangeRateHistory[i-1]);
+  
+      // Perform staking
+      let stakeTxBuilder = new TransactionBuilder();
+      stakeTxBuilder = stakeTxBuilder.add(
+        ptStake(umi, {
+          globalConfig,
+          userStake: userStakePDA,
+          baseMint: baseMint,
+          userBaseMintAta: userBase,
+          user: umi.identity,
+          vault: vaultStakingPDA,
+          associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
+          quantity: quantity,
+        })
+      );
+      await stakeTxBuilder.sendAndConfirm(umi);
+  
+      // Add another delay after staking
+      await new Promise(resolve => setTimeout(resolve, 10000));
+  
+      // Fetch and check the updated user stake after staking
+      const userStakeAcc = await safeFetchUserStake(umi, userStakePDA);
+      console.log(`Stake ${i} completed. Current points history size:`,
+        userStakeAcc.pointsHistory.length);
+      //console.log("Last points history entry:", userStakeAcc.pointsHistory[userStakeAcc.pointsHistory.length]);
+  
+      // Assertions
+      assert.strictEqual(globalConfigAcc.exchangeRateHistory.length, i);
+      assert.equal(globalConfigAcc.exchangeRateHistory[i-1].exchangeRate, newExchangeRate);
+    }
+  
+    // Final checks
+    const finalGlobalConfigAcc = await safeFetchGlobalConfig(umi, globalConfig);
+    const finalUserStakeAcc = await safeFetchUserStake(umi, userStakePDA);
+  
+    console.log("Final exchange rate history:", finalGlobalConfigAcc.exchangeRateHistory);
+    console.log("Final points history:", finalUserStakeAcc.pointsHistory);
+  
+    assert.strictEqual(finalGlobalConfigAcc.exchangeRateHistory.length, maxPhases - 1);
+    assert.ok(finalUserStakeAcc.pointsHistory.length > 1, "Points history should have grown");
+    assert.ok(finalUserStakeAcc.stakedAmount > BigInt(0), "Staking should have occurred");
   });
 
   it("should accept pool manager update", async () => {

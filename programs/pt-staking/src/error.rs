@@ -15,5 +15,9 @@ pub enum PtStakingError {
     #[msg("No exchange rate avaliable")]
     NoExchangeRateAvailable,
     #[msg("Insufficient staked amount")]
-    InsufficientStakedAmount
+    InsufficientStakedAmount,
+    #[msg("Already Initialized")]
+    AlreadyInitialized,
+    #[msg("Not Initialized")]
+    NotInitialized,
 }

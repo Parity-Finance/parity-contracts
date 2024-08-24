@@ -18,15 +18,19 @@ pub mod pt_staking {
         ctx: Context<InitializeGlobalConfig>,
         params: InitializeGlobalConfigParams,
     ) -> Result<()> {
-        initialize_global_config::handler(ctx, params)
+        InitializeGlobalConfig::handler(ctx, params)
+    }
+
+    pub fn init_pt_stake(ctx: Context<InitPtStake>) -> Result<()> {
+        InitPtStake::handler(ctx)
     }
 
     pub fn pt_stake(ctx: Context<PtStake>, quantity: u64) -> Result<()> {
-        pt_stake::handler(ctx, quantity)
+        PtStake::handler(ctx, quantity)
     }
 
     pub fn pt_unstake(ctx: Context<PtUnstake>, quantity: u64) -> Result<()> {
-        pt_unstake::handler(ctx, quantity)
+        PtUnstake::handler(ctx, quantity)
     }
 
     pub fn update_global_config(
