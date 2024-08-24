@@ -3,11 +3,12 @@ use anchor_lang::prelude::*;
 use crate::{GlobalConfig, PtStakingError};
 
 #[derive(Accounts)]
-pub struct UpdateGlobalConfigOwner<'info> { 
+pub struct UpdateGlobalConfigOwner<'info> {
     #[account(
         mut,
         seeds = [b"global-config"],
-        bump
+        bump,
+        constraint = global_config.initialized == true @ PtStakingError::NotInitialized,
     )]
     pub global_config: Account<'info, GlobalConfig>,
 
@@ -15,11 +16,13 @@ pub struct UpdateGlobalConfigOwner<'info> {
     pub new_owner: Signer<'info>,
 }
 
-pub fn handler(ctx: Context<UpdateGlobalConfigOwner>) -> Result<()> { 
-    let global_config = &mut ctx.accounts.global_config;
+impl UpdateGlobalConfigOwner<'_> {
+    pub fn handler(ctx: Context<UpdateGlobalConfigOwner>) -> Result<()> {
+        let global_config = &mut ctx.accounts.global_config;
 
-    global_config.owner = global_config.pending_owner;
-    global_config.pending_owner = Pubkey::default();
+        global_config.owner = global_config.pending_owner;
+        global_config.pending_owner = Pubkey::default();
 
-    Ok(())
+        Ok(())
+    }
 }

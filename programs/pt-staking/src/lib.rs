@@ -37,17 +37,17 @@ pub mod pt_staking {
         ctx: Context<UpdateGlobalConfig>,
         params: UpdateGlobalConfigParams,
     ) -> Result<()> {
-        update_global_config::handler(ctx, params)
+        UpdateGlobalConfig::handler(ctx, params)
     }
 
     pub fn initiate_update_global_config_owner(
         ctx: Context<InitiateUpdateGlobalConfigOwner>,
         new_owner: Pubkey,
     ) -> Result<()> {
-        initiate_update_global_config_owner::handler(ctx, new_owner)
+        InitiateUpdateGlobalConfigOwner::handler(ctx, new_owner)
     }
 
     pub fn update_global_config_owner(ctx: Context<UpdateGlobalConfigOwner>) -> Result<()> {
-        update_global_config_owner::handler(ctx)
+        UpdateGlobalConfigOwner::handler(ctx)
     }
 }

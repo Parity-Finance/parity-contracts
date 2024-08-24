@@ -15,6 +15,7 @@ pub struct UpdateGlobalConfig<'info> {
         mut,
         seeds = [b"global-config"],
         bump,
+        constraint = global_config.initialized == true @ PtStakingError::NotInitialized,
         realloc = 8 + GlobalConfig::INIT_SPACE * 2, 
         realloc::payer = owner,
         realloc::zero = false
@@ -26,6 +27,7 @@ pub struct UpdateGlobalConfig<'info> {
     pub system_program: Program<'info, System>,
 }
 
+impl UpdateGlobalConfig<'_> {
 pub fn handler(ctx: Context<UpdateGlobalConfig>, params: UpdateGlobalConfigParams) -> Result<()> {
     let global_config = &mut ctx.accounts.global_config;
 
@@ -61,4 +63,5 @@ pub fn handler(ctx: Context<UpdateGlobalConfig>, params: UpdateGlobalConfigParam
     }
 
     Ok(())
+ }
 }
