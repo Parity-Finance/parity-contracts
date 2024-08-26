@@ -35,7 +35,6 @@ pub struct GlobalConfig {
         serde(with = "serde_with::As::<serde_with::DisplayFromStr>")
     )]
     pub admin: Pubkey,
-    pub initialized: bool,
     #[cfg_attr(
         feature = "serde",
         serde(with = "serde_with::As::<serde_with::DisplayFromStr>")

@@ -22,7 +22,6 @@ import {
 import {
   Serializer,
   array,
-  bool,
   i64,
   mapSerializer,
   publicKey as publicKeySerializer,
@@ -42,7 +41,6 @@ export type UserStake = Account<UserStakeAccountData>;
 export type UserStakeAccountData = {
   discriminator: Array<number>;
   userPubkey: PublicKey;
-  initialized: boolean;
   stakedAmount: bigint;
   initialStakingTimestamp: bigint;
   lastClaimTimestamp: bigint;
@@ -51,7 +49,6 @@ export type UserStakeAccountData = {
 
 export type UserStakeAccountDataArgs = {
   userPubkey: PublicKey;
-  initialized: boolean;
   stakedAmount: number | bigint;
   initialStakingTimestamp: number | bigint;
   lastClaimTimestamp: number | bigint;
@@ -67,7 +64,6 @@ export function getUserStakeAccountDataSerializer(): Serializer<
       [
         ['discriminator', array(u8(), { size: 8 })],
         ['userPubkey', publicKeySerializer()],
-        ['initialized', bool()],
         ['stakedAmount', u64()],
         ['initialStakingTimestamp', i64()],
         ['lastClaimTimestamp', i64()],
@@ -151,7 +147,6 @@ export function getUserStakeGpaBuilder(
     .registerFields<{
       discriminator: Array<number>;
       userPubkey: PublicKey;
-      initialized: boolean;
       stakedAmount: number | bigint;
       initialStakingTimestamp: number | bigint;
       lastClaimTimestamp: number | bigint;
@@ -159,11 +154,10 @@ export function getUserStakeGpaBuilder(
     }>({
       discriminator: [0, array(u8(), { size: 8 })],
       userPubkey: [8, publicKeySerializer()],
-      initialized: [40, bool()],
-      stakedAmount: [41, u64()],
-      initialStakingTimestamp: [49, i64()],
-      lastClaimTimestamp: [57, i64()],
-      pointsHistory: [65, array(getPointsEarnedPhaseSerializer())],
+      stakedAmount: [40, u64()],
+      initialStakingTimestamp: [48, i64()],
+      lastClaimTimestamp: [56, i64()],
+      pointsHistory: [64, array(getPointsEarnedPhaseSerializer())],
     })
     .deserializeUsing<UserStake>((account) => deserializeUserStake(account))
     .whereField('discriminator', [102, 53, 163, 107, 9, 138, 87, 153]);

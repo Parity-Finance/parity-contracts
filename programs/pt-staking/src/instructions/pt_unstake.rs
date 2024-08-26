@@ -10,7 +10,6 @@ pub struct PtUnstake<'info> {
     #[account(
         mut,
         seeds = [b"global-config"],
-        constraint = global_config.initialized == true @ PtStakingError::NotInitialized,
         bump
     )]
     pub global_config: Account<'info, GlobalConfig>,
@@ -19,7 +18,6 @@ pub struct PtUnstake<'info> {
         mut,
         seeds = [b"user-stake",user.key().as_ref()],
         bump,
-        constraint = user_stake.initialized == true @ PtStakingError::NotInitialized,
         constraint = user_stake.user_pubkey == user.key() @ PtStakingError::InvalidOwner,
     )]
     pub user_stake: Account<'info, UserStake>,
@@ -114,8 +112,6 @@ impl PtUnstake<'_> {
         // If all tokens are unstaked, reset the initial_staking_timestamp
         if user_stake.staked_amount == 0 {
             user_stake.initial_staking_timestamp = 0;
-        } else {
-            user_stake.initial_staking_timestamp = current_timestamp;
         }
 
         Ok(())

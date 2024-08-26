@@ -12,7 +12,6 @@ pub struct GlobalConfig {
     pub owner: Pubkey,         
     pub pending_owner: Pubkey, 
     pub admin: Pubkey,         
-    pub initialized: bool,
 
     pub base_mint: Pubkey,                            
     pub staking_vault: Pubkey,                        
@@ -31,7 +30,6 @@ pub struct GlobalConfig {
 #[derive(InitSpace, Debug)]
 pub struct UserStake {
     pub user_pubkey: Pubkey, 
-    pub initialized: bool,                 
     pub staked_amount: u64,                  
     pub initial_staking_timestamp: i64,                
     pub last_claim_timestamp: i64,              
@@ -196,7 +194,6 @@ mod tests {
             owner: Pubkey::default(),
             pending_owner: Pubkey::default(),
             admin: Pubkey::default(),
-            initialized: true,
             staking_vault: Pubkey::default(),
             baseline_yield_bps: 5,
             staked_supply: 1_000_000,
@@ -217,7 +214,6 @@ mod tests {
 
         UserStake {
             user_pubkey: Pubkey::new_unique(),
-            initialized: true,
             staked_amount: 1_000_000,
             initial_staking_timestamp: timestamp,
             last_claim_timestamp: timestamp,

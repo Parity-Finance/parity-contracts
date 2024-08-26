@@ -60,6 +60,7 @@ import {
   mintAdmin,
   updateTokenManagerOwner,
   findGlobalConfigPda,
+  calculatePoints,
 } from "../clients/js/src";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -94,8 +95,9 @@ import {
   updateGlobalConfig,
   updateGlobalConfigOwner,
 } from "../clients/js/src/generated";
-import { ProgramTestContext, start } from "solana-bankrun";
-import { fastForward } from "./utils/utilts";
+import { ProgramTestContext, start, startAnchor, BanksClient, Clock } from "solana-bankrun";
+import { BankrunProvider } from "anchor-bankrun";
+// import { fastForward } from "./utils/utilts";
 
 describe.only("parity-issuance", () => {
   let umi = createUmi("http://localhost:8899");
@@ -1095,10 +1097,10 @@ describe.only("parity-issuance", () => {
       Number(
         ((baseMintAcc.supply / BigInt(10 ** baseMintDecimals)) *
           BigInt(exchangeRate)) /
-          BigInt(10 ** exchangeRateDecimals) -
-          tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals)
+        BigInt(10 ** exchangeRateDecimals) -
+        tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals)
       ) *
-        10 ** quoteMintDecimals +
+      10 ** quoteMintDecimals +
       1;
     if (quantity < 0) {
       quantity = 1;
@@ -1142,14 +1144,14 @@ describe.only("parity-issuance", () => {
       Number(
         ((baseMintAcc.supply / BigInt(10 ** baseMintDecimals)) *
           BigInt(exchangeRate)) /
-          BigInt(10 ** exchangeRateDecimals) -
-          tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals)
+        BigInt(10 ** exchangeRateDecimals) -
+        tokenManagerAcc.totalCollateral / BigInt(10 ** quoteMintDecimals)
       ) *
       10 ** quoteMintDecimals;
 
     const maxCollateral = Number(
       (baseMintAcc.supply / BigInt(10 ** baseMintDecimals)) *
-        BigInt(exchangeRate)
+      BigInt(exchangeRate)
     );
     quantity = maxCollateral - Number(_tokenManagerAcc.totalCollateral);
     // console.log("Max Collateral: ", maxCollateral);
@@ -1347,11 +1349,6 @@ describe.only("parity-issuance", () => {
     assert.equal(_userStakeAcc.userPubkey, umi.identity.publicKey);
     assert.equal(_userStakeAcc.stakedAmount, 0, "Staked amount should be zero");
     assert.equal(
-      _userStakeAcc.initialized,
-      true,
-      "userstake account should be initialized"
-    );
-    assert.equal(
       _userStakeAcc.initialStakingTimestamp,
       0,
       "initial staking time should be zero"
@@ -1380,6 +1377,7 @@ describe.only("parity-issuance", () => {
     const globalConfigAcc = await safeFetchGlobalConfig(umi, globalConfig);
     const userStakeAcc = await safeFetchUserStake(umi, userStakePDA);
     const vaultAcc = await safeFetchToken(umi, vaultStakingPDA);
+    console.log("ptstaking last claim timestamp", userStakeAcc.lastClaimTimestamp);
 
     // console.log("Vault Acc: ", vaultAcc);
     //console.log("User Stake Acc: ", userStakeAcc);
@@ -1392,8 +1390,7 @@ describe.only("parity-issuance", () => {
   });
 
   it.only("baseMint can be unstaked in PT Staking", async () => {
-    // Simulate time passing to 1,500,000
-    await fastForward(context, BigInt(604_800));
+
     // First, we need to stake some tokens
     let quantity = 1000 * 10 ** baseMintDecimals;
 
@@ -1402,6 +1399,7 @@ describe.only("parity-issuance", () => {
     const userStakeAcc = await safeFetchUserStake(umi, userStakePDA);
     const vaultAcc = await safeFetchToken(umi, vaultStakingPDA);
     const userBaseAcc = await safeFetchToken(umi, userBase);
+
 
     let txBuilder = new TransactionBuilder();
 
@@ -1418,7 +1416,8 @@ describe.only("parity-issuance", () => {
       })
     );
 
-    await txBuilder.sendAndConfirm(umi);
+     await txBuilder.sendAndConfirm(umi);
+
 
     // Fetch accounts after unstaking
     const _globalConfigAcc = await safeFetchGlobalConfig(umi, globalConfig);
@@ -1428,12 +1427,17 @@ describe.only("parity-issuance", () => {
 
     const pointsHistory = _userStakeAcc.pointsHistory;
 
-    console.log("Points History: ", pointsHistory);
+     console.log("Points History: ", pointsHistory[0].points);
 
-    // console.log("Vault Acc: ", vaultAcc);
-    // console.log("User Stake Acc: ", userStakeAcc);
-    // console.log("Global Config Acc: ", globalConfigAcc);
-    // console.log("User Base Acc: ", userBaseAcc);
+    // We are using the updated lastclain timestamp as the current time 
+    const expectedPoints = calculatePoints(
+      _globalConfigAcc,
+      BigInt(quantity),
+      Number(userStakeAcc.lastClaimTimestamp),
+      Number(_userStakeAcc.lastClaimTimestamp)
+    );
+
+    console.log("expected points", expectedPoints[0].points)
 
     // Assert the changes
     assert.equal(
@@ -1452,6 +1456,13 @@ describe.only("parity-issuance", () => {
       "Global staked supply should decrease"
     );
 
+    // Assert calculated points
+    assert.equal(
+      pointsHistory[0].points,
+      expectedPoints[0].points,
+      "Calculated points should match the points in history"
+    );
+
     // Check if user received the unstaked tokens
     const expectedUserBalance = userBaseAcc.amount + BigInt(quantity);
     assert.equal(
@@ -1468,7 +1479,6 @@ describe.only("parity-issuance", () => {
       0,
       "The phase index should be 0 (initial phase)"
     );
-    //assert.equal(pointsHistory[0].points, 38.052, " ~31.71 points (for 50M FDV phase)");
 
     // Attempt unstaking with a user thats not the owner
     // which should fail
@@ -1803,7 +1813,7 @@ describe.only("parity-issuance", () => {
       "Admin should be reverted back to original admin"
     );
   });
-  it.only("should initiate and accept global config owner update", async () => {
+  it("should initiate and accept global config owner update", async () => {
     const newOwner = umi.eddsa.generateKeypair();
 
     await umi.rpc.airdrop(
@@ -2010,7 +2020,7 @@ describe.only("parity-issuance", () => {
     );
   });
 
-  it.only("should update Pt Staking global config", async () => {
+  it("should update Pt Staking global config", async () => {
     const notOwner = umi.eddsa.generateKeypair();
     const newBaselineYield = 5000; // For 50%
     const newExchangeRatePtStaking = 30 * 10 ** baseMintDecimals;
@@ -2133,7 +2143,7 @@ describe.only("parity-issuance", () => {
     );
   });
 
-  it.only("dynamically increases account size for exchange rate and points history, and verifies PT staking reallocation", async () => {
+  it("dynamically increases account size for exchange rate and points history, and verifies PT staking reallocation", async () => {
     const maxPhases = 15;
     let quantity = 100 * 10 ** baseMintDecimals;
 

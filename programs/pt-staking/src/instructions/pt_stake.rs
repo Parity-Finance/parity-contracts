@@ -11,14 +11,12 @@ pub struct PtStake<'info> {
     #[account(
         mut,
         seeds = [b"global-config"],
-        constraint = global_config.initialized == true @ PtStakingError::NotInitialized,
         bump
     )]
     pub global_config: Account<'info, GlobalConfig>,
     #[account(
         mut,
         seeds = [b"user-stake",user.key().as_ref()],
-        constraint = user_stake.initialized == true @ PtStakingError::NotInitialized,
         constraint = user_stake.user_pubkey == user.key() @ PtStakingError::InvalidOwner,
         bump,
         realloc = 8 + UserStake::INIT_SPACE * 2, 
@@ -103,7 +101,7 @@ impl PtStake<'_> {
         global_config.update_global_points(points_earned_phases);
 
         // Update the  staking timestamp to the current time.
-        user_stake.initial_staking_timestamp = current_timestamp;
+        user_stake.last_claim_timestamp = current_timestamp;
     }
 
     // Update the global staked supply

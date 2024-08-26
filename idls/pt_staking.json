@@ -275,10 +275,6 @@
             "type": "publicKey"
           },
           {
-            "name": "initialized",
-            "type": "bool"
-          },
-          {
             "name": "baseMint",
             "type": "publicKey"
           },
@@ -333,10 +329,6 @@
           {
             "name": "userPubkey",
             "type": "publicKey"
-          },
-          {
-            "name": "initialized",
-            "type": "bool"
           },
           {
             "name": "stakedAmount",

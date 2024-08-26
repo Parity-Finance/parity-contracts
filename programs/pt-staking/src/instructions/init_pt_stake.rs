@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-use crate::{PtStakingError, UserStake};
+use crate::UserStake;
 
 #[derive(Accounts)]
 pub struct InitPtStake<'info> {
@@ -10,7 +10,6 @@ pub struct InitPtStake<'info> {
         bump,
         payer = user,
         space = 8 + UserStake::INIT_SPACE,
-        constraint = user_stake.initialized != true @ PtStakingError::AlreadyInitialized
     )]
     pub user_stake: Account<'info, UserStake>,
     #[account(mut)]
@@ -23,7 +22,6 @@ impl InitPtStake<'_> {
         let user_stake = &mut ctx.accounts.user_stake;
 
         user_stake.user_pubkey = ctx.accounts.user.key();
-        user_stake.initialized = true;
         user_stake.staked_amount = 0;
         user_stake.initial_staking_timestamp = 0;
         user_stake.last_claim_timestamp = 0;

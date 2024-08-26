@@ -15,7 +15,6 @@ pub struct UpdateGlobalConfig<'info> {
         mut,
         seeds = [b"global-config"],
         bump,
-        constraint = global_config.initialized == true @ PtStakingError::NotInitialized,
         realloc = 8 + GlobalConfig::INIT_SPACE * 2, 
         realloc::payer = owner,
         realloc::zero = false

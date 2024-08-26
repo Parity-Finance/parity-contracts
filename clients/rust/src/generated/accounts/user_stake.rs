@@ -23,7 +23,6 @@ pub struct UserStake {
         serde(with = "serde_with::As::<serde_with::DisplayFromStr>")
     )]
     pub user_pubkey: Pubkey,
-    pub initialized: bool,
     pub staked_amount: u64,
     pub initial_staking_timestamp: i64,
     pub last_claim_timestamp: i64,

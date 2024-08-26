@@ -8,7 +8,6 @@ pub struct UpdateGlobalConfigOwner<'info> {
         mut,
         seeds = [b"global-config"],
         bump,
-        constraint = global_config.initialized == true @ PtStakingError::NotInitialized,
     )]
     pub global_config: Account<'info, GlobalConfig>,
 
