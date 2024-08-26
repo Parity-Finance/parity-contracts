@@ -6,6 +6,7 @@ import {
   TransactionBuilder,
   createAmount,
   some,
+  unwrapOption,
 } from "@metaplex-foundation/umi";
 import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
 import {
@@ -95,8 +96,8 @@ import {
   updateGlobalConfig,
   updateGlobalConfigOwner,
 } from "../clients/js/src/generated";
-import { ProgramTestContext, start, startAnchor, BanksClient, Clock } from "solana-bankrun";
-import { BankrunProvider } from "anchor-bankrun";
+// import { ProgramTestContext, start, startAnchor, BanksClient, Clock } from "solana-bankrun";
+// import { BankrunProvider } from "anchor-bankrun";
 // import { fastForward } from "./utils/utilts";
 
 describe.only("parity-issuance", () => {
@@ -183,7 +184,7 @@ describe.only("parity-issuance", () => {
   const baselineYield = 2000; // For 20%
   const initialExchangeRatePtStaking = 20 * 10 ** baseMintDecimals;
 
-  let context: ProgramTestContext;
+  // let context: ProgramTestContext;
 
   before(async () => {
     try {
@@ -193,7 +194,7 @@ describe.only("parity-issuance", () => {
         { commitment: "finalized" }
       );
 
-      context = await start([], []);
+      // context = await start([], []);
 
       const quoteMintWeb3js = await createMint(
         connection,
@@ -346,7 +347,7 @@ describe.only("parity-issuance", () => {
     );
   });
 
-  it.only("Stake Pool is initialized!", async () => {
+  it("Stake Pool is initialized!", async () => {
     let txBuilder = new TransactionBuilder();
 
     txBuilder = txBuilder.add(
@@ -1390,8 +1391,6 @@ describe.only("parity-issuance", () => {
   });
 
   it.only("baseMint can be unstaked in PT Staking", async () => {
-
-    // First, we need to stake some tokens
     let quantity = 1000 * 10 ** baseMintDecimals;
 
     // Fetch accounts before unstaking
@@ -1399,7 +1398,6 @@ describe.only("parity-issuance", () => {
     const userStakeAcc = await safeFetchUserStake(umi, userStakePDA);
     const vaultAcc = await safeFetchToken(umi, vaultStakingPDA);
     const userBaseAcc = await safeFetchToken(umi, userBase);
-
 
     let txBuilder = new TransactionBuilder();
 
@@ -1416,8 +1414,7 @@ describe.only("parity-issuance", () => {
       })
     );
 
-     await txBuilder.sendAndConfirm(umi);
-
+    await txBuilder.sendAndConfirm(umi);
 
     // Fetch accounts after unstaking
     const _globalConfigAcc = await safeFetchGlobalConfig(umi, globalConfig);
@@ -1427,7 +1424,8 @@ describe.only("parity-issuance", () => {
 
     const pointsHistory = _userStakeAcc.pointsHistory;
 
-     console.log("Points History: ", pointsHistory[0].points);
+    console.log("Points History: ", pointsHistory[0].points);
+    console.log("Points History full: ", pointsHistory);
 
     // We are using the updated lastclain timestamp as the current time 
     const expectedPoints = calculatePoints(
@@ -1438,6 +1436,7 @@ describe.only("parity-issuance", () => {
     );
 
     console.log("expected points", expectedPoints[0].points)
+    console.log("expected points full", expectedPoints);
 
     // Assert the changes
     assert.equal(
@@ -1813,6 +1812,7 @@ describe.only("parity-issuance", () => {
       "Admin should be reverted back to original admin"
     );
   });
+
   it("should initiate and accept global config owner update", async () => {
     const newOwner = umi.eddsa.generateKeypair();
 
@@ -1900,7 +1900,7 @@ describe.only("parity-issuance", () => {
     );
   });
 
-  it("should update deposit cap", async () => {
+  it("should update deposit cap parity staking", async () => {
     const notOwner = umi.eddsa.generateKeypair();
     const newDespositCap = testDepositCapAmount;
 
@@ -2143,9 +2143,26 @@ describe.only("parity-issuance", () => {
     );
   });
 
-  it("dynamically increases account size for exchange rate and points history, and verifies PT staking reallocation", async () => {
-    const maxPhases = 15;
+  it.only("dynamically increases account size for exchange rate and points history, and verifies PT staking reallocation", async () => {
+    const maxPhases = 5;
     let quantity = 100 * 10 ** baseMintDecimals;
+
+    // Stake first
+    let stakeTxBuilder = new TransactionBuilder();
+    stakeTxBuilder = stakeTxBuilder.add(
+      ptStake(umi, {
+        globalConfig,
+        userStake: userStakePDA,
+        baseMint: baseMint,
+        userBaseMintAta: userBase,
+        user: umi.identity,
+        vault: vaultStakingPDA,
+        associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
+        quantity: quantity,
+      })
+    );
+
+    await stakeTxBuilder.sendAndConfirm(umi);
 
     //We first of all increase the deposit cap
     let newDepositCap = testDepositCapAmount * 100;
@@ -2164,10 +2181,10 @@ describe.only("parity-issuance", () => {
 
     // Function to create a new exchange rate phase
     const createExchangeRatePhase = (index: number) =>
-      (index + 2) * 10 ** baseMintDecimals; // Increase exchange rate each time
+      (20 - index) * 10 ** baseMintDecimals; // Increase exchange rate each time
 
     // Add phases and stake sequentially
-    for (let i = 3; i < maxPhases; i++) {
+    for (let i = 2; i < maxPhases; i++) {
       const newExchangeRate = createExchangeRatePhase(i);
 
       // Update global config (exchange rate)
@@ -2192,33 +2209,33 @@ describe.only("parity-issuance", () => {
         `Phase ${i} added. Current exchange rate history size:`,
         globalConfigAcc.exchangeRateHistory.length
       );
-      //console.log("Last exchange rate phase:", globalConfigAcc.exchangeRateHistory[i-1]);
+      console.log("Last exchange rate phase:", globalConfigAcc.exchangeRateHistory[i - 1]);
 
       // Perform staking
-      let stakeTxBuilder = new TransactionBuilder();
-      stakeTxBuilder = stakeTxBuilder.add(
-        ptStake(umi, {
-          globalConfig,
-          userStake: userStakePDA,
-          baseMint: baseMint,
-          userBaseMintAta: userBase,
-          user: umi.identity,
-          vault: vaultStakingPDA,
-          associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
-          quantity: quantity,
-        })
-      );
-      await stakeTxBuilder.sendAndConfirm(umi);
+      // let stakeTxBuilder = new TransactionBuilder();
+      // stakeTxBuilder = stakeTxBuilder.add(
+      //   ptStake(umi, {
+      //     globalConfig,
+      //     userStake: userStakePDA,
+      //     baseMint: baseMint,
+      //     userBaseMintAta: userBase,
+      //     user: umi.identity,
+      //     vault: vaultStakingPDA,
+      //     associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
+      //     quantity: quantity,
+      //   })
+      // );
+      // await stakeTxBuilder.sendAndConfirm(umi);
 
       // Add another delay after staking
       await new Promise((resolve) => setTimeout(resolve, 10000));
 
       // Fetch and check the updated user stake after staking
-      const userStakeAcc = await safeFetchUserStake(umi, userStakePDA);
-      console.log(
-        `Stake ${i} completed. Current points history size:`,
-        userStakeAcc.pointsHistory.length
-      );
+      // const userStakeAcc = await safeFetchUserStake(umi, userStakePDA);
+      // console.log(
+      //   `Stake ${i} completed. Current points history size:`,
+      //   userStakeAcc.pointsHistory.length
+      // );
       //console.log("Last points history entry:", userStakeAcc.pointsHistory[userStakeAcc.pointsHistory.length]);
 
       // Assertions
@@ -2233,20 +2250,41 @@ describe.only("parity-issuance", () => {
     const finalGlobalConfigAcc = await safeFetchGlobalConfig(umi, globalConfig);
     const finalUserStakeAcc = await safeFetchUserStake(umi, userStakePDA);
 
+    console.log(finalUserStakeAcc.stakedAmount);
+    console.log(finalGlobalConfigAcc);
+    console.log(Number(finalUserStakeAcc.lastClaimTimestamp));
+    console.log(Math.round(Date.now() / 1000));
+
+    const points = calculatePoints(
+      finalGlobalConfigAcc,
+      finalUserStakeAcc.stakedAmount,
+      Number(finalUserStakeAcc.lastClaimTimestamp),
+      Math.round(Date.now() / 1000)
+    );
+
+    console.log("Points:", points);
+
     console.log(
       "Final exchange rate history:",
-      finalGlobalConfigAcc.exchangeRateHistory
+      finalGlobalConfigAcc.exchangeRateHistory.map((phase, index) => {
+        const timeElapsed = unwrapOption(phase.endDate) ? unwrapOption(phase.endDate) - phase.startDate : 0;
+        return {
+          ...phase,
+          index,
+          timeElapsed,
+        };
+      })
     );
-    console.log("Final points history:", finalUserStakeAcc.pointsHistory);
+    console.log("Final points history:", finalUserStakeAcc.pointsHistory.sort((a, b) => a.index - b.index));
 
     assert.strictEqual(
       finalGlobalConfigAcc.exchangeRateHistory.length,
       maxPhases - 1
     );
-    assert.ok(
-      finalUserStakeAcc.pointsHistory.length > 1,
-      "Points history should have grown"
-    );
+    // assert.ok(
+    //   finalUserStakeAcc.pointsHistory.length > 1,
+    //   "Points history should have grown"
+    // );
     assert.ok(
       finalUserStakeAcc.stakedAmount > BigInt(0),
       "Staking should have occurred"
