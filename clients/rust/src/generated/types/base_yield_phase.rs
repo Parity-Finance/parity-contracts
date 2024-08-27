@@ -18,5 +18,5 @@ pub struct BaseYieldPhase {
     pub base_yield_bps: u64,
     pub start_date: i64,
     pub end_date: Option<i64>,
-    pub index: u32,
+    pub index: u16,
 }

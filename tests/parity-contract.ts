@@ -84,6 +84,8 @@ import chai, { assert as chaiAssert } from "chai";
 import { bs58 } from "@coral-xyz/anchor/dist/cjs/utils/bytes";
 import { calculateMaxWithdrawableAmount } from "../clients/js/src/utils/maxWithdrawable";
 import {
+  createParityStakingProgram,
+  createPtStakingProgram,
   findUserStakePda,
   initializeGlobalConfig,
   initiateUpdateGlobalConfigOwner,
@@ -102,6 +104,8 @@ describe.only("parity-issuance", () => {
   umi.programs.add(createSplAssociatedTokenProgram());
   umi.programs.add(createSplTokenProgram());
   umi.programs.add(createParityIssuanceProgram());
+  umi.programs.add(createPtStakingProgram());
+  umi.programs.add(createParityStakingProgram());
 
   const connection = new Connection("http://localhost:8899", {
     commitment: "finalized",
@@ -243,6 +247,7 @@ describe.only("parity-issuance", () => {
     }
   });
 
+  // Initialisations
   it.only("Token manager is initialized!", async () => {
     const merkleRoot = getMerkleRoot(allowedWallets);
 
@@ -418,6 +423,7 @@ describe.only("parity-issuance", () => {
     assert.equal(globalConfigAcc.stakedSupply, 0);
   });
 
+  // START: Issuance Program
   it.only("pUSD can be minted for USDC", async () => {
     const quantity = 10000 * 10 ** baseMintDecimals;
 
@@ -1189,540 +1195,6 @@ describe.only("parity-issuance", () => {
     );
   });
 
-  // Stake Program
-  it("baseMint can be staked for xMint", async () => {
-    let quantity = 1000 * 10 ** baseMintDecimals;
-
-    let txBuilder = new TransactionBuilder();
-
-    const userXAtaAcc = await safeFetchToken(umi, userX);
-
-    if (!userXAtaAcc) {
-      txBuilder = txBuilder.add(
-        createAssociatedToken(umi, {
-          mint: xMint,
-        })
-      );
-    }
-
-    const _stakePoolAcc = await safeFetchPoolManager(umi, poolManager);
-    const _xMintAcc = await safeFetchMint(umi, xMint);
-    const _vaultAcc = await safeFetchToken(umi, vaultStaking);
-
-    txBuilder = txBuilder.add(
-      stake(umi, {
-        poolManager,
-        baseMint,
-        xMint,
-        payerBaseMintAta: userBase,
-        payerXMintAta: userX,
-        vault: vaultStaking,
-        associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
-        quantity,
-      })
-    );
-
-    // console.log("Inception Timestamp:", Number(_stakePoolAcc.inceptionTimestamp));
-    // console.log("Current Timestamp:", Math.floor(Date.now() / 1000));
-    // console.log("Annual Yield Rate:", Number(_stakePoolAcc.annualYieldRate));
-    // console.log("Initial Exchange Rate:", Number(_stakePoolAcc.initialExchangeRate));
-
-    const exchangeRate = calculateExchangeRate(
-      Number(_stakePoolAcc.lastYieldChangeTimestamp),
-      Math.floor(Date.now() / 1000),
-      Number(_stakePoolAcc.intervalAprRate),
-      Number(_stakePoolAcc.lastYieldChangeExchangeRate),
-      Number(_stakePoolAcc.secondsPerInterval)
-    );
-    // console.log("Exchange Rate: ", exchangeRate);
-
-    await txBuilder.sendAndConfirm(umi);
-    //await txBuilder.sendAndConfirm(umi, { send: { skipPreflight: true } });
-
-    const stakePoolAcc = await safeFetchPoolManager(umi, poolManager);
-    const xMintAcc = await safeFetchMint(umi, xMint);
-    const vaultAcc = await safeFetchToken(umi, vaultStaking);
-
-    const expectedBaseMintAmount = BigInt(quantity);
-
-    const expectedxMintAmount = BigInt(
-      Math.floor((quantity / exchangeRate) * 10 ** baseMintDecimals)
-    );
-    // console.log("Expected xMint Amount: ", Number(expectedxMintAmount));
-    // console.log("xMint Supply start: ", Number(_xMintAcc.supply));
-    // console.log("xMint Supply end: ", Number(xMintAcc.supply));
-
-    assert.equal(
-      stakePoolAcc.baseBalance,
-      _stakePoolAcc.baseBalance + expectedBaseMintAmount,
-      "Base Balance is not correct"
-    );
-    assert.equal(
-      vaultAcc.amount,
-      _vaultAcc.amount + expectedBaseMintAmount,
-      "Vault amount is not correct"
-    );
-    chaiAssert.closeTo(
-      Number(xMintAcc.supply),
-      Number(_xMintAcc.supply) + Number(expectedxMintAmount),
-      300000,
-      "xSupply is not correct"
-    );
-
-    quantity = 1001 * 10 ** baseMintDecimals;
-    //Attempt to try and stake again which should fail because of deposit cap reached
-    txBuilder = new TransactionBuilder();
-
-    txBuilder = txBuilder.add(
-      stake(umi, {
-        poolManager,
-        baseMint,
-        xMint,
-        payerBaseMintAta: userBase,
-        payerXMintAta: userX,
-        vault: vaultStaking,
-        associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
-        quantity,
-      })
-    );
-
-    await assert.rejects(
-      async () => {
-        await txBuilder.sendAndConfirm(umi);
-      },
-      (err) => {
-        return (err as Error).message.includes("Deposit cap exceeded");
-      },
-      "Expected staking to fail because Deposit cap exceeded"
-    );
-  });
-
-  // PT Staking program
-  it.only("baseMint can be staked in PT Staking", async () => {
-    let quantity = 1000 * 10 ** baseMintDecimals;
-
-    //Attempt staking without creating the userStake acccount
-    //This should fail
-    let txBuilder = new TransactionBuilder();
-
-    txBuilder = txBuilder.add(
-      ptStake(umi, {
-        globalConfig,
-        userStake: userStakePDA,
-        baseMint: baseMint,
-        userBaseMintAta: userBase,
-        user: umi.identity,
-        vault: vaultStakingPDA,
-        associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
-        quantity: quantity,
-      })
-    );
-
-    await assert.rejects(
-      async () => {
-        await txBuilder.sendAndConfirm(umi);
-      },
-      (err) => {
-        return (err as Error).message.includes(
-          "The program expected this account to be already initialized."
-        );
-      },
-      "Expected staking to fail because account isnt initialized"
-    );
-
-    // Create userStake acccount
-    txBuilder = new TransactionBuilder();
-
-    txBuilder = txBuilder.add(
-      initPtStake(umi, {
-        userStake: userStakePDA,
-        user: umi.identity,
-      })
-    );
-
-    await txBuilder.sendAndConfirm(umi);
-
-    const _userStakeAcc = await safeFetchUserStake(umi, userStakePDA);
-
-    assert.equal(_userStakeAcc.userPubkey, umi.identity.publicKey);
-    assert.equal(_userStakeAcc.stakedAmount, 0, "Staked amount should be zero");
-    assert.equal(
-      _userStakeAcc.initialStakingTimestamp,
-      0,
-      "initial staking time should be zero"
-    );
-
-    //Attempt staking after userStake acccount has been created
-    //This should succeed
-
-    txBuilder = new TransactionBuilder();
-
-    txBuilder = txBuilder.add(
-      ptStake(umi, {
-        globalConfig,
-        userStake: userStakePDA,
-        baseMint: baseMint,
-        userBaseMintAta: userBase,
-        user: umi.identity,
-        vault: vaultStakingPDA,
-        associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
-        quantity: quantity,
-      })
-    );
-
-    await txBuilder.sendAndConfirm(umi);
-
-    const globalConfigAcc = await safeFetchGlobalConfig(umi, globalConfig);
-    const userStakeAcc = await safeFetchUserStake(umi, userStakePDA);
-    const vaultAcc = await safeFetchToken(umi, vaultStakingPDA);
-    console.log("ptstaking last claim timestamp", userStakeAcc.lastClaimTimestamp);
-
-    // console.log("Vault Acc: ", vaultAcc);
-    //console.log("User Stake Acc: ", userStakeAcc);
-    // console.log("Global Config Acc: ", globalConfigAcc);
-
-    assert.equal(vaultAcc.amount, quantity);
-    assert.equal(userStakeAcc.stakedAmount, quantity);
-    assert.equal(globalConfigAcc.stakedSupply, quantity);
-    assert.equal(globalConfigAcc.stakingVault, vaultAcc.publicKey);
-  });
-
-  it.only("baseMint can be unstaked in PT Staking", async () => {
-    let quantity = 1000 * 10 ** baseMintDecimals;
-
-    // Fetch accounts before unstaking
-    const globalConfigAcc = await safeFetchGlobalConfig(umi, globalConfig);
-    const userStakeAcc = await safeFetchUserStake(umi, userStakePDA);
-    const vaultAcc = await safeFetchToken(umi, vaultStakingPDA);
-    const userBaseAcc = await safeFetchToken(umi, userBase);
-
-    let txBuilder = new TransactionBuilder();
-
-    txBuilder = txBuilder.add(
-      ptUnstake(umi, {
-        globalConfig,
-        userStake: userStakePDA,
-        baseMint: baseMint,
-        userBaseMintAta: userBase,
-        user: umi.identity,
-        vault: vaultStakingPDA,
-        associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
-        quantity,
-      })
-    );
-
-    await txBuilder.sendAndConfirm(umi);
-
-    // Fetch accounts after unstaking
-    const _globalConfigAcc = await safeFetchGlobalConfig(umi, globalConfig);
-    const _userStakeAcc = await safeFetchUserStake(umi, userStakePDA);
-    const _vaultAcc = await safeFetchToken(umi, vaultStakingPDA);
-    const _userBaseAcc = await safeFetchToken(umi, userBase);
-
-    const pointsHistory = _userStakeAcc.pointsHistory;
-
-    console.log("Points History: ", pointsHistory[0].points);
-    console.log("Points History full: ", pointsHistory);
-
-    // We are using the updated lastclain timestamp as the current time 
-    const expectedPoints = calculatePoints(
-      _globalConfigAcc,
-      BigInt(quantity),
-      Number(userStakeAcc.lastClaimTimestamp),
-      Number(_userStakeAcc.lastClaimTimestamp)
-    );
-
-    console.log("expected points", expectedPoints[0].points)
-    console.log("expected points full", expectedPoints);
-
-    // Assert the changes
-    assert.equal(
-      _vaultAcc.amount,
-      vaultAcc.amount - BigInt(quantity),
-      "Vault balance should decrease by unstaked amount"
-    );
-    assert.equal(
-      _userStakeAcc.stakedAmount,
-      userStakeAcc.stakedAmount - BigInt(quantity),
-      "User staked amount should decrease"
-    );
-    assert.equal(
-      _globalConfigAcc.stakedSupply,
-      globalConfigAcc.stakedSupply - BigInt(quantity),
-      "Global staked supply should decrease"
-    );
-
-    // Assert calculated points
-    assert.equal(
-      pointsHistory[0].points,
-      expectedPoints[0].points,
-      "Calculated points should match the points in history"
-    );
-
-    // Check if user received the unstaked tokens
-    const expectedUserBalance = userBaseAcc.amount + BigInt(quantity);
-    assert.equal(
-      _userBaseAcc.amount,
-      expectedUserBalance,
-      "User should receive unstaked tokens"
-    );
-
-    // // TODO: Add assertions for points calculation if applicable
-    // Check that the points were calculated within a single phase
-    assert.equal(pointsHistory.length, 1, "Only one phase should be involved");
-    assert.equal(
-      pointsHistory[0].index,
-      0,
-      "The phase index should be 0 (initial phase)"
-    );
-
-    // Attempt unstaking with a user thats not the owner
-    // which should fail
-
-    const newUser = umi.eddsa.generateKeypair();
-
-    await umi.rpc.airdrop(
-      newUser.publicKey,
-      createAmount(100_000 * 10 ** 9, "SOL", 9),
-      {
-        commitment: "finalized",
-      }
-    );
-
-    umi.use(keypairIdentity(newUser));
-
-    txBuilder = new TransactionBuilder();
-
-    txBuilder = txBuilder.add(
-      ptUnstake(umi, {
-        globalConfig,
-        userStake: userStakePDA,
-        baseMint: baseMint,
-        userBaseMintAta: userBase,
-        user: umi.identity,
-        vault: vaultStakingPDA,
-        associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
-        quantity,
-      })
-    );
-
-    await assert.rejects(
-      async () => {
-        await txBuilder.sendAndConfirm(umi);
-      },
-      (err) => {
-        return (err as Error).message.includes(
-          " A seeds constraint was violated"
-        );
-      },
-      "Expected unstaking error as user isnt the owner of PDA"
-    );
-
-    umi.use(keypairIdentity(fromWeb3JsKeypair(keypair))); // Switch back to  admin
-  });
-
-  it("baseMint can be unstaked by redeeming xMint", async () => {
-    // const quantity = 10000 * 10 ** baseMintDecimals;
-    let txBuilder = new TransactionBuilder();
-
-    const userBaseAtaAcc = await safeFetchToken(umi, userBase);
-
-    if (!userBaseAtaAcc) {
-      txBuilder = txBuilder.add(
-        createAssociatedToken(umi, {
-          mint: baseMint,
-        })
-      );
-    }
-
-    const _stakePoolAcc = await safeFetchPoolManager(umi, poolManager);
-    const _xMintAcc = await safeFetchMint(umi, xMint);
-    const _vaultAcc = await safeFetchToken(umi, vaultStaking);
-
-    const quantity = Number(_xMintAcc.supply);
-    // console.log("Quantity: ", quantity);
-
-    txBuilder = txBuilder.add(
-      unstake(umi, {
-        poolManager,
-        baseMint,
-        xMint,
-        payerBaseMintAta: userBase,
-        payerXMintAta: userX,
-        vault: vaultStaking,
-        associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
-        quantity,
-        tokenManager,
-        parityIssuanceProgram: PARITY_ISSUANCE_PROGRAM_ID,
-      })
-    );
-
-    // console.log("Inception Timestamp:", Number(_stakePoolAcc.inceptionTimestamp));
-    // console.log("Current Timestamp:", Math.floor(Date.now() / 1000));
-    // console.log("Annual Yield Rate:", Number(_stakePoolAcc.annualYieldRate));
-    // console.log("Initial Exchange Rate:", Number(_stakePoolAcc.initialExchangeRate));
-
-    const exchangeRate = calculateExchangeRate(
-      Number(_stakePoolAcc.lastYieldChangeTimestamp),
-      Math.floor(Date.now() / 1000),
-      Number(_stakePoolAcc.intervalAprRate),
-      Number(_stakePoolAcc.lastYieldChangeExchangeRate),
-      Number(_stakePoolAcc.secondsPerInterval)
-    );
-    // console.log("Exchange Rate: ", exchangeRate);
-
-    await txBuilder.sendAndConfirm(umi, { send: { skipPreflight: true } });
-
-    const stakePoolAcc = await safeFetchPoolManager(umi, poolManager);
-    const xMintAcc = await safeFetchMint(umi, xMint);
-    const vaultAcc = await safeFetchToken(umi, vaultStaking);
-
-    const expectedBaseMintAmount = BigInt(
-      Math.floor((quantity * exchangeRate) / 10 ** baseMintDecimals)
-    );
-    // console.log("Expected Base Mint Amount: ", Number(expectedBaseMintAmount));
-    // console.log("Base Balance Start: ", Number(_stakePoolAcc.baseBalance));
-    // console.log("Base Balance end: ", Number(stakePoolAcc.baseBalance));
-
-    const expectedxMintAmount = BigInt(quantity);
-
-    chaiAssert.equal(
-      Number(stakePoolAcc.baseBalance),
-      0,
-      "Base Balance is not correct"
-    );
-    chaiAssert.equal(Number(vaultAcc.amount), 0, "Vault amount is not correct");
-    chaiAssert.equal(
-      xMintAcc.supply,
-      _xMintAcc.supply - expectedxMintAmount,
-      "xSupply is not correct"
-    );
-  });
-
-  it("should update the annual yield rate of the stake pool", async function () {
-    const annualYieldRate = 2500; // in Basis points
-    const intervalSeconds = 60 * 60 * 8; // 8 hour interval
-
-    const intervalRate = calculateIntervalRate(
-      annualYieldRate,
-      intervalSeconds
-    );
-    // console.log("Interval Rate: ", Number(intervalRate));
-
-    let txBuilder = new TransactionBuilder();
-
-    txBuilder = txBuilder.add(
-      updateAnnualYield(umi, {
-        poolManager,
-        admin: umi.identity,
-        intervalAprRate: intervalRate,
-        tokenManager,
-        xMint,
-        parityIssuanceProgram: PARITY_ISSUANCE_PROGRAM_ID,
-        associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
-        vault: vaultStaking,
-        baseMint: baseMint,
-      })
-    );
-
-    await txBuilder.sendAndConfirm(umi);
-
-    const stakePoolAcc = await safeFetchPoolManager(umi, poolManager);
-
-    assert.equal(
-      stakePoolAcc.intervalAprRate,
-      intervalRate,
-      "Annual yield rate should be updated to 25.00%"
-    );
-  });
-
-  it("should initiate and accept pool owner update", async () => {
-    const newAdmin = umi.eddsa.generateKeypair();
-
-    await umi.rpc.airdrop(
-      newAdmin.publicKey,
-      createAmount(100_000 * 10 ** 9, "SOL", 9),
-      {
-        commitment: "finalized",
-      }
-    );
-
-    // Initiate update of pool owner
-    let txBuilder = new TransactionBuilder();
-    txBuilder = txBuilder.add(
-      initiateUpdatePoolOwner(umi, {
-        poolManager,
-        newOwner: newAdmin.publicKey,
-        owner: umi.identity,
-      })
-    );
-    await txBuilder.sendAndConfirm(umi);
-
-    // Check if the update initiation was successful
-    let poolManagerAcc = await safeFetchPoolManager(umi, poolManager);
-    assert.equal(
-      poolManagerAcc.pendingOwner,
-      newAdmin.publicKey,
-      "Pending owner should be set to new admin"
-    );
-
-    // Accept update of pool owner
-    umi.use(keypairIdentity(newAdmin)); // Switch to new admin
-    txBuilder = new TransactionBuilder();
-    txBuilder = txBuilder.add(
-      updatePoolOwner(umi, {
-        poolManager,
-        newOwner: umi.identity,
-      })
-    );
-    await txBuilder.sendAndConfirm(umi);
-
-    // Verify the new admin is set
-    poolManagerAcc = await safeFetchPoolManager(umi, poolManager);
-
-    assert.equal(
-      poolManagerAcc.owner,
-      newAdmin.publicKey,
-      "owner should be updated to new owner"
-    );
-    assert.equal(
-      poolManagerAcc.pendingOwner,
-      publicKey("11111111111111111111111111111111"),
-      "Pending owner should be set to default pubkey"
-    );
-
-    // Change back
-    txBuilder = new TransactionBuilder();
-    txBuilder = txBuilder.add(
-      initiateUpdatePoolOwner(umi, {
-        poolManager,
-        newOwner: fromWeb3JsKeypair(keypair).publicKey,
-        owner: umi.identity,
-      })
-    );
-    await txBuilder.sendAndConfirm(umi);
-
-    // Accept update back to original admin
-    umi.use(keypairIdentity(fromWeb3JsKeypair(keypair))); // Switch to new admin
-
-    txBuilder = new TransactionBuilder();
-    txBuilder = txBuilder.add(
-      updatePoolOwner(umi, {
-        poolManager,
-        newOwner: umi.identity,
-      })
-    );
-    await txBuilder.sendAndConfirm(umi);
-
-    // Verify the admin is set back to original
-    poolManagerAcc = await safeFetchPoolManager(umi, poolManager);
-    assert.equal(
-      poolManagerAcc.admin,
-      keypair.publicKey.toBase58(),
-      "Admin should be reverted back to original admin"
-    );
-  });
-
   it("should initiate and accept manager owner update", async () => {
     const newAdmin = umi.eddsa.generateKeypair();
 
@@ -1808,603 +1280,6 @@ describe.only("parity-issuance", () => {
       publicKey(keypair.publicKey),
       "Admin should be reverted back to original admin"
     );
-  });
-
-  it("should initiate and accept global config owner update", async () => {
-    const newOwner = umi.eddsa.generateKeypair();
-
-    await umi.rpc.airdrop(
-      newOwner.publicKey,
-      createAmount(100_000 * 10 ** 9, "SOL", 9),
-      {
-        commitment: "finalized",
-      }
-    );
-    umi.use(keypairIdentity(fromWeb3JsKeypair(keypair))); // Switch to new admin
-
-    // Initiate update of tokenManager owner
-    let txBuilder = new TransactionBuilder();
-    txBuilder = txBuilder.add(
-      initiateUpdateGlobalConfigOwner(umi, {
-        globalConfig,
-        newOwner: newOwner.publicKey,
-        owner: umi.identity,
-      })
-    );
-    await txBuilder.sendAndConfirm(umi);
-
-    // Check if the update initiation was successful
-    let globalConfigAcc = await safeFetchGlobalConfig(umi, globalConfig);
-
-    assert.equal(
-      globalConfigAcc.pendingOwner,
-      newOwner.publicKey,
-      "Pending owner should be set to new admin"
-    );
-
-    // Accept update of manager owner
-    umi.use(keypairIdentity(newOwner)); // Switch to new admin
-    txBuilder = new TransactionBuilder();
-    txBuilder = txBuilder.add(
-      updateGlobalConfigOwner(umi, {
-        globalConfig,
-        newOwner: umi.identity,
-      })
-    );
-    await txBuilder.sendAndConfirm(umi);
-
-    // Verify the new owner is set
-    globalConfigAcc = await safeFetchGlobalConfig(umi, globalConfig);
-    assert.equal(
-      globalConfigAcc.owner,
-      newOwner.publicKey,
-      "owner should be updated to new owner"
-    );
-    assert.equal(
-      globalConfigAcc.pendingOwner,
-      publicKey("11111111111111111111111111111111"),
-      "Pending owner should be set to default pubkey"
-    );
-
-    // Change back
-    txBuilder = new TransactionBuilder();
-    txBuilder = txBuilder.add(
-      initiateUpdateGlobalConfigOwner(umi, {
-        globalConfig,
-        newOwner: fromWeb3JsKeypair(keypair).publicKey,
-        owner: umi.identity,
-      })
-    );
-    await txBuilder.sendAndConfirm(umi);
-
-    // Accept update back to original admin
-    umi.use(keypairIdentity(fromWeb3JsKeypair(keypair))); // Switch back to original admin
-    txBuilder = new TransactionBuilder();
-    txBuilder = txBuilder.add(
-      updateGlobalConfigOwner(umi, {
-        globalConfig,
-        newOwner: umi.identity,
-      })
-    );
-    await txBuilder.sendAndConfirm(umi);
-
-    // Verify the admin is set back to original
-    globalConfigAcc = await safeFetchGlobalConfig(umi, globalConfig);
-    assert.equal(
-      globalConfigAcc.admin,
-      publicKey(keypair.publicKey),
-      "Admin should be reverted back to original admin"
-    );
-  });
-
-  it("should update deposit cap parity staking", async () => {
-    const notOwner = umi.eddsa.generateKeypair();
-    const newDespositCap = testDepositCapAmount;
-
-    await umi.rpc.airdrop(
-      notOwner.publicKey,
-      createAmount(100_000 * 10 ** 9, "SOL", 9),
-      {
-        commitment: "finalized",
-      }
-    );
-
-    //Attempt trying to update deposit cap with a signer that's not the Owner
-    umi.use(keypairIdentity(notOwner));
-
-    let txBuilder = new TransactionBuilder();
-    txBuilder = txBuilder.add(
-      updatePoolManager(umi, {
-        poolManager,
-        owner: umi.identity,
-        newAdmin: null,
-        newDepositCap: newDespositCap,
-      })
-    );
-
-    await assert.rejects(
-      async () => {
-        await txBuilder.sendAndConfirm(umi);
-      },
-      (err) => {
-        return (err as Error).message.includes("Invalid owner");
-      },
-      "Expected updating pool manager to fail because of Invalid owner"
-    );
-
-    //Attempt trying to change update deposit cap with the right Owner
-
-    umi.use(keypairIdentity(fromWeb3JsKeypair(keypair)));
-
-    txBuilder = new TransactionBuilder();
-    txBuilder = txBuilder.add(
-      updatePoolManager(umi, {
-        poolManager,
-        owner: umi.identity,
-        newAdmin: null,
-        newDepositCap: newDespositCap,
-      })
-    );
-
-    await txBuilder.sendAndConfirm(umi);
-
-    //verify the updated deposit cap is set
-    let poolManagerAcc = await safeFetchPoolManager(umi, poolManager);
-
-    assert.equal(
-      poolManagerAcc.depositCap,
-      newDespositCap,
-      "deposit cap should be updated "
-    );
-
-    let quantity = 1000 * 10 ** baseMintDecimals;
-
-    //Attempt  staking to test if it works
-    //This should work since deposit cap variable has been increased
-    txBuilder = new TransactionBuilder();
-
-    const userXAtaAcc = await safeFetchToken(umi, userX);
-
-    if (!userXAtaAcc) {
-      txBuilder = txBuilder.add(
-        createAssociatedToken(umi, {
-          mint: xMint,
-        })
-      );
-    }
-
-    txBuilder = txBuilder.add(
-      stake(umi, {
-        poolManager,
-        baseMint,
-        xMint,
-        payerBaseMintAta: userBase,
-        payerXMintAta: userX,
-        vault: vaultStaking,
-        associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
-        quantity,
-      })
-    );
-
-    await txBuilder.sendAndConfirm(umi);
-
-    //Attempt to try and stake again which should fail because of deposit cap reached
-    quantity = 1001 * 10 ** baseMintDecimals;
-
-    txBuilder = new TransactionBuilder();
-
-    txBuilder = txBuilder.add(
-      stake(umi, {
-        poolManager,
-        baseMint,
-        xMint,
-        payerBaseMintAta: userBase,
-        payerXMintAta: userX,
-        vault: vaultStaking,
-        associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
-        quantity,
-      })
-    );
-
-    await assert.rejects(
-      async () => {
-        await txBuilder.sendAndConfirm(umi);
-      },
-      (err) => {
-        return (err as Error).message.includes("Deposit cap exceeded");
-      },
-      "Expected staking to fail because Deposit cap exceeded"
-    );
-  });
-
-  it("should update Pt Staking global config", async () => {
-    const notOwner = umi.eddsa.generateKeypair();
-    const newBaselineYield = 5000; // For 50%
-    const newExchangeRatePtStaking = 30 * 10 ** baseMintDecimals;
-    const newDespositCap = testDepositCapAmount;
-
-    await umi.rpc.airdrop(
-      notOwner.publicKey,
-      createAmount(100_000 * 10 ** 9, "SOL", 9),
-      {
-        commitment: "finalized",
-      }
-    );
-
-    //Attempt trying to update with a signer that's not the Owner
-    umi.use(keypairIdentity(notOwner));
-
-    let txBuilder = new TransactionBuilder();
-    txBuilder = txBuilder.add(
-      updateGlobalConfig(umi, {
-        globalConfig,
-        owner: umi.identity,
-        newBaselineYieldBps: newBaselineYield,
-        newExchangeRate: newExchangeRatePtStaking,
-        newDepositCap: newDespositCap,
-      })
-    );
-
-    await assert.rejects(
-      async () => {
-        await txBuilder.sendAndConfirm(umi);
-      },
-      (err) => {
-        return (err as Error).message.includes("Invalid owner");
-      },
-      "Expected updating global config to fail because of Invalid owner"
-    );
-    //Attempt trying to change update  with the right Owner
-
-    umi.use(keypairIdentity(fromWeb3JsKeypair(keypair)));
-
-    txBuilder = new TransactionBuilder();
-    txBuilder = txBuilder.add(
-      updateGlobalConfig(umi, {
-        globalConfig,
-        owner: umi.identity,
-        newBaselineYieldBps: newBaselineYield,
-        newExchangeRate: newExchangeRatePtStaking,
-        newDepositCap: newDespositCap,
-      })
-    );
-
-    await txBuilder.sendAndConfirm(umi);
-
-    //verify the updated global config is set
-    const globalConfigAcc = await safeFetchGlobalConfig(umi, globalConfig);
-
-    assert.equal(
-      globalConfigAcc.baseYieldHistory[-1].baseYieldBps,
-      newBaselineYield,
-      "base line yield should be updated"
-    );
-    assert.equal(
-      globalConfigAcc.depositCap,
-      newDespositCap,
-      "deposit cap should be updated"
-    );
-    assert.equal(
-      globalConfigAcc.exchangeRateHistory[1].exchangeRate,
-      newExchangeRatePtStaking,
-      "exchange rate should be updated"
-    );
-
-    let quantity = 1000 * 10 ** baseMintDecimals;
-
-    //Attempt  staking to test if deposit cap works
-    //This should work since deposit cap variable has been increased
-    txBuilder = new TransactionBuilder();
-
-    txBuilder = txBuilder.add(
-      ptStake(umi, {
-        globalConfig,
-        userStake: userStakePDA,
-        baseMint: baseMint,
-        userBaseMintAta: userBase,
-        user: umi.identity,
-        vault: vaultStakingPDA,
-        associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
-        quantity: quantity,
-      })
-    );
-
-    await txBuilder.sendAndConfirm(umi);
-
-    //Attempt to try and stake again which should fail because of deposit cap reached
-    quantity = 1001 * 10 ** baseMintDecimals;
-
-    txBuilder = new TransactionBuilder();
-
-    txBuilder = txBuilder.add(
-      ptStake(umi, {
-        globalConfig,
-        userStake: userStakePDA,
-        baseMint: baseMint,
-        userBaseMintAta: userBase,
-        user: umi.identity,
-        vault: vaultStakingPDA,
-        associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
-        quantity: quantity,
-      })
-    );
-
-    await assert.rejects(
-      async () => {
-        await txBuilder.sendAndConfirm(umi);
-      },
-      (err) => {
-        return (err as Error).message.includes("Deposit cap exceeded");
-      },
-      "Expected staking to fail because Deposit cap exceeded"
-    );
-  });
-
-  it.only("dynamically increases account size for exchange rate and points history, and verifies PT staking reallocation", async () => {
-    const maxPhases = 5;
-    let quantity = 100 * 10 ** baseMintDecimals;
-
-    // Stake first
-    let stakeTxBuilder = new TransactionBuilder();
-    stakeTxBuilder = stakeTxBuilder.add(
-      ptStake(umi, {
-        globalConfig,
-        userStake: userStakePDA,
-        baseMint: baseMint,
-        userBaseMintAta: userBase,
-        user: umi.identity,
-        vault: vaultStakingPDA,
-        associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
-        quantity: quantity,
-      })
-    );
-
-    await stakeTxBuilder.sendAndConfirm(umi);
-
-    //We first of all increase the deposit cap
-    let newDepositCap = testDepositCapAmount * 100;
-    let txBuilder = new TransactionBuilder();
-    txBuilder = txBuilder.add(
-      updateGlobalConfig(umi, {
-        globalConfig,
-        owner: umi.identity,
-        newBaselineYieldBps: null,
-        newExchangeRate: null,
-        newDepositCap: newDepositCap,
-      })
-    );
-
-    await txBuilder.sendAndConfirm(umi);
-
-    // Function to create a new exchange rate phase
-    const createExchangeRatePhase = (index: number) =>
-      (20 - index) * 10 ** baseMintDecimals; // Increase exchange rate each time
-
-    // Add phases and stake sequentially
-    for (let i = 2; i < maxPhases; i++) {
-      const newExchangeRate = createExchangeRatePhase(i);
-
-      // Update global config (exchange rate)
-      let updateConfigTxBuilder = new TransactionBuilder();
-      updateConfigTxBuilder = updateConfigTxBuilder.add(
-        updateGlobalConfig(umi, {
-          globalConfig,
-          owner: umi.identity,
-          newBaselineYieldBps: null,
-          newExchangeRate: newExchangeRate,
-          newDepositCap: null,
-        })
-      );
-      await updateConfigTxBuilder.sendAndConfirm(umi);
-
-      // Add a delay to ensure clock advances
-      await new Promise((resolve) => setTimeout(resolve, 10000));
-
-      // Fetch and log global config after update
-      let globalConfigAcc = await safeFetchGlobalConfig(umi, globalConfig);
-      console.log(
-        `Phase ${i} added. Current exchange rate history size:`,
-        globalConfigAcc.exchangeRateHistory.length
-      );
-      console.log("Last exchange rate phase:", globalConfigAcc.exchangeRateHistory[i - 1]);
-
-      // Perform staking
-      // let stakeTxBuilder = new TransactionBuilder();
-      // stakeTxBuilder = stakeTxBuilder.add(
-      //   ptStake(umi, {
-      //     globalConfig,
-      //     userStake: userStakePDA,
-      //     baseMint: baseMint,
-      //     userBaseMintAta: userBase,
-      //     user: umi.identity,
-      //     vault: vaultStakingPDA,
-      //     associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
-      //     quantity: quantity,
-      //   })
-      // );
-      // await stakeTxBuilder.sendAndConfirm(umi);
-
-      // Add another delay after staking
-      await new Promise((resolve) => setTimeout(resolve, 10000));
-
-      // Fetch and check the updated user stake after staking
-      // const userStakeAcc = await safeFetchUserStake(umi, userStakePDA);
-      // console.log(
-      //   `Stake ${i} completed. Current points history size:`,
-      //   userStakeAcc.pointsHistory.length
-      // );
-      //console.log("Last points history entry:", userStakeAcc.pointsHistory[userStakeAcc.pointsHistory.length]);
-
-      // Assertions
-      assert.strictEqual(globalConfigAcc.exchangeRateHistory.length, i);
-      assert.equal(
-        globalConfigAcc.exchangeRateHistory[i - 1].exchangeRate,
-        newExchangeRate
-      );
-    }
-
-    // Final checks
-    const finalGlobalConfigAcc = await safeFetchGlobalConfig(umi, globalConfig);
-    const finalUserStakeAcc = await safeFetchUserStake(umi, userStakePDA);
-
-    console.log(finalUserStakeAcc.stakedAmount);
-    console.log(finalGlobalConfigAcc);
-    console.log(Number(finalUserStakeAcc.lastClaimTimestamp));
-    console.log(Math.round(Date.now() / 1000));
-
-    const points = calculatePoints(
-      finalGlobalConfigAcc,
-      finalUserStakeAcc.stakedAmount,
-      Number(finalUserStakeAcc.lastClaimTimestamp),
-      Math.round(Date.now() / 1000)
-    );
-
-    console.log("Points:", points);
-
-    console.log(
-      "Final exchange rate history:",
-      finalGlobalConfigAcc.exchangeRateHistory.map((phase, index) => {
-        const timeElapsed = unwrapOption(phase.endDate) ? unwrapOption(phase.endDate) - phase.startDate : 0;
-        return {
-          ...phase,
-          index,
-          timeElapsed,
-        };
-      })
-    );
-    console.log("Final points history:", finalUserStakeAcc.pointsHistory.sort((a, b) => a.index - b.index));
-
-    assert.strictEqual(
-      finalGlobalConfigAcc.exchangeRateHistory.length,
-      maxPhases - 1
-    );
-    // assert.ok(
-    //   finalUserStakeAcc.pointsHistory.length > 1,
-    //   "Points history should have grown"
-    // );
-    assert.ok(
-      finalUserStakeAcc.stakedAmount > BigInt(0),
-      "Staking should have occurred"
-    );
-  });
-
-  it("should accept pool manager update", async () => {
-    const newOwner = umi.eddsa.generateKeypair();
-    const newAdmin = umi.eddsa.generateKeypair();
-
-    await umi.rpc.airdrop(
-      newAdmin.publicKey,
-      createAmount(100_000 * 10 ** 9, "SOL", 9),
-      {
-        commitment: "finalized",
-      }
-    );
-
-    await umi.rpc.airdrop(
-      newOwner.publicKey,
-      createAmount(100_000 * 10 ** 9, "SOL", 9),
-      {
-        commitment: "finalized",
-      }
-    );
-
-    //Attempt trying to change pool manager with the wrong previous owner
-
-    umi.use(keypairIdentity(newOwner));
-
-    let txBuilder = new TransactionBuilder();
-    txBuilder = txBuilder.add(
-      updatePoolManager(umi, {
-        poolManager,
-        owner: umi.identity,
-        newAdmin: newAdmin.publicKey,
-        newDepositCap: null,
-      })
-    );
-
-    await assert.rejects(
-      async () => {
-        await txBuilder.sendAndConfirm(umi);
-      },
-      (err) => {
-        return (err as Error).message.includes("Invalid owner");
-      },
-      "Expected updating pool manager to fail because of Invalid owner"
-    );
-
-    //Attempt trying to change pool manager with the right owner
-
-    umi.use(keypairIdentity(fromWeb3JsKeypair(keypair)));
-
-    txBuilder = new TransactionBuilder();
-    txBuilder = txBuilder.add(
-      updatePoolManager(umi, {
-        poolManager,
-        owner: umi.identity,
-        newAdmin: newAdmin.publicKey,
-        newDepositCap: null,
-      })
-    );
-
-    await txBuilder.sendAndConfirm(umi);
-
-    // Verify the new admin and owner is set
-    let poolManagerAcc = await safeFetchPoolManager(umi, poolManager);
-
-    assert.equal(
-      poolManagerAcc.admin,
-      newAdmin.publicKey,
-      "admin should be updated to new admin"
-    );
-
-    // Change the owner and admin back
-    umi.use(keypairIdentity(fromWeb3JsKeypair(keypair)));
-
-    txBuilder = new TransactionBuilder();
-    txBuilder = txBuilder.add(
-      updatePoolManager(umi, {
-        poolManager,
-        owner: umi.identity,
-        newAdmin: fromWeb3JsKeypair(keypair).publicKey,
-        newDepositCap: null,
-      })
-    );
-
-    await txBuilder.sendAndConfirm(umi);
-
-    // Verify the owner and admin is set back to original
-    poolManagerAcc = await safeFetchPoolManager(umi, poolManager);
-
-    assert.equal(
-      poolManagerAcc.admin,
-      keypair.publicKey,
-      "admin should be updated to new admin"
-    );
-  });
-
-  it("should update xMint metadata of stake program", async () => {
-    const name = "TEST";
-    const symbol = "TEST";
-    const uri = "https://example.com/new-xmint-info.json";
-
-    let txBuilder = new TransactionBuilder();
-    txBuilder = txBuilder.add(
-      updateXmintMetadata(umi, {
-        poolManager,
-        metadataAccount: xMetadata,
-        name,
-        symbol,
-        uri,
-        owner: umi.identity,
-      })
-    );
-
-    await txBuilder.sendAndConfirm(umi);
-
-    const xMintMetadata = await safeFetchMetadata(umi, xMetadata);
-    assert.equal(xMintMetadata.name, name, "Name should be updated");
-    assert.equal(xMintMetadata.symbol, symbol, "Symbol should be updated");
-    assert.equal(xMintMetadata.uri, uri, "Uri should be updated");
   });
 
   it("should update base mint metadata of issuance program", async () => {
@@ -2883,6 +1758,1131 @@ describe.only("parity-issuance", () => {
       vaultAcc.amount,
       _vaultAcc.amount - expectedQuoteAmountAfterFees,
       "Vault amount should be correct"
+    );
+  });
+
+  // START: Stake Program
+  it("baseMint can be staked for xMint", async () => {
+    let quantity = 1000 * 10 ** baseMintDecimals;
+
+    let txBuilder = new TransactionBuilder();
+
+    const userXAtaAcc = await safeFetchToken(umi, userX);
+
+    if (!userXAtaAcc) {
+      txBuilder = txBuilder.add(
+        createAssociatedToken(umi, {
+          mint: xMint,
+        })
+      );
+    }
+
+    const _stakePoolAcc = await safeFetchPoolManager(umi, poolManager);
+    const _xMintAcc = await safeFetchMint(umi, xMint);
+    const _vaultAcc = await safeFetchToken(umi, vaultStaking);
+
+    txBuilder = txBuilder.add(
+      stake(umi, {
+        poolManager,
+        baseMint,
+        xMint,
+        payerBaseMintAta: userBase,
+        payerXMintAta: userX,
+        vault: vaultStaking,
+        associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
+        quantity,
+      })
+    );
+
+    // console.log("Inception Timestamp:", Number(_stakePoolAcc.inceptionTimestamp));
+    // console.log("Current Timestamp:", Math.floor(Date.now() / 1000));
+    // console.log("Annual Yield Rate:", Number(_stakePoolAcc.annualYieldRate));
+    // console.log("Initial Exchange Rate:", Number(_stakePoolAcc.initialExchangeRate));
+
+    const exchangeRate = calculateExchangeRate(
+      Number(_stakePoolAcc.lastYieldChangeTimestamp),
+      Math.floor(Date.now() / 1000),
+      Number(_stakePoolAcc.intervalAprRate),
+      Number(_stakePoolAcc.lastYieldChangeExchangeRate),
+      Number(_stakePoolAcc.secondsPerInterval)
+    );
+    // console.log("Exchange Rate: ", exchangeRate);
+
+    await txBuilder.sendAndConfirm(umi);
+    //await txBuilder.sendAndConfirm(umi, { send: { skipPreflight: true } });
+
+    const stakePoolAcc = await safeFetchPoolManager(umi, poolManager);
+    const xMintAcc = await safeFetchMint(umi, xMint);
+    const vaultAcc = await safeFetchToken(umi, vaultStaking);
+
+    const expectedBaseMintAmount = BigInt(quantity);
+
+    const expectedxMintAmount = BigInt(
+      Math.floor((quantity / exchangeRate) * 10 ** baseMintDecimals)
+    );
+    // console.log("Expected xMint Amount: ", Number(expectedxMintAmount));
+    // console.log("xMint Supply start: ", Number(_xMintAcc.supply));
+    // console.log("xMint Supply end: ", Number(xMintAcc.supply));
+
+    assert.equal(
+      stakePoolAcc.baseBalance,
+      _stakePoolAcc.baseBalance + expectedBaseMintAmount,
+      "Base Balance is not correct"
+    );
+    assert.equal(
+      vaultAcc.amount,
+      _vaultAcc.amount + expectedBaseMintAmount,
+      "Vault amount is not correct"
+    );
+    chaiAssert.closeTo(
+      Number(xMintAcc.supply),
+      Number(_xMintAcc.supply) + Number(expectedxMintAmount),
+      300000,
+      "xSupply is not correct"
+    );
+
+    quantity = 1001 * 10 ** baseMintDecimals;
+    //Attempt to try and stake again which should fail because of deposit cap reached
+    txBuilder = new TransactionBuilder();
+
+    txBuilder = txBuilder.add(
+      stake(umi, {
+        poolManager,
+        baseMint,
+        xMint,
+        payerBaseMintAta: userBase,
+        payerXMintAta: userX,
+        vault: vaultStaking,
+        associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
+        quantity,
+      })
+    );
+
+    await assert.rejects(
+      async () => {
+        await txBuilder.sendAndConfirm(umi);
+      },
+      (err) => {
+        return (err as Error).message.includes("Deposit cap exceeded");
+      },
+      "Expected staking to fail because Deposit cap exceeded"
+    );
+  });
+
+  it("baseMint can be unstaked by redeeming xMint", async () => {
+    // const quantity = 10000 * 10 ** baseMintDecimals;
+    let txBuilder = new TransactionBuilder();
+
+    const userBaseAtaAcc = await safeFetchToken(umi, userBase);
+
+    if (!userBaseAtaAcc) {
+      txBuilder = txBuilder.add(
+        createAssociatedToken(umi, {
+          mint: baseMint,
+        })
+      );
+    }
+
+    const _stakePoolAcc = await safeFetchPoolManager(umi, poolManager);
+    const _xMintAcc = await safeFetchMint(umi, xMint);
+    const _vaultAcc = await safeFetchToken(umi, vaultStaking);
+
+    const quantity = Number(_xMintAcc.supply);
+    // console.log("Quantity: ", quantity);
+
+    txBuilder = txBuilder.add(
+      unstake(umi, {
+        poolManager,
+        baseMint,
+        xMint,
+        payerBaseMintAta: userBase,
+        payerXMintAta: userX,
+        vault: vaultStaking,
+        associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
+        quantity,
+        tokenManager,
+        parityIssuanceProgram: PARITY_ISSUANCE_PROGRAM_ID,
+      })
+    );
+
+    // console.log("Inception Timestamp:", Number(_stakePoolAcc.inceptionTimestamp));
+    // console.log("Current Timestamp:", Math.floor(Date.now() / 1000));
+    // console.log("Annual Yield Rate:", Number(_stakePoolAcc.annualYieldRate));
+    // console.log("Initial Exchange Rate:", Number(_stakePoolAcc.initialExchangeRate));
+
+    const exchangeRate = calculateExchangeRate(
+      Number(_stakePoolAcc.lastYieldChangeTimestamp),
+      Math.floor(Date.now() / 1000),
+      Number(_stakePoolAcc.intervalAprRate),
+      Number(_stakePoolAcc.lastYieldChangeExchangeRate),
+      Number(_stakePoolAcc.secondsPerInterval)
+    );
+    // console.log("Exchange Rate: ", exchangeRate);
+
+    await txBuilder.sendAndConfirm(umi, { send: { skipPreflight: true } });
+
+    const stakePoolAcc = await safeFetchPoolManager(umi, poolManager);
+    const xMintAcc = await safeFetchMint(umi, xMint);
+    const vaultAcc = await safeFetchToken(umi, vaultStaking);
+
+    const expectedBaseMintAmount = BigInt(
+      Math.floor((quantity * exchangeRate) / 10 ** baseMintDecimals)
+    );
+    // console.log("Expected Base Mint Amount: ", Number(expectedBaseMintAmount));
+    // console.log("Base Balance Start: ", Number(_stakePoolAcc.baseBalance));
+    // console.log("Base Balance end: ", Number(stakePoolAcc.baseBalance));
+
+    const expectedxMintAmount = BigInt(quantity);
+
+    chaiAssert.equal(
+      Number(stakePoolAcc.baseBalance),
+      0,
+      "Base Balance is not correct"
+    );
+    chaiAssert.equal(Number(vaultAcc.amount), 0, "Vault amount is not correct");
+    chaiAssert.equal(
+      xMintAcc.supply,
+      _xMintAcc.supply - expectedxMintAmount,
+      "xSupply is not correct"
+    );
+  });
+
+  it("should update the annual yield rate of the stake pool", async function () {
+    const annualYieldRate = 2500; // in Basis points
+    const intervalSeconds = 60 * 60 * 8; // 8 hour interval
+
+    const intervalRate = calculateIntervalRate(
+      annualYieldRate,
+      intervalSeconds
+    );
+    // console.log("Interval Rate: ", Number(intervalRate));
+
+    let txBuilder = new TransactionBuilder();
+
+    txBuilder = txBuilder.add(
+      updateAnnualYield(umi, {
+        poolManager,
+        admin: umi.identity,
+        intervalAprRate: intervalRate,
+        tokenManager,
+        xMint,
+        parityIssuanceProgram: PARITY_ISSUANCE_PROGRAM_ID,
+        associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
+        vault: vaultStaking,
+        baseMint: baseMint,
+      })
+    );
+
+    await txBuilder.sendAndConfirm(umi);
+
+    const stakePoolAcc = await safeFetchPoolManager(umi, poolManager);
+
+    assert.equal(
+      stakePoolAcc.intervalAprRate,
+      intervalRate,
+      "Annual yield rate should be updated to 25.00%"
+    );
+  });
+
+  it("should initiate and accept pool owner update", async () => {
+    const newAdmin = umi.eddsa.generateKeypair();
+
+    await umi.rpc.airdrop(
+      newAdmin.publicKey,
+      createAmount(100_000 * 10 ** 9, "SOL", 9),
+      {
+        commitment: "finalized",
+      }
+    );
+
+    // Initiate update of pool owner
+    let txBuilder = new TransactionBuilder();
+    txBuilder = txBuilder.add(
+      initiateUpdatePoolOwner(umi, {
+        poolManager,
+        newOwner: newAdmin.publicKey,
+        owner: umi.identity,
+      })
+    );
+    await txBuilder.sendAndConfirm(umi);
+
+    // Check if the update initiation was successful
+    let poolManagerAcc = await safeFetchPoolManager(umi, poolManager);
+    assert.equal(
+      poolManagerAcc.pendingOwner,
+      newAdmin.publicKey,
+      "Pending owner should be set to new admin"
+    );
+
+    // Accept update of pool owner
+    umi.use(keypairIdentity(newAdmin)); // Switch to new admin
+    txBuilder = new TransactionBuilder();
+    txBuilder = txBuilder.add(
+      updatePoolOwner(umi, {
+        poolManager,
+        newOwner: umi.identity,
+      })
+    );
+    await txBuilder.sendAndConfirm(umi);
+
+    // Verify the new admin is set
+    poolManagerAcc = await safeFetchPoolManager(umi, poolManager);
+
+    assert.equal(
+      poolManagerAcc.owner,
+      newAdmin.publicKey,
+      "owner should be updated to new owner"
+    );
+    assert.equal(
+      poolManagerAcc.pendingOwner,
+      publicKey("11111111111111111111111111111111"),
+      "Pending owner should be set to default pubkey"
+    );
+
+    // Change back
+    txBuilder = new TransactionBuilder();
+    txBuilder = txBuilder.add(
+      initiateUpdatePoolOwner(umi, {
+        poolManager,
+        newOwner: fromWeb3JsKeypair(keypair).publicKey,
+        owner: umi.identity,
+      })
+    );
+    await txBuilder.sendAndConfirm(umi);
+
+    // Accept update back to original admin
+    umi.use(keypairIdentity(fromWeb3JsKeypair(keypair))); // Switch to new admin
+
+    txBuilder = new TransactionBuilder();
+    txBuilder = txBuilder.add(
+      updatePoolOwner(umi, {
+        poolManager,
+        newOwner: umi.identity,
+      })
+    );
+    await txBuilder.sendAndConfirm(umi);
+
+    // Verify the admin is set back to original
+    poolManagerAcc = await safeFetchPoolManager(umi, poolManager);
+    assert.equal(
+      poolManagerAcc.admin,
+      keypair.publicKey.toBase58(),
+      "Admin should be reverted back to original admin"
+    );
+  });
+
+  it("should update deposit cap parity staking", async () => {
+    const notOwner = umi.eddsa.generateKeypair();
+    const newDespositCap = testDepositCapAmount;
+
+    await umi.rpc.airdrop(
+      notOwner.publicKey,
+      createAmount(100_000 * 10 ** 9, "SOL", 9),
+      {
+        commitment: "finalized",
+      }
+    );
+
+    //Attempt trying to update deposit cap with a signer that's not the Owner
+    umi.use(keypairIdentity(notOwner));
+
+    let txBuilder = new TransactionBuilder();
+    txBuilder = txBuilder.add(
+      updatePoolManager(umi, {
+        poolManager,
+        owner: umi.identity,
+        newAdmin: null,
+        newDepositCap: newDespositCap,
+      })
+    );
+
+    await assert.rejects(
+      async () => {
+        await txBuilder.sendAndConfirm(umi);
+      },
+      (err) => {
+        return (err as Error).message.includes("Invalid owner");
+      },
+      "Expected updating pool manager to fail because of Invalid owner"
+    );
+
+    //Attempt trying to change update deposit cap with the right Owner
+
+    umi.use(keypairIdentity(fromWeb3JsKeypair(keypair)));
+
+    txBuilder = new TransactionBuilder();
+    txBuilder = txBuilder.add(
+      updatePoolManager(umi, {
+        poolManager,
+        owner: umi.identity,
+        newAdmin: null,
+        newDepositCap: newDespositCap,
+      })
+    );
+
+    await txBuilder.sendAndConfirm(umi);
+
+    //verify the updated deposit cap is set
+    let poolManagerAcc = await safeFetchPoolManager(umi, poolManager);
+
+    assert.equal(
+      poolManagerAcc.depositCap,
+      newDespositCap,
+      "deposit cap should be updated "
+    );
+
+    let quantity = 1000 * 10 ** baseMintDecimals;
+
+    //Attempt  staking to test if it works
+    //This should work since deposit cap variable has been increased
+    txBuilder = new TransactionBuilder();
+
+    const userXAtaAcc = await safeFetchToken(umi, userX);
+
+    if (!userXAtaAcc) {
+      txBuilder = txBuilder.add(
+        createAssociatedToken(umi, {
+          mint: xMint,
+        })
+      );
+    }
+
+    txBuilder = txBuilder.add(
+      stake(umi, {
+        poolManager,
+        baseMint,
+        xMint,
+        payerBaseMintAta: userBase,
+        payerXMintAta: userX,
+        vault: vaultStaking,
+        associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
+        quantity,
+      })
+    );
+
+    await txBuilder.sendAndConfirm(umi);
+
+    //Attempt to try and stake again which should fail because of deposit cap reached
+    quantity = 1001 * 10 ** baseMintDecimals;
+
+    txBuilder = new TransactionBuilder();
+
+    txBuilder = txBuilder.add(
+      stake(umi, {
+        poolManager,
+        baseMint,
+        xMint,
+        payerBaseMintAta: userBase,
+        payerXMintAta: userX,
+        vault: vaultStaking,
+        associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
+        quantity,
+      })
+    );
+
+    await assert.rejects(
+      async () => {
+        await txBuilder.sendAndConfirm(umi);
+      },
+      (err) => {
+        return (err as Error).message.includes("Deposit cap exceeded");
+      },
+      "Expected staking to fail because Deposit cap exceeded"
+    );
+  });
+
+  it("should accept pool manager update", async () => {
+    const newOwner = umi.eddsa.generateKeypair();
+    const newAdmin = umi.eddsa.generateKeypair();
+
+    await umi.rpc.airdrop(
+      newAdmin.publicKey,
+      createAmount(100_000 * 10 ** 9, "SOL", 9),
+      {
+        commitment: "finalized",
+      }
+    );
+
+    await umi.rpc.airdrop(
+      newOwner.publicKey,
+      createAmount(100_000 * 10 ** 9, "SOL", 9),
+      {
+        commitment: "finalized",
+      }
+    );
+
+    //Attempt trying to change pool manager with the wrong previous owner
+
+    umi.use(keypairIdentity(newOwner));
+
+    let txBuilder = new TransactionBuilder();
+    txBuilder = txBuilder.add(
+      updatePoolManager(umi, {
+        poolManager,
+        owner: umi.identity,
+        newAdmin: newAdmin.publicKey,
+        newDepositCap: null,
+      })
+    );
+
+    await assert.rejects(
+      async () => {
+        await txBuilder.sendAndConfirm(umi);
+      },
+      (err) => {
+        return (err as Error).message.includes("Invalid owner");
+      },
+      "Expected updating pool manager to fail because of Invalid owner"
+    );
+
+    //Attempt trying to change pool manager with the right owner
+
+    umi.use(keypairIdentity(fromWeb3JsKeypair(keypair)));
+
+    txBuilder = new TransactionBuilder();
+    txBuilder = txBuilder.add(
+      updatePoolManager(umi, {
+        poolManager,
+        owner: umi.identity,
+        newAdmin: newAdmin.publicKey,
+        newDepositCap: null,
+      })
+    );
+
+    await txBuilder.sendAndConfirm(umi);
+
+    // Verify the new admin and owner is set
+    let poolManagerAcc = await safeFetchPoolManager(umi, poolManager);
+
+    assert.equal(
+      poolManagerAcc.admin,
+      newAdmin.publicKey,
+      "admin should be updated to new admin"
+    );
+
+    // Change the owner and admin back
+    umi.use(keypairIdentity(fromWeb3JsKeypair(keypair)));
+
+    txBuilder = new TransactionBuilder();
+    txBuilder = txBuilder.add(
+      updatePoolManager(umi, {
+        poolManager,
+        owner: umi.identity,
+        newAdmin: fromWeb3JsKeypair(keypair).publicKey,
+        newDepositCap: null,
+      })
+    );
+
+    await txBuilder.sendAndConfirm(umi);
+
+    // Verify the owner and admin is set back to original
+    poolManagerAcc = await safeFetchPoolManager(umi, poolManager);
+
+    assert.equal(
+      poolManagerAcc.admin,
+      keypair.publicKey,
+      "admin should be updated to new admin"
+    );
+  });
+
+  it("should update xMint metadata of stake program", async () => {
+    const name = "TEST";
+    const symbol = "TEST";
+    const uri = "https://example.com/new-xmint-info.json";
+
+    let txBuilder = new TransactionBuilder();
+    txBuilder = txBuilder.add(
+      updateXmintMetadata(umi, {
+        poolManager,
+        metadataAccount: xMetadata,
+        name,
+        symbol,
+        uri,
+        owner: umi.identity,
+      })
+    );
+
+    await txBuilder.sendAndConfirm(umi);
+
+    const xMintMetadata = await safeFetchMetadata(umi, xMetadata);
+    assert.equal(xMintMetadata.name, name, "Name should be updated");
+    assert.equal(xMintMetadata.symbol, symbol, "Symbol should be updated");
+    assert.equal(xMintMetadata.uri, uri, "Uri should be updated");
+  });
+
+  // START: PT Staking program
+  it.only("baseMint can be staked in PT Staking", async () => {
+    let quantity = 1000 * 10 ** baseMintDecimals;
+
+    // Attempt staking without creating the userStake acccount
+    // This should fail
+    let txBuilder = new TransactionBuilder();
+
+    txBuilder = txBuilder.add(
+      ptStake(umi, {
+        globalConfig,
+        userStake: userStakePDA,
+        baseMint: baseMint,
+        userBaseMintAta: userBase,
+        user: umi.identity,
+        vault: vaultStakingPDA,
+        associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
+        quantity: quantity,
+      })
+    );
+
+    await assert.rejects(
+      async () => {
+        await txBuilder.sendAndConfirm(umi);
+      },
+      (err) => {
+        return (err as Error).message.includes(
+          "The program expected this account to be already initialized."
+        );
+      },
+      "Expected staking to fail because account isnt initialized"
+    );
+
+    // Create userStake acccount
+    txBuilder = new TransactionBuilder();
+
+    txBuilder = txBuilder.add(
+      initPtStake(umi, {
+        userStake: userStakePDA,
+        user: umi.identity,
+      })
+    );
+
+    await txBuilder.sendAndConfirm(umi);
+
+    const _userStakeAcc = await safeFetchUserStake(umi, userStakePDA);
+
+    assert.equal(_userStakeAcc.userPubkey, umi.identity.publicKey);
+    assert.equal(_userStakeAcc.stakedAmount, 0, "Staked amount should be zero");
+    assert.equal(
+      _userStakeAcc.initialStakingTimestamp,
+      0,
+      "initial staking time should be zero"
+    );
+
+    // Attempt staking after userStake acccount has been created
+    // This should succeed
+    txBuilder = new TransactionBuilder();
+
+    txBuilder = txBuilder.add(
+      ptStake(umi, {
+        globalConfig,
+        userStake: userStakePDA,
+        baseMint: baseMint,
+        userBaseMintAta: userBase,
+        user: umi.identity,
+        vault: vaultStakingPDA,
+        associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
+        quantity: quantity,
+      })
+    );
+
+    await txBuilder.sendAndConfirm(umi);
+
+    const globalConfigAcc = await safeFetchGlobalConfig(umi, globalConfig);
+    const userStakeAcc = await safeFetchUserStake(umi, userStakePDA);
+    const vaultAcc = await safeFetchToken(umi, vaultStakingPDA);
+
+    // console.log("ptstaking last claim timestamp", userStakeAcc.lastClaimTimestamp);
+    // console.log("Vault Acc: ", vaultAcc);
+    // console.log("User Stake Acc: ", userStakeAcc);
+    // console.log("Global Config Acc: ", globalConfigAcc);
+
+    assert.equal(vaultAcc.amount, quantity);
+    assert.equal(userStakeAcc.stakedAmount, quantity);
+    assert.equal(globalConfigAcc.stakedSupply, quantity);
+    assert.equal(globalConfigAcc.stakingVault, vaultAcc.publicKey);
+  });
+
+  it.only("baseMint can be unstaked in PT Staking", async () => {
+    let quantity = 1000 * 10 ** baseMintDecimals;
+
+    // Fetch accounts before unstaking
+    const globalConfigAcc = await safeFetchGlobalConfig(umi, globalConfig);
+    const userStakeAcc = await safeFetchUserStake(umi, userStakePDA);
+    const vaultAcc = await safeFetchToken(umi, vaultStakingPDA);
+    const userBaseAcc = await safeFetchToken(umi, userBase);
+
+    let txBuilder = new TransactionBuilder();
+
+    txBuilder = txBuilder.add(
+      ptUnstake(umi, {
+        globalConfig,
+        userStake: userStakePDA,
+        baseMint: baseMint,
+        userBaseMintAta: userBase,
+        user: umi.identity,
+        vault: vaultStakingPDA,
+        associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
+        quantity,
+      })
+    );
+
+    const res = await txBuilder.sendAndConfirm(umi);
+    // console.log(bs58.encode(res.signature));
+
+    // Fetch accounts after unstaking
+    const _globalConfigAcc = await safeFetchGlobalConfig(umi, globalConfig);
+    const _userStakeAcc = await safeFetchUserStake(umi, userStakePDA);
+    const _vaultAcc = await safeFetchToken(umi, vaultStakingPDA);
+    const _userBaseAcc = await safeFetchToken(umi, userBase);
+
+    // console.log(_userStakeAcc);
+    // console.log(_globalConfigAcc);
+
+    const pointsHistory = _userStakeAcc.pointsHistory;
+
+    // console.log("Points History: ", pointsHistory[0].points);
+    // console.log("Points History full: ", pointsHistory);
+
+    // We are using the updated lastclain timestamp as the current time 
+    const expectedPoints = calculatePoints(
+      _globalConfigAcc,
+      BigInt(quantity),
+      Number(userStakeAcc.lastClaimTimestamp),
+      Number(_userStakeAcc.lastClaimTimestamp)
+    );
+
+    // console.log("expected points", expectedPoints[0].points)
+    // console.log("expected points full", expectedPoints);
+
+    // Assert the changes
+    assert.equal(
+      _vaultAcc.amount,
+      vaultAcc.amount - BigInt(quantity),
+      "Vault balance should decrease by unstaked amount"
+    );
+    assert.equal(
+      _userStakeAcc.stakedAmount,
+      userStakeAcc.stakedAmount - BigInt(quantity),
+      "User staked amount should decrease"
+    );
+    assert.equal(
+      _globalConfigAcc.stakedSupply,
+      globalConfigAcc.stakedSupply - BigInt(quantity),
+      "Global staked supply should decrease"
+    );
+
+    // Assert calculated points
+    assert.equal(
+      pointsHistory[0].points,
+      expectedPoints[0].points,
+      "Calculated points should match the points in history"
+    );
+
+    // Check if user received the unstaked tokens
+    const expectedUserBalance = userBaseAcc.amount + BigInt(quantity);
+    assert.equal(
+      _userBaseAcc.amount,
+      expectedUserBalance,
+      "User should receive unstaked tokens"
+    );
+
+    // // TODO: Add assertions for points calculation if applicable
+    // Check that the points were calculated within a single phase
+    assert.equal(pointsHistory.length, 1, "Only one phase should be involved");
+    assert.equal(
+      pointsHistory[0].index,
+      0,
+      "The phase index should be 0 (initial phase)"
+    );
+
+    // Attempt unstaking with a user thats not the owner
+    // which should fail
+    const newUser = umi.eddsa.generateKeypair();
+
+    await umi.rpc.airdrop(
+      newUser.publicKey,
+      createAmount(100_000 * 10 ** 9, "SOL", 9),
+      {
+        commitment: "finalized",
+      }
+    );
+
+    umi.use(keypairIdentity(newUser));
+
+    txBuilder = new TransactionBuilder();
+
+    txBuilder = txBuilder.add(
+      ptUnstake(umi, {
+        globalConfig,
+        userStake: userStakePDA,
+        baseMint: baseMint,
+        userBaseMintAta: userBase,
+        user: umi.identity,
+        vault: vaultStakingPDA,
+        associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
+        quantity,
+      })
+    );
+
+    await assert.rejects(
+      async () => {
+        await txBuilder.sendAndConfirm(umi);
+      },
+      (err) => {
+        return (err as Error).message.includes(
+          " A seeds constraint was violated"
+        );
+      },
+      "Expected unstaking error as user isnt the owner of PDA"
+    );
+
+    umi.use(keypairIdentity(fromWeb3JsKeypair(keypair))); // Switch back to  admin
+  });
+
+  it.only("should initiate and accept global config owner update", async () => {
+    const newOwner = umi.eddsa.generateKeypair();
+
+    await umi.rpc.airdrop(
+      newOwner.publicKey,
+      createAmount(100_000 * 10 ** 9, "SOL", 9),
+      {
+        commitment: "finalized",
+      }
+    );
+    umi.use(keypairIdentity(fromWeb3JsKeypair(keypair))); // Switch to new admin
+
+    // Initiate update of tokenManager owner
+    let txBuilder = new TransactionBuilder();
+    txBuilder = txBuilder.add(
+      initiateUpdateGlobalConfigOwner(umi, {
+        globalConfig,
+        newOwner: newOwner.publicKey,
+        owner: umi.identity,
+      })
+    );
+    await txBuilder.sendAndConfirm(umi);
+
+    // Check if the update initiation was successful
+    let globalConfigAcc = await safeFetchGlobalConfig(umi, globalConfig);
+
+    assert.equal(
+      globalConfigAcc.pendingOwner,
+      newOwner.publicKey,
+      "Pending owner should be set to new admin"
+    );
+
+    // Accept update of manager owner
+    umi.use(keypairIdentity(newOwner)); // Switch to new admin
+    txBuilder = new TransactionBuilder();
+    txBuilder = txBuilder.add(
+      updateGlobalConfigOwner(umi, {
+        globalConfig,
+        newOwner: umi.identity,
+      })
+    );
+    await txBuilder.sendAndConfirm(umi);
+
+    // Verify the new owner is set
+    globalConfigAcc = await safeFetchGlobalConfig(umi, globalConfig);
+    assert.equal(
+      globalConfigAcc.owner,
+      newOwner.publicKey,
+      "owner should be updated to new owner"
+    );
+    assert.equal(
+      globalConfigAcc.pendingOwner,
+      publicKey("11111111111111111111111111111111"),
+      "Pending owner should be set to default pubkey"
+    );
+
+    // Change back
+    txBuilder = new TransactionBuilder();
+    txBuilder = txBuilder.add(
+      initiateUpdateGlobalConfigOwner(umi, {
+        globalConfig,
+        newOwner: fromWeb3JsKeypair(keypair).publicKey,
+        owner: umi.identity,
+      })
+    );
+    await txBuilder.sendAndConfirm(umi);
+
+    // Accept update back to original admin
+    umi.use(keypairIdentity(fromWeb3JsKeypair(keypair))); // Switch back to original admin
+    txBuilder = new TransactionBuilder();
+    txBuilder = txBuilder.add(
+      updateGlobalConfigOwner(umi, {
+        globalConfig,
+        newOwner: umi.identity,
+      })
+    );
+    await txBuilder.sendAndConfirm(umi);
+
+    // Verify the admin is set back to original
+    globalConfigAcc = await safeFetchGlobalConfig(umi, globalConfig);
+    assert.equal(
+      globalConfigAcc.admin,
+      publicKey(keypair.publicKey),
+      "Admin should be reverted back to original admin"
+    );
+  });
+
+  it.only("should update Pt Staking global config", async () => {
+    const notOwner = umi.eddsa.generateKeypair();
+    const newBaselineYield = 5000; // For 50%
+    const newExchangeRatePtStaking = 30 * 10 ** baseMintDecimals;
+    const newDespositCap = testDepositCapAmount;
+
+    await umi.rpc.airdrop(
+      notOwner.publicKey,
+      createAmount(100_000 * 10 ** 9, "SOL", 9),
+      {
+        commitment: "finalized",
+      }
+    );
+
+    // Attempt trying to update with a signer that's not the Owner
+    umi.use(keypairIdentity(notOwner));
+
+    let txBuilder = new TransactionBuilder();
+    txBuilder = txBuilder.add(
+      updateGlobalConfig(umi, {
+        globalConfig,
+        owner: umi.identity,
+        newBaselineYieldBps: newBaselineYield,
+        newExchangeRate: newExchangeRatePtStaking,
+        newDepositCap: newDespositCap,
+      })
+    );
+
+    await assert.rejects(
+      async () => {
+        await txBuilder.sendAndConfirm(umi);
+      },
+      (err) => {
+        return (err as Error).message.includes("Invalid owner");
+      },
+      "Expected updating global config to fail because of Invalid owner"
+    );
+
+    // Attempt trying to change update  with the right Owner
+    umi.use(keypairIdentity(fromWeb3JsKeypair(keypair)));
+
+    txBuilder = new TransactionBuilder();
+    txBuilder = txBuilder.add(
+      updateGlobalConfig(umi, {
+        globalConfig,
+        owner: umi.identity,
+        newBaselineYieldBps: newBaselineYield,
+        newExchangeRate: newExchangeRatePtStaking,
+        newDepositCap: newDespositCap,
+      })
+    );
+
+    const res = await txBuilder.sendAndConfirm(umi);
+    // console.log(bs58.encode(res.signature));
+
+    // Verify the updated global config is set
+    const globalConfigAcc = await safeFetchGlobalConfig(umi, globalConfig);
+
+    assert.equal(
+      globalConfigAcc.baseYieldHistory[globalConfigAcc.baseYieldHistory.length - 1].baseYieldBps,
+      newBaselineYield,
+      "base line yield should be updated"
+    );
+    assert.equal(
+      globalConfigAcc.depositCap,
+      newDespositCap,
+      "deposit cap should be updated"
+    );
+    assert.equal(
+      globalConfigAcc.exchangeRateHistory[globalConfigAcc.exchangeRateHistory.length - 1].exchangeRate,
+      newExchangeRatePtStaking,
+      "exchange rate should be updated"
+    );
+
+    let quantity = 1000 * 10 ** baseMintDecimals;
+
+    // Attempt  staking to test if deposit cap works
+    // This should work since deposit cap variable has been increased
+    txBuilder = new TransactionBuilder();
+
+    txBuilder = txBuilder.add(
+      ptStake(umi, {
+        globalConfig,
+        userStake: userStakePDA,
+        baseMint: baseMint,
+        userBaseMintAta: userBase,
+        user: umi.identity,
+        vault: vaultStakingPDA,
+        associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
+        quantity: quantity,
+      })
+    );
+
+    await txBuilder.sendAndConfirm(umi);
+
+    //Attempt to try and stake again which should fail because of deposit cap reached
+    quantity = 1001 * 10 ** baseMintDecimals;
+
+    txBuilder = new TransactionBuilder();
+
+    txBuilder = txBuilder.add(
+      ptStake(umi, {
+        globalConfig,
+        userStake: userStakePDA,
+        baseMint: baseMint,
+        userBaseMintAta: userBase,
+        user: umi.identity,
+        vault: vaultStakingPDA,
+        associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
+        quantity: quantity,
+      })
+    );
+
+    await assert.rejects(
+      async () => {
+        await txBuilder.sendAndConfirm(umi);
+      },
+      (err) => {
+        return (err as Error).message.includes("Deposit cap exceeded");
+      },
+      "Expected staking to fail because Deposit cap exceeded"
+    );
+  });
+
+  it.only("dynamically increases account size for exchange rate and points history, and verifies PT staking reallocation", async () => {
+    const maxPhases = 5;
+    let quantity = 100 * 10 ** baseMintDecimals;
+
+    let globalConfigAcc = await safeFetchGlobalConfig(umi, globalConfig);
+
+    // We first of all increase the deposit cap
+    let newDepositCap = testDepositCapAmount * 100;
+    let txBuilder = new TransactionBuilder();
+    txBuilder = txBuilder.add(
+      updateGlobalConfig(umi, {
+        globalConfig,
+        owner: umi.identity,
+        newBaselineYieldBps: null,
+        newExchangeRate: null,
+        newDepositCap: newDepositCap,
+      })
+    );
+
+    await txBuilder.sendAndConfirm(umi);
+
+    // Stake amount
+    txBuilder = new TransactionBuilder();
+    txBuilder = txBuilder.add(
+      ptStake(umi, {
+        globalConfig,
+        userStake: userStakePDA,
+        baseMint: baseMint,
+        userBaseMintAta: userBase,
+        user: umi.identity,
+        vault: vaultStakingPDA,
+        associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
+        quantity: quantity,
+      })
+    );
+
+    await txBuilder.sendAndConfirm(umi);
+
+    // Function to create a new exchange rate phase
+    const createExchangeRatePhase = (index: number) =>
+      (20 - index) * 10 ** baseMintDecimals; // Increase exchange rate each time
+
+    // Add phases and stake sequentially
+    for (let i = globalConfigAcc.exchangeRateHistory.length; i < maxPhases; i++) {
+      const newExchangeRate = createExchangeRatePhase(i);
+
+      // Update global config (exchange rate)
+      let updateConfigTxBuilder = new TransactionBuilder();
+      updateConfigTxBuilder = updateConfigTxBuilder.add(
+        updateGlobalConfig(umi, {
+          globalConfig,
+          owner: umi.identity,
+          newBaselineYieldBps: null,
+          newExchangeRate: newExchangeRate,
+          newDepositCap: null,
+        })
+      );
+      await updateConfigTxBuilder.sendAndConfirm(umi);
+
+      // Add a delay to ensure clock advances
+      await new Promise((resolve) => setTimeout(resolve, 10000));
+
+      // Fetch and log global config after update
+      globalConfigAcc = await safeFetchGlobalConfig(umi, globalConfig);
+
+      console.log(
+        `Phase ${i} added. Current exchange rate history size:`,
+        globalConfigAcc.exchangeRateHistory.length
+      );
+      console.log("Last exchange rate phase:", globalConfigAcc.exchangeRateHistory[i]);
+
+      // Add another delay after staking
+      await new Promise((resolve) => setTimeout(resolve, 10000));
+
+      // Assertions
+      assert.strictEqual(globalConfigAcc.exchangeRateHistory.length - 1, i);
+      assert.strictEqual(
+        Number(globalConfigAcc.exchangeRateHistory[i].exchangeRate),
+        newExchangeRate
+      );
+    }
+
+    // Perform unstaking
+    txBuilder = new TransactionBuilder();
+    txBuilder = txBuilder.add(
+      ptUnstake(umi, {
+        globalConfig,
+        userStake: userStakePDA,
+        baseMint: baseMint,
+        userBaseMintAta: userBase,
+        user: umi.identity,
+        vault: vaultStakingPDA,
+        associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
+        quantity: quantity,
+      })
+    );
+    await txBuilder.sendAndConfirm(umi);
+
+    // Final checks
+    const finalGlobalConfigAcc = await safeFetchGlobalConfig(umi, globalConfig);
+    const finalUserStakeAcc = await safeFetchUserStake(umi, userStakePDA);
+
+
+    const points = calculatePoints(
+      finalGlobalConfigAcc,
+      finalUserStakeAcc.stakedAmount,
+      Number(finalUserStakeAcc.lastClaimTimestamp),
+      Math.round(Date.now() / 1000)
+    );
+
+    console.log("Points expected:", points);
+
+    console.log(
+      "Final exchange rate history:",
+      finalGlobalConfigAcc.exchangeRateHistory.map((phase, index) => {
+        const timeElapsed = unwrapOption(phase.endDate) ? unwrapOption(phase.endDate) - phase.startDate : 0;
+        return {
+          ...phase,
+          index,
+          timeElapsed,
+        };
+      })
+    );
+    console.log("Final points history:", finalUserStakeAcc.pointsHistory.sort((a, b) => a.index - b.index));
+
+    assert.strictEqual(
+      finalGlobalConfigAcc.exchangeRateHistory.length,
+      maxPhases
+    );
+    // assert.ok(
+    //   finalUserStakeAcc.pointsHistory.length > 1,
+    //   "Points history should have grown"
+    // );
+    assert.ok(
+      finalUserStakeAcc.stakedAmount > BigInt(0),
+      "Staking should have occurred"
     );
   });
 });

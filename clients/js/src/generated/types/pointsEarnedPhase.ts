@@ -9,7 +9,7 @@
 import {
   Serializer,
   struct,
-  u32,
+  u16,
   u64,
 } from '@metaplex-foundation/umi/serializers';
 
@@ -33,7 +33,7 @@ export function getPointsEarnedPhaseSerializer(): Serializer<
     [
       ['exchangeRate', u64()],
       ['points', u64()],
-      ['index', u32()],
+      ['index', u16()],
     ],
     { description: 'PointsEarnedPhase' }
   ) as Serializer<PointsEarnedPhaseArgs, PointsEarnedPhase>;

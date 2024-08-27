@@ -1,5 +1,8 @@
-use crate::{GlobalConfig, PtStakingError, UserStake};
-use anchor_lang::prelude::*;
+use crate::{GlobalConfig, PtStakingError, UserStake, POINTS_EARNED_PHASE_SIZE};
+use anchor_lang::{
+    prelude::*,
+    system_program::{transfer, Transfer},
+};
 use anchor_spl::{
     associated_token::AssociatedToken,
     token::{transfer_checked, Mint, Token, TokenAccount, TransferChecked},
@@ -18,7 +21,6 @@ pub struct PtUnstake<'info> {
         mut,
         seeds = [b"user-stake",user.key().as_ref()],
         bump,
-        constraint = user_stake.user_pubkey == user.key() @ PtStakingError::InvalidOwner,
     )]
     pub user_stake: Account<'info, UserStake>,
 
@@ -63,9 +65,10 @@ impl PtUnstake<'_> {
 
         // Check if the user has enough staked tokens to unstake
         if user_stake.staked_amount < quantity {
-            return Err(PtStakingError::InsufficientStakedAmount.into());
+            return err!(PtStakingError::InsufficientStakedAmount);
         }
 
+        // Transfer tokens from vault to user
         transfer_checked(
             CpiContext::new_with_signer(
                 ctx.accounts.token_program.to_account_info(),
@@ -88,6 +91,56 @@ impl PtUnstake<'_> {
             user_stake.last_claim_timestamp,
             current_timestamp,
         )?;
+        msg!("points_earned_phases: {:?}", points_earned_phases);
+
+        // Calculate how many new phases will be added
+        let new_phases_count = points_earned_phases
+            .iter()
+            .filter(|&phase| {
+                !user_stake
+                    .points_history
+                    .iter()
+                    .any(|p| p.index == phase.index)
+            })
+            .count();
+
+        msg!("new_phases_count: {}", new_phases_count);
+
+        // Calculate required space
+        let additional_space = new_phases_count
+            .checked_mul(POINTS_EARNED_PHASE_SIZE)
+            .unwrap();
+
+        msg!("additional_space: {}", additional_space);
+
+        let current_space = user_stake.to_account_info().data_len();
+        let required_space = current_space.checked_add(additional_space).unwrap();
+        msg!("required_space: {}", required_space);
+
+        let rent = Rent::get()?;
+        let new_minimum_balance = rent.minimum_balance(required_space);
+        msg!("new_minimum_balance: {}", new_minimum_balance);
+
+        let lamports_diff = new_minimum_balance.saturating_sub(user_stake.get_lamports());
+        msg!("lamports_diff: {}", lamports_diff);
+
+        if lamports_diff > 0 {
+            transfer(
+                CpiContext::new(
+                    ctx.accounts.system_program.to_account_info(),
+                    Transfer {
+                        from: ctx.accounts.user.to_account_info(),
+                        to: user_stake.to_account_info(),
+                    },
+                ),
+                lamports_diff,
+            )?;
+        }
+
+        // Realloc space
+        user_stake
+            .to_account_info()
+            .realloc(required_space, false)?;
         // Update user's points history
         user_stake.update_points_history(points_earned_phases.clone());
 

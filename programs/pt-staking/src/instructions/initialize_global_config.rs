@@ -1,4 +1,6 @@
-use crate::{BaseYieldPhase, ExchangeRatePhase, GlobalConfig};
+use crate::{
+    BaseYieldPhase, ExchangeRatePhase, GlobalConfig, PointsEarnedPhase, INITIAL_GLOBAL_CONFIG_SIZE,
+};
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
@@ -22,7 +24,7 @@ pub struct InitializeGlobalConfig<'info> {
         seeds = [b"global-config"],
         bump,
         payer = user,
-        space = 8 + GlobalConfig::INIT_SPACE,
+        space = INITIAL_GLOBAL_CONFIG_SIZE,
     )]
     pub global_config: Box<Account<'info, GlobalConfig>>,
     #[account(
@@ -60,7 +62,6 @@ impl InitializeGlobalConfig<'_> {
 
         //Other
         global_config.staked_supply = 0;
-        global_config.total_points_issued = 0;
         global_config.deposit_cap = params.deposit_cap;
 
         // Histories
@@ -82,7 +83,13 @@ impl InitializeGlobalConfig<'_> {
         };
         global_config.base_yield_history = vec![initial_base_yield_phase];
 
-        global_config.points_history = Vec::new();
+        // Initialize the points history with the initial points earned
+        let initial_points_earned_phase = PointsEarnedPhase {
+            exchange_rate: params.initial_exchange_rate,
+            points: 0,
+            index: 0,
+        };
+        global_config.points_history = vec![initial_points_earned_phase];
 
         Ok(())
     }

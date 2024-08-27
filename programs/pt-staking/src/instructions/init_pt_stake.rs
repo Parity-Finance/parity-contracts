@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-use crate::UserStake;
+use crate::{UserStake, INITIAL_USER_STAKE_SIZE};
 
 #[derive(Accounts)]
 pub struct InitPtStake<'info> {
@@ -9,7 +9,7 @@ pub struct InitPtStake<'info> {
         seeds = [b"user-stake",user.key().as_ref()],
         bump,
         payer = user,
-        space = 8 + UserStake::INIT_SPACE,
+        space = INITIAL_USER_STAKE_SIZE,
     )]
     pub user_stake: Account<'info, UserStake>,
     #[account(mut)]

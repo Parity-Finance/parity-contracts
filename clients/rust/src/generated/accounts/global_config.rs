@@ -48,7 +48,6 @@ pub struct GlobalConfig {
     pub staking_vault: Pubkey,
     pub base_mint_decimals: u8,
     pub staked_supply: u64,
-    pub total_points_issued: u64,
     pub deposit_cap: u64,
     pub exchange_rate_history: Vec<ExchangeRatePhase>,
     pub points_history: Vec<PointsEarnedPhase>,

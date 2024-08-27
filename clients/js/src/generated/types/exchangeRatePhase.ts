@@ -12,7 +12,7 @@ import {
   i64,
   option,
   struct,
-  u32,
+  u16,
   u64,
 } from '@metaplex-foundation/umi/serializers';
 
@@ -39,7 +39,7 @@ export function getExchangeRatePhaseSerializer(): Serializer<
       ['exchangeRate', u64()],
       ['startDate', i64()],
       ['endDate', option(i64())],
-      ['index', u32()],
+      ['index', u16()],
     ],
     { description: 'ExchangeRatePhase' }
   ) as Serializer<ExchangeRatePhaseArgs, ExchangeRatePhase>;

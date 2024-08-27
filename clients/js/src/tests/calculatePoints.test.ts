@@ -19,7 +19,6 @@ describe('calculatePoints', () => {
         stakingVault: {} as any,
         baseMintDecimals: 6,
         stakedSupply: 1_000_000n,
-        totalPointsIssued: 50_000n,
         depositCap: 10_000_000n,
         exchangeRateHistory: [],
         pointsHistory: [],

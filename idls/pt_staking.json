@@ -291,10 +291,6 @@
             "type": "u64"
           },
           {
-            "name": "totalPointsIssued",
-            "type": "u64"
-          },
-          {
             "name": "depositCap",
             "type": "u64"
           },
@@ -430,7 +426,7 @@
           },
           {
             "name": "index",
-            "type": "u32"
+            "type": "u16"
           }
         ]
       }
@@ -450,7 +446,7 @@
           },
           {
             "name": "index",
-            "type": "u32"
+            "type": "u16"
           }
         ]
       }
@@ -476,7 +472,7 @@
           },
           {
             "name": "index",
-            "type": "u32"
+            "type": "u16"
           }
         ]
       }

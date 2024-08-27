@@ -2,63 +2,71 @@ use anchor_lang::prelude::*;
 
 use crate::PtStakingError;
 
+pub const INITIAL_GLOBAL_CONFIG_SIZE: usize =
+    8 + 32 + 32 + 32 + 32 + 32 + 1 + 8 + 8 + 8 + 4 + 26 + 4 + 18 + 4 + 27;
+
+pub const INITIAL_USER_STAKE_SIZE: usize = 8 + 32 + 8 + 8 + 8 + 4;
+
+pub const BASE_YIELD_PHASE_SIZE: usize = 27;
+pub const POINTS_EARNED_PHASE_SIZE: usize = 18;
+pub const EXCHANGE_RATE_PHASE_SIZE: usize = 26;
+
 #[account]
-#[derive(InitSpace, Debug)]
+#[derive(Debug)]
 pub struct GlobalConfig {
-    pub bump: u8,
+    pub bump: u8, // 1
 
     // Authorities
-    pub owner: Pubkey,
-    pub pending_owner: Pubkey,
-    pub admin: Pubkey,
+    pub owner: Pubkey,         // 32
+    pub pending_owner: Pubkey, // 32
+    pub admin: Pubkey,         // 32
 
-    pub base_mint: Pubkey,
-    pub staking_vault: Pubkey,
-    pub base_mint_decimals: u8,
-    // pub baseline_yield_bps: u64,
-    pub staked_supply: u64,
-    pub total_points_issued: u64,
-    pub deposit_cap: u64,
-    #[max_len(10)]
-    pub exchange_rate_history: Vec<ExchangeRatePhase>,
-    #[max_len(10)]
-    pub points_history: Vec<PointsEarnedPhase>,
-    #[max_len(10)]
-    pub base_yield_history: Vec<BaseYieldPhase>,
+    // Mint infos
+    pub base_mint: Pubkey,      // 32
+    pub staking_vault: Pubkey,  // 32
+    pub base_mint_decimals: u8, // 1
+
+    // Other
+    pub staked_supply: u64, // 8
+    pub deposit_cap: u64,   // 8
+
+    // Histories
+    pub exchange_rate_history: Vec<ExchangeRatePhase>, // 4 + (26 * X)
+    pub points_history: Vec<PointsEarnedPhase>,        // 4 + (18 * X)
+    pub base_yield_history: Vec<BaseYieldPhase>,       // 4 + (27 * X)
 }
 
 #[account]
-#[derive(InitSpace, Debug)]
+#[derive(Debug)]
 pub struct UserStake {
-    pub user_pubkey: Pubkey,
-    pub staked_amount: u64,
-    pub initial_staking_timestamp: i64,
-    pub last_claim_timestamp: i64,
-    #[max_len(10)]
-    pub points_history: Vec<PointsEarnedPhase>,
+    pub user_pubkey: Pubkey,                    // 32
+    pub staked_amount: u64,                     // 8
+    pub initial_staking_timestamp: i64,         // 8
+    pub last_claim_timestamp: i64,              // 8
+    pub points_history: Vec<PointsEarnedPhase>, // 4 + (18 * X)
 }
 
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, InitSpace)]
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug)]
 pub struct ExchangeRatePhase {
-    pub exchange_rate: u64,
-    pub start_date: i64,
-    pub end_date: Option<i64>,
-    pub index: u32,
+    pub exchange_rate: u64,    // 8
+    pub start_date: i64,       // 8
+    pub end_date: Option<i64>, // 8
+    pub index: u16,            // 2
 }
 
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, InitSpace)]
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug)]
 pub struct PointsEarnedPhase {
-    pub exchange_rate: u64,
-    pub points: u64,
-    pub index: u32,
+    pub exchange_rate: u64, // 8
+    pub points: u64,        // 8
+    pub index: u16,         // 2
 }
 
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug, InitSpace)]
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug)]
 pub struct BaseYieldPhase {
-    pub base_yield_bps: u64,
-    pub start_date: i64,
-    pub end_date: Option<i64>,
-    pub index: u32,
+    pub base_yield_bps: u64,   // 8
+    pub start_date: i64,       // 8
+    pub end_date: Option<i64>, // 9
+    pub index: u16,            // 2
 }
 
 enum CombinedPhase<'a> {
@@ -234,22 +242,16 @@ impl GlobalConfig {
             {
                 existing_phase.points =
                     existing_phase.points.checked_add(new_phase.points).unwrap();
-
-                //store the global total points
-                self.total_points_issued = self
-                    .total_points_issued
-                    .checked_add(new_phase.points)
-                    .unwrap();
             } else {
                 self.points_history.push(new_phase.clone());
-
-                //store the global total points
-                self.total_points_issued = self
-                    .total_points_issued
-                    .checked_add(new_phase.points)
-                    .unwrap();
             }
         }
+
+        // Sort the points history by index to maintain order
+        self.points_history.sort_by_key(|phase| phase.index);
+
+        // Log the updated points history for debugging
+        msg!("Updated global points history: {:?}", self.points_history);
     }
 }
 
@@ -267,6 +269,12 @@ impl UserStake {
                 self.points_history.push(new_phase);
             }
         }
+
+        // Sort the points history by index to maintain order
+        self.points_history.sort_by_key(|phase| phase.index);
+
+        // Log the updated points history for debugging
+        msg!("Updated user points history: {:?}", self.points_history);
     }
 }
 
@@ -298,7 +306,6 @@ mod tests {
                 index: 0,
             }],
             staked_supply: 1_000_000,
-            total_points_issued: 50_000,
             deposit_cap: 10_000_000,
             exchange_rate_history: create_default_exchange_rate_phases(),
             points_history: create_default_points_earned_phases(),
@@ -362,7 +369,6 @@ mod tests {
         assert_eq!(global_config.staking_vault, Pubkey::default());
         assert_eq!(global_config.base_yield_history[0].base_yield_bps, 5);
         assert_eq!(global_config.staked_supply, 1_000_000);
-        assert_eq!(global_config.total_points_issued, 50_000);
         assert_eq!(global_config.deposit_cap, 10_000_000);
         assert_eq!(global_config.exchange_rate_history.len(), 2);
         assert_eq!(global_config.points_history.len(), 2);
@@ -399,12 +405,10 @@ mod tests {
             index: 1,
         });
         global_config.staked_supply = 2_000_000;
-        global_config.total_points_issued = 100_000;
 
         // Assertions after update
         assert_eq!(global_config.base_yield_history[1].base_yield_bps, 7);
         assert_eq!(global_config.staked_supply, 2_000_000);
-        assert_eq!(global_config.total_points_issued, 100_000);
     }
 
     #[test]

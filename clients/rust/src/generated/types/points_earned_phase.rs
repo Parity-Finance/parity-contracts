@@ -17,5 +17,5 @@ use borsh::{BorshDeserialize, BorshSerialize};
 pub struct PointsEarnedPhase {
     pub exchange_rate: u64,
     pub points: u64,
-    pub index: u32,
+    pub index: u16,
 }

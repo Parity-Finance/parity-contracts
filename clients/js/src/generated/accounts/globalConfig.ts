@@ -53,7 +53,6 @@ export type GlobalConfigAccountData = {
   stakingVault: PublicKey;
   baseMintDecimals: number;
   stakedSupply: bigint;
-  totalPointsIssued: bigint;
   depositCap: bigint;
   exchangeRateHistory: Array<ExchangeRatePhase>;
   pointsHistory: Array<PointsEarnedPhase>;
@@ -69,7 +68,6 @@ export type GlobalConfigAccountDataArgs = {
   stakingVault: PublicKey;
   baseMintDecimals: number;
   stakedSupply: number | bigint;
-  totalPointsIssued: number | bigint;
   depositCap: number | bigint;
   exchangeRateHistory: Array<ExchangeRatePhaseArgs>;
   pointsHistory: Array<PointsEarnedPhaseArgs>;
@@ -96,7 +94,6 @@ export function getGlobalConfigAccountDataSerializer(): Serializer<
         ['stakingVault', publicKeySerializer()],
         ['baseMintDecimals', u8()],
         ['stakedSupply', u64()],
-        ['totalPointsIssued', u64()],
         ['depositCap', u64()],
         ['exchangeRateHistory', array(getExchangeRatePhaseSerializer())],
         ['pointsHistory', array(getPointsEarnedPhaseSerializer())],
@@ -187,7 +184,6 @@ export function getGlobalConfigGpaBuilder(
       stakingVault: PublicKey;
       baseMintDecimals: number;
       stakedSupply: number | bigint;
-      totalPointsIssued: number | bigint;
       depositCap: number | bigint;
       exchangeRateHistory: Array<ExchangeRatePhaseArgs>;
       pointsHistory: Array<PointsEarnedPhaseArgs>;
@@ -202,9 +198,8 @@ export function getGlobalConfigGpaBuilder(
       stakingVault: [137, publicKeySerializer()],
       baseMintDecimals: [169, u8()],
       stakedSupply: [170, u64()],
-      totalPointsIssued: [178, u64()],
-      depositCap: [186, u64()],
-      exchangeRateHistory: [194, array(getExchangeRatePhaseSerializer())],
+      depositCap: [178, u64()],
+      exchangeRateHistory: [186, array(getExchangeRatePhaseSerializer())],
       pointsHistory: [null, array(getPointsEarnedPhaseSerializer())],
       baseYieldHistory: [null, array(getBaseYieldPhaseSerializer())],
     })
