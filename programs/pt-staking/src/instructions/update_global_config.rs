@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-use crate::{ExchangeRatePhase, GlobalConfig, PtStakingError};
+use crate::{BaseYieldPhase, ExchangeRatePhase, GlobalConfig, PtStakingError};
 
 #[derive(AnchorSerialize, AnchorDeserialize, Debug, Clone)]
 pub struct UpdateGlobalConfigParams {
@@ -29,10 +29,24 @@ pub struct UpdateGlobalConfig<'info> {
 impl UpdateGlobalConfig<'_> {
 pub fn handler(ctx: Context<UpdateGlobalConfig>, params: UpdateGlobalConfigParams) -> Result<()> {
     let global_config = &mut ctx.accounts.global_config;
+    let current_timestamp = Clock::get()?.unix_timestamp;
 
     // Update the baseline yield if provided
     if let Some(new_yield) = params.new_baseline_yield_bps {
-        global_config.baseline_yield_bps = new_yield;
+        // Close the current base yield phase by setting the end_date
+        if let Some(last_phase) = global_config.base_yield_history.last_mut() {
+            last_phase.end_date = Some(current_timestamp);
+        }
+
+        // Add a new phase to the base_yield_history
+        let new_phase = BaseYieldPhase {
+            base_yield_bps: new_yield,
+            start_date: current_timestamp,
+            end_date: None,
+            index: global_config.base_yield_history.len() as u32,
+        };
+
+        global_config.base_yield_history.push(new_phase);
     }
 
     // Update the deposit cap if provided

@@ -1,4 +1,4 @@
-use crate::{ExchangeRatePhase, GlobalConfig};
+use crate::{BaseYieldPhase, ExchangeRatePhase, GlobalConfig};
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
@@ -40,44 +40,50 @@ pub struct InitializeGlobalConfig<'info> {
     pub associated_token_program: Program<'info, AssociatedToken>,
 }
 
-
 impl InitializeGlobalConfig<'_> {
-pub fn handler(
-    ctx: Context<InitializeGlobalConfig>,
-    params: InitializeGlobalConfigParams,
-) -> Result<()> {
-    let global_config = &mut ctx.accounts.global_config;
-    let bump = ctx.bumps.global_config;
+    pub fn handler(
+        ctx: Context<InitializeGlobalConfig>,
+        params: InitializeGlobalConfigParams,
+    ) -> Result<()> {
+        let global_config = &mut ctx.accounts.global_config;
+        let bump = ctx.bumps.global_config;
 
-    // Authorities
-    global_config.owner = ctx.accounts.user.key();
-    global_config.admin = params.admin;
-    global_config.bump = bump;
+        // Authorities
+        global_config.owner = ctx.accounts.user.key();
+        global_config.admin = params.admin;
+        global_config.bump = bump;
 
-    //Token
-    global_config.base_mint = ctx.accounts.base_mint.key();
-    global_config.base_mint_decimals = ctx.accounts.base_mint.decimals;
-    global_config.staking_vault = ctx.accounts.vault.key();
+        //Token
+        global_config.base_mint = ctx.accounts.base_mint.key();
+        global_config.base_mint_decimals = ctx.accounts.base_mint.decimals;
+        global_config.staking_vault = ctx.accounts.vault.key();
 
-    //Other
-    global_config.baseline_yield_bps = params.baseline_yield_bps;
-    global_config.staked_supply = 0;
-    global_config.total_points_issued = 0;
-    global_config.deposit_cap = params.deposit_cap;
+        //Other
+        global_config.staked_supply = 0;
+        global_config.total_points_issued = 0;
+        global_config.deposit_cap = params.deposit_cap;
 
-    //Histories
-    //Initialize the exchange rate history with the initial exchange rate
-    let initial_phase = ExchangeRatePhase {
-        exchange_rate: params.initial_exchange_rate,
-        start_date: Clock::get()?.unix_timestamp, // Current timestamp
-        end_date: None,
-        index: 0,
-    };
-    global_config.exchange_rate_history = vec![initial_phase];
-    global_config.points_history = Vec::new();
+        // Histories
+        // Initialize the exchange rate history with the initial exchange rate
+        let initial_phase = ExchangeRatePhase {
+            exchange_rate: params.initial_exchange_rate,
+            start_date: Clock::get()?.unix_timestamp, // Current timestamp
+            end_date: None,
+            index: 0,
+        };
+        global_config.exchange_rate_history = vec![initial_phase];
 
+        // Initialize the base yield history with the initial base yield rate
+        let initial_base_yield_phase = BaseYieldPhase {
+            base_yield_bps: params.baseline_yield_bps,
+            start_date: Clock::get()?.unix_timestamp,
+            end_date: None,
+            index: 0,
+        };
+        global_config.base_yield_history = vec![initial_base_yield_phase];
 
+        global_config.points_history = Vec::new();
 
-    Ok(())
-}
+        Ok(())
+    }
 }

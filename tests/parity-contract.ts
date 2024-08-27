@@ -96,9 +96,6 @@ import {
   updateGlobalConfig,
   updateGlobalConfigOwner,
 } from "../clients/js/src/generated";
-// import { ProgramTestContext, start, startAnchor, BanksClient, Clock } from "solana-bankrun";
-// import { BankrunProvider } from "anchor-bankrun";
-// import { fastForward } from "./utils/utilts";
 
 describe.only("parity-issuance", () => {
   let umi = createUmi("http://localhost:8899");
@@ -411,7 +408,7 @@ describe.only("parity-issuance", () => {
 
     assert.equal(globalConfigAcc.baseMint, baseMint[0]);
     assert.equal(globalConfigAcc.baseMintDecimals, baseMintDecimals);
-    assert.equal(globalConfigAcc.baselineYieldBps, baselineYield);
+    assert.equal(globalConfigAcc.baseYieldHistory[0].baseYieldBps, baselineYield);
     assert.equal(globalConfigAcc.admin, umi.identity.publicKey);
     assert.equal(globalConfigAcc.depositCap, testDepositCapAmount);
     assert.equal(
@@ -2078,7 +2075,7 @@ describe.only("parity-issuance", () => {
     const globalConfigAcc = await safeFetchGlobalConfig(umi, globalConfig);
 
     assert.equal(
-      globalConfigAcc.baselineYieldBps,
+      globalConfigAcc.baseYieldHistory[-1].baseYieldBps,
       newBaselineYield,
       "base line yield should be updated"
     );

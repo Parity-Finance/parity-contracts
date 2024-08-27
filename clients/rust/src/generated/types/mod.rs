@@ -5,8 +5,10 @@
 //! [https://github.com/metaplex-foundation/kinobi]
 //!
 
+pub(crate) mod r#base_yield_phase;
 pub(crate) mod r#exchange_rate_phase;
 pub(crate) mod r#points_earned_phase;
 
+pub use self::r#base_yield_phase::*;
 pub use self::r#exchange_rate_phase::*;
 pub use self::r#points_earned_phase::*;

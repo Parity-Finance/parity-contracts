@@ -6,5 +6,6 @@
  * @see https://github.com/metaplex-foundation/kinobi
  */
 
+export * from './baseYieldPhase';
 export * from './exchangeRatePhase';
 export * from './pointsEarnedPhase';

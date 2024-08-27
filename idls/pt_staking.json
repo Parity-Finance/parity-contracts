@@ -287,10 +287,6 @@
             "type": "u8"
           },
           {
-            "name": "baselineYieldBps",
-            "type": "u64"
-          },
-          {
             "name": "stakedSupply",
             "type": "u64"
           },
@@ -315,6 +311,14 @@
             "type": {
               "vec": {
                 "defined": "PointsEarnedPhase"
+              }
+            }
+          },
+          {
+            "name": "baseYieldHistory",
+            "type": {
+              "vec": {
+                "defined": "BaseYieldPhase"
               }
             }
           }
@@ -443,6 +447,32 @@
           {
             "name": "points",
             "type": "u64"
+          },
+          {
+            "name": "index",
+            "type": "u32"
+          }
+        ]
+      }
+    },
+    {
+      "name": "BaseYieldPhase",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "baseYieldBps",
+            "type": "u64"
+          },
+          {
+            "name": "startDate",
+            "type": "i64"
+          },
+          {
+            "name": "endDate",
+            "type": {
+              "option": "i64"
+            }
           },
           {
             "name": "index",

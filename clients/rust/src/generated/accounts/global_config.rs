@@ -5,6 +5,7 @@
 //! [https://github.com/metaplex-foundation/kinobi]
 //!
 
+use crate::generated::types::BaseYieldPhase;
 use crate::generated::types::ExchangeRatePhase;
 use crate::generated::types::PointsEarnedPhase;
 #[cfg(feature = "anchor")]
@@ -46,12 +47,12 @@ pub struct GlobalConfig {
     )]
     pub staking_vault: Pubkey,
     pub base_mint_decimals: u8,
-    pub baseline_yield_bps: u64,
     pub staked_supply: u64,
     pub total_points_issued: u64,
     pub deposit_cap: u64,
     pub exchange_rate_history: Vec<ExchangeRatePhase>,
     pub points_history: Vec<PointsEarnedPhase>,
+    pub base_yield_history: Vec<BaseYieldPhase>,
 }
 
 impl GlobalConfig {

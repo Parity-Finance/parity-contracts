@@ -30,10 +30,13 @@ import {
   u8,
 } from '@metaplex-foundation/umi/serializers';
 import {
+  BaseYieldPhase,
+  BaseYieldPhaseArgs,
   ExchangeRatePhase,
   ExchangeRatePhaseArgs,
   PointsEarnedPhase,
   PointsEarnedPhaseArgs,
+  getBaseYieldPhaseSerializer,
   getExchangeRatePhaseSerializer,
   getPointsEarnedPhaseSerializer,
 } from '../types';
@@ -49,12 +52,12 @@ export type GlobalConfigAccountData = {
   baseMint: PublicKey;
   stakingVault: PublicKey;
   baseMintDecimals: number;
-  baselineYieldBps: bigint;
   stakedSupply: bigint;
   totalPointsIssued: bigint;
   depositCap: bigint;
   exchangeRateHistory: Array<ExchangeRatePhase>;
   pointsHistory: Array<PointsEarnedPhase>;
+  baseYieldHistory: Array<BaseYieldPhase>;
 };
 
 export type GlobalConfigAccountDataArgs = {
@@ -65,12 +68,12 @@ export type GlobalConfigAccountDataArgs = {
   baseMint: PublicKey;
   stakingVault: PublicKey;
   baseMintDecimals: number;
-  baselineYieldBps: number | bigint;
   stakedSupply: number | bigint;
   totalPointsIssued: number | bigint;
   depositCap: number | bigint;
   exchangeRateHistory: Array<ExchangeRatePhaseArgs>;
   pointsHistory: Array<PointsEarnedPhaseArgs>;
+  baseYieldHistory: Array<BaseYieldPhaseArgs>;
 };
 
 export function getGlobalConfigAccountDataSerializer(): Serializer<
@@ -92,12 +95,12 @@ export function getGlobalConfigAccountDataSerializer(): Serializer<
         ['baseMint', publicKeySerializer()],
         ['stakingVault', publicKeySerializer()],
         ['baseMintDecimals', u8()],
-        ['baselineYieldBps', u64()],
         ['stakedSupply', u64()],
         ['totalPointsIssued', u64()],
         ['depositCap', u64()],
         ['exchangeRateHistory', array(getExchangeRatePhaseSerializer())],
         ['pointsHistory', array(getPointsEarnedPhaseSerializer())],
+        ['baseYieldHistory', array(getBaseYieldPhaseSerializer())],
       ],
       { description: 'GlobalConfigAccountData' }
     ),
@@ -183,12 +186,12 @@ export function getGlobalConfigGpaBuilder(
       baseMint: PublicKey;
       stakingVault: PublicKey;
       baseMintDecimals: number;
-      baselineYieldBps: number | bigint;
       stakedSupply: number | bigint;
       totalPointsIssued: number | bigint;
       depositCap: number | bigint;
       exchangeRateHistory: Array<ExchangeRatePhaseArgs>;
       pointsHistory: Array<PointsEarnedPhaseArgs>;
+      baseYieldHistory: Array<BaseYieldPhaseArgs>;
     }>({
       discriminator: [0, array(u8(), { size: 8 })],
       bump: [8, u8()],
@@ -198,12 +201,12 @@ export function getGlobalConfigGpaBuilder(
       baseMint: [105, publicKeySerializer()],
       stakingVault: [137, publicKeySerializer()],
       baseMintDecimals: [169, u8()],
-      baselineYieldBps: [170, u64()],
-      stakedSupply: [178, u64()],
-      totalPointsIssued: [186, u64()],
-      depositCap: [194, u64()],
-      exchangeRateHistory: [202, array(getExchangeRatePhaseSerializer())],
+      stakedSupply: [170, u64()],
+      totalPointsIssued: [178, u64()],
+      depositCap: [186, u64()],
+      exchangeRateHistory: [194, array(getExchangeRatePhaseSerializer())],
       pointsHistory: [null, array(getPointsEarnedPhaseSerializer())],
+      baseYieldHistory: [null, array(getBaseYieldPhaseSerializer())],
     })
     .deserializeUsing<GlobalConfig>((account) =>
       deserializeGlobalConfig(account)
