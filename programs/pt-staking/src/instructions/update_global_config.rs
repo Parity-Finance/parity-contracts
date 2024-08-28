@@ -89,17 +89,11 @@ impl UpdateGlobalConfig<'_> {
             let current_space = global_config.to_account_info().data_len();
             let required_space = current_space.checked_add(additional_space).unwrap();
 
-            msg!("current_space: {}", current_space);
-
             let rent = Rent::get()?;
             let new_minimum_balance = rent.minimum_balance(required_space);
 
-            msg!("new_minimum_balance: {}", new_minimum_balance);
-
             let lamports_diff =
                 new_minimum_balance.saturating_sub(global_config.to_account_info().lamports());
-
-            msg!("lamports_diff: {}", lamports_diff);
 
             if lamports_diff > 0 {
                 transfer(

@@ -80,10 +80,6 @@ impl GlobalConfig {
             .checked_add(quote_amount as u128)
             .ok_or(PtStakingError::CalculationOverflow)?;
 
-        msg!("quote_amount: {}", quote_amount);
-        msg!("vault_amount: {}", vault_amount);
-        msg!("deposit_cap: {}", self.deposit_cap);
-
         if new_vault_amount > self.deposit_cap as u128 {
             return err!(PtStakingError::DepositCapExceeded);
         }
@@ -251,7 +247,7 @@ impl GlobalConfig {
         self.points_history.sort_by_key(|phase| phase.index);
 
         // Log the updated points history for debugging
-        msg!("Updated global points history: {:?}", self.points_history);
+        // msg!("Updated global points history: {:?}", self.points_history);
     }
 }
 
@@ -274,7 +270,7 @@ impl UserStake {
         self.points_history.sort_by_key(|phase| phase.index);
 
         // Log the updated points history for debugging
-        msg!("Updated user points history: {:?}", self.points_history);
+        // msg!("Updated user points history: {:?}", self.points_history);
     }
 }
 

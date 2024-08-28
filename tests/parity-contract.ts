@@ -373,7 +373,7 @@ describe.only("parity-issuance", () => {
       })
     );
 
-    await txBuilder.sendAndConfirm(umi, { send: { skipPreflight: true } });
+    await txBuilder.sendAndConfirm(umi, { send: { skipPreflight: false } });
 
     const stakePoolAcc = await safeFetchPoolManager(umi, poolManager);
     const xMintAcc = await safeFetchMint(umi, xMint);
@@ -407,7 +407,7 @@ describe.only("parity-issuance", () => {
       })
     );
 
-    await txBuilder.sendAndConfirm(umi, { send: { skipPreflight: true } });
+    await txBuilder.sendAndConfirm(umi, { send: { skipPreflight: false } });
 
     const globalConfigAcc = await safeFetchGlobalConfig(umi, globalConfig);
 
@@ -1919,7 +1919,7 @@ describe.only("parity-issuance", () => {
     );
     // console.log("Exchange Rate: ", exchangeRate);
 
-    await txBuilder.sendAndConfirm(umi, { send: { skipPreflight: true } });
+    await txBuilder.sendAndConfirm(umi, { send: { skipPreflight: false } });
 
     const stakePoolAcc = await safeFetchPoolManager(umi, poolManager);
     const xMintAcc = await safeFetchMint(umi, xMint);
@@ -2311,7 +2311,7 @@ describe.only("parity-issuance", () => {
   });
 
   // START: PT Staking program
-  it("baseMint can be staked in PT Staking", async () => {
+  it.only("baseMint can be staked in PT Staking", async () => {
     let quantity = 1000 * 10 ** baseMintDecimals;
 
     // Attempt staking without creating the userStake acccount
@@ -2399,7 +2399,7 @@ describe.only("parity-issuance", () => {
     assert.equal(globalConfigAcc.stakingVault, vaultAcc.publicKey);
   });
 
-  it("baseMint can be unstaked in PT Staking", async () => {
+  it.only("baseMint can be unstaked in PT Staking", async () => {
     let quantity = 1000 * 10 ** baseMintDecimals;
 
     // Fetch accounts before unstaking
@@ -2536,7 +2536,7 @@ describe.only("parity-issuance", () => {
     umi.use(keypairIdentity(fromWeb3JsKeypair(keypair))); // Switch back to  admin
   });
 
-  it("should initiate and accept global config owner update", async () => {
+  it.only("should initiate and accept global config owner update", async () => {
     const newOwner = umi.eddsa.generateKeypair();
 
     await umi.rpc.airdrop(
@@ -2623,7 +2623,7 @@ describe.only("parity-issuance", () => {
     );
   });
 
-  it("should update Pt Staking global config", async () => {
+  it.only("should update Pt Staking global config", async () => {
     const notOwner = umi.eddsa.generateKeypair();
     const newBaselineYield = 5000; // For 50%
     const newExchangeRatePtStaking = 30 * 10 ** baseMintDecimals;
@@ -2747,7 +2747,7 @@ describe.only("parity-issuance", () => {
     );
   });
 
-  it("dynamically increases account size for exchange rate and points history, and verifies PT staking reallocation", async () => {
+  it.only("dynamically increases account size for exchange rate and points history, and verifies PT staking reallocation", async () => {
     const maxPhases = 5;
     let quantity = 100 * 10 ** baseMintDecimals;
 
@@ -2785,13 +2785,26 @@ describe.only("parity-issuance", () => {
 
     await txBuilder.sendAndConfirm(umi);
 
+    // const _globalConfigAcc = await safeFetchGlobalConfig(umi, globalConfig);
+    // const _globalUserStake = await safeFetchUserStake(umi, userStakePDA);
+    // console.log("Original global points:", _globalConfigAcc.pointsHistory);
+    // console.log("Original global user points:", _globalUserStake.pointsHistory);
+
     // Function to create a new exchange rate phase
     const createExchangeRatePhase = (index: number) =>
       (20 - index) * 10 ** baseMintDecimals; // Increase exchange rate each time
 
-    // Add phases and stake sequentially
+    // Function to create a new baseline yield rate
+    const createBaselineYieldRate = (index: number) => {
+      const baseRate = 2000; // 20% as basis points
+      const increment = 300; // 3% increment as basis points
+      return baseRate + (index * increment);
+    };
+
+    // Add phases 
     for (let i = globalConfigAcc.exchangeRateHistory.length; i < maxPhases; i++) {
       const newExchangeRate = createExchangeRatePhase(i);
+      const newBaselineYieldBps = createBaselineYieldRate(i);
 
       // Update global config (exchange rate)
       let updateConfigTxBuilder = new TransactionBuilder();
@@ -2799,7 +2812,7 @@ describe.only("parity-issuance", () => {
         updateGlobalConfig(umi, {
           globalConfig,
           owner: umi.identity,
-          newBaselineYieldBps: null,
+          newBaselineYieldBps: newBaselineYieldBps,
           newExchangeRate: newExchangeRate,
           newDepositCap: null,
         })
@@ -2816,7 +2829,8 @@ describe.only("parity-issuance", () => {
         `Phase ${i} added. Current exchange rate history size:`,
         globalConfigAcc.exchangeRateHistory.length
       );
-      console.log("Last exchange rate phase:", globalConfigAcc.exchangeRateHistory[i]);
+      // console.log("Last exchange rate phase:", globalConfigAcc.exchangeRateHistory[i]);
+      // console.log("Last base yield phase:", globalConfigAcc.baseYieldHistory[globalConfigAcc.baseYieldHistory.length - 1]);
 
       // Add another delay after staking
       await new Promise((resolve) => setTimeout(resolve, 10000));
@@ -2827,7 +2841,48 @@ describe.only("parity-issuance", () => {
         Number(globalConfigAcc.exchangeRateHistory[i].exchangeRate),
         newExchangeRate
       );
+
+      assert.strictEqual(Number(globalConfigAcc.baseYieldHistory[globalConfigAcc.baseYieldHistory.length - 1].baseYieldBps), newBaselineYieldBps);
     }
+
+    // Confirmation
+    let postGlobalConfigAcc = await safeFetchGlobalConfig(umi, globalConfig);
+    // console.log("post global points:", postGlobalConfigAcc.pointsHistory.sort((a, b) => a.index - b.index));
+    let postUserStakeAcc = await safeFetchUserStake(umi, userStakePDA);
+    // console.log("post user points:", postUserStakeAcc.pointsHistory.sort((a, b) => a.index - b.index));
+
+    const points = calculatePoints(
+      postGlobalConfigAcc,
+      postUserStakeAcc.stakedAmount,
+      Number(postUserStakeAcc.lastClaimTimestamp),
+      Math.round(Date.now() / 1000)
+    );
+
+    console.log("Points calculated:", points);
+
+    // Create arrays with expected global and user points
+    const expectedGlobalPoints = [...postGlobalConfigAcc.pointsHistory, ...points].reduce((acc, phase) => {
+      const existingPhase = acc.find(p => p.index === phase.index);
+      if (existingPhase) {
+        existingPhase.points += phase.points;
+      } else {
+        acc.push({ ...phase });
+      }
+      return acc;
+    }, []).sort((a, b) => a.index - b.index);
+
+    const expectedUserPoints = [...postUserStakeAcc.pointsHistory, ...points].reduce((acc, phase) => {
+      const existingPhase = acc.find(p => p.index === phase.index);
+      if (existingPhase) {
+        existingPhase.points += phase.points;
+      } else {
+        acc.push({ ...phase });
+      }
+      return acc;
+    }, []).sort((a, b) => a.index - b.index);
+
+    console.log("Expected Global Points:", expectedGlobalPoints);
+    console.log("Expected User Points:", expectedUserPoints);
 
     // Perform unstaking
     txBuilder = new TransactionBuilder();
@@ -2849,52 +2904,47 @@ describe.only("parity-issuance", () => {
     const finalGlobalConfigAcc = await safeFetchGlobalConfig(umi, globalConfig);
     const finalUserStakeAcc = await safeFetchUserStake(umi, userStakePDA);
 
+    // Compare expected points with actual points
+    expectedGlobalPoints.forEach((phase, index) => {
+      const actualPhasePoints = finalGlobalConfigAcc.pointsHistory.find(p => p.index === phase.index).points
 
-    const points = calculatePoints(
-      finalGlobalConfigAcc,
-      finalUserStakeAcc.stakedAmount,
-      Number(finalUserStakeAcc.lastClaimTimestamp),
-      Math.round(Date.now() / 1000)
-    );
+      assert.ok(
+        BigInt(phase.points) === actualPhasePoints,
+        `Global points mismatch at index ${index}. Expected: ${phase.points}, Actual: ${actualPhasePoints}`
+      );
+    });
 
-    console.log("Points expected:", points);
+    expectedUserPoints.forEach((phase, index) => {
+      const actualPhasePoints = finalUserStakeAcc.pointsHistory.find(p => p.index === phase.index).points
 
-    console.log(
-      "Final exchange rate history:",
-      finalGlobalConfigAcc.exchangeRateHistory.map((phase, index) => {
-        const timeElapsed = unwrapOption(phase.endDate) ? unwrapOption(phase.endDate) - phase.startDate : 0;
-        return {
-          ...phase,
-          index,
-          timeElapsed,
-        };
-      })
-    );
-    console.log("Final points history:", finalUserStakeAcc.pointsHistory.sort((a, b) => a.index - b.index));
+      assert.ok(
+        BigInt(phase.points) === actualPhasePoints,
+        `User points mismatch at index ${index}. Expected: ${phase.points}, Actual: ${actualPhasePoints}`
+      );
+    });
 
-    assert.strictEqual(
-      finalGlobalConfigAcc.exchangeRateHistory.length,
-      maxPhases
-    );
-    // assert.ok(
-    //   finalUserStakeAcc.pointsHistory.length > 1,
-    //   "Points history should have grown"
+    // console.log(
+    //   "Final exchange rate history:",
+    //   finalGlobalConfigAcc.exchangeRateHistory.map((phase, index) => {
+    //     const timeElapsed = unwrapOption(phase.endDate) ? unwrapOption(phase.endDate) - phase.startDate : 0;
+    //     return {
+    //       ...phase,
+    //       index,
+    //       timeElapsed,
+    //     };
+    //   })
     // );
-    assert.ok(
-      finalUserStakeAcc.stakedAmount > BigInt(0),
-      "Staking should have occurred"
-    );
+    // console.log("Final points history user:", finalUserStakeAcc.pointsHistory.sort((a, b) => a.index - b.index));
+    // console.log("Final points history global:", finalGlobalConfigAcc.pointsHistory.sort((a, b) => a.index - b.index));
   });
 
   it("should handle multiple deposits in PT Staking and multiple exchange rates, confirming recent claims", async () => {
     const initialDeposit = 1000 * 10 ** baseMintDecimals;
     const smallDeposit = 1 * 10 ** baseMintDecimals;
-    const delay = 10000; // 10 seconds delay
+    const delay = 1000; // 10 seconds delay
 
     let previousStakeTimestamp: number;
     let finalDepositTimestamp: number;
-
-
 
     // Create userStake acccount
     let txBuilder = new TransactionBuilder();
@@ -2940,7 +2990,7 @@ describe.only("parity-issuance", () => {
 
     let userStakeAcc = await safeFetchUserStake(umi, userStakePDA);
     previousStakeTimestamp = Number(userStakeAcc.lastClaimTimestamp);
-    console.log("Initial stake timestamp:", previousStakeTimestamp);
+    // console.log("Initial stake timestamp:", previousStakeTimestamp);
 
     // Function to update exchange rate and perform a small deposit
     const updateRateAndDeposit = async (newRate: number) => {
@@ -3038,10 +3088,10 @@ describe.only("parity-issuance", () => {
     }
   });
 
-  it.only("should handle multiple deposits in PT Staking, with a single exchange rate", async () => {
+  it("should handle multiple deposits in PT Staking, with a single exchange rate", async () => {
     const initialDeposit = 1000 * 10 ** baseMintDecimals;
     const smallDeposit = 1 * 10 ** baseMintDecimals;
-    const delay = 10000; // 10 seconds delay
+    const delay = 1000; // 10 seconds delay
 
     let previousStakeTimestamp: number;
     let finalDepositTimestamp: number;
@@ -3094,7 +3144,7 @@ describe.only("parity-issuance", () => {
 
     let userStakeAcc = await safeFetchUserStake(umi, userStakePDA);
     previousStakeTimestamp = Number(userStakeAcc.lastClaimTimestamp);
-    console.log("Initial stake timestamp:", previousStakeTimestamp);
+    // console.log("Initial stake timestamp:", previousStakeTimestamp);
 
     // Function to perform a small deposit
     const performSmallDeposit = async () => {
@@ -3134,6 +3184,7 @@ describe.only("parity-issuance", () => {
 
     // Verify points calculation
     globalConfigAcc = await safeFetchGlobalConfig(umi, globalConfig);
+
     const points = calculatePoints(
       globalConfigAcc,
       expectedStakedAmount,
@@ -3169,5 +3220,4 @@ describe.only("parity-issuance", () => {
       "Exchange rate in points history should match the initial rate"
     );
   });
-
 });
