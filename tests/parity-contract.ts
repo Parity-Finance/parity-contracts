@@ -2311,7 +2311,7 @@ describe.only("parity-issuance", () => {
   });
 
   // START: PT Staking program
-  it.only("baseMint can be staked in PT Staking", async () => {
+  it("baseMint can be staked in PT Staking", async () => {
     let quantity = 1000 * 10 ** baseMintDecimals;
 
     // Attempt staking without creating the userStake acccount
@@ -2399,7 +2399,7 @@ describe.only("parity-issuance", () => {
     assert.equal(globalConfigAcc.stakingVault, vaultAcc.publicKey);
   });
 
-  it.only("baseMint can be unstaked in PT Staking", async () => {
+  it("baseMint can be unstaked in PT Staking", async () => {
     let quantity = 1000 * 10 ** baseMintDecimals;
 
     // Fetch accounts before unstaking
@@ -2536,7 +2536,7 @@ describe.only("parity-issuance", () => {
     umi.use(keypairIdentity(fromWeb3JsKeypair(keypair))); // Switch back to  admin
   });
 
-  it.only("should initiate and accept global config owner update", async () => {
+  it("should initiate and accept global config owner update", async () => {
     const newOwner = umi.eddsa.generateKeypair();
 
     await umi.rpc.airdrop(
@@ -2623,7 +2623,7 @@ describe.only("parity-issuance", () => {
     );
   });
 
-  it.only("should update Pt Staking global config", async () => {
+  it("should update Pt Staking global config", async () => {
     const notOwner = umi.eddsa.generateKeypair();
     const newBaselineYield = 5000; // For 50%
     const newExchangeRatePtStaking = 30 * 10 ** baseMintDecimals;
@@ -2747,7 +2747,7 @@ describe.only("parity-issuance", () => {
     );
   });
 
-  it.only("dynamically increases account size for exchange rate and points history, and verifies PT staking reallocation", async () => {
+  it("dynamically increases account size for exchange rate and points history, and verifies PT staking reallocation", async () => {
     const maxPhases = 5;
     let quantity = 100 * 10 ** baseMintDecimals;
 
@@ -2885,4 +2885,289 @@ describe.only("parity-issuance", () => {
       "Staking should have occurred"
     );
   });
+
+  it("should handle multiple deposits in PT Staking and multiple exchange rates, confirming recent claims", async () => {
+    const initialDeposit = 1000 * 10 ** baseMintDecimals;
+    const smallDeposit = 1 * 10 ** baseMintDecimals;
+    const delay = 10000; // 10 seconds delay
+
+    let previousStakeTimestamp: number;
+    let finalDepositTimestamp: number;
+
+
+
+    // Create userStake acccount
+    let txBuilder = new TransactionBuilder();
+
+    txBuilder = txBuilder.add(
+      initPtStake(umi, {
+        userStake: userStakePDA,
+        user: umi.identity,
+      })
+    );
+
+    await txBuilder.sendAndConfirm(umi);
+
+    // Increase the deposit cap
+    let newDepositCap = testDepositCapAmount * 100;
+    txBuilder = new TransactionBuilder();
+    txBuilder = txBuilder.add(
+      updateGlobalConfig(umi, {
+        globalConfig,
+        owner: umi.identity,
+        newBaselineYieldBps: null,
+        newExchangeRate: null,
+        newDepositCap: newDepositCap,
+      })
+    );
+    await txBuilder.sendAndConfirm(umi);
+
+    // Initial deposit
+    txBuilder = new TransactionBuilder();
+    txBuilder = txBuilder.add(
+      ptStake(umi, {
+        globalConfig,
+        userStake: userStakePDA,
+        baseMint: baseMint,
+        userBaseMintAta: userBase,
+        user: umi.identity,
+        vault: vaultStakingPDA,
+        associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
+        quantity: initialDeposit,
+      })
+    );
+    await txBuilder.sendAndConfirm(umi);
+
+    let userStakeAcc = await safeFetchUserStake(umi, userStakePDA);
+    previousStakeTimestamp = Number(userStakeAcc.lastClaimTimestamp);
+    console.log("Initial stake timestamp:", previousStakeTimestamp);
+
+    // Function to update exchange rate and perform a small deposit
+    const updateRateAndDeposit = async (newRate: number) => {
+      // Update exchange rate
+      let updateTxBuilder = new TransactionBuilder();
+      updateTxBuilder = updateTxBuilder.add(
+        updateGlobalConfig(umi, {
+          globalConfig,
+          owner: umi.identity,
+          newBaselineYieldBps: null,
+          newExchangeRate: newRate,
+          newDepositCap: null,
+        })
+      );
+      await updateTxBuilder.sendAndConfirm(umi);
+
+      // Perform small deposit
+      let stakeTxBuilder = new TransactionBuilder();
+      stakeTxBuilder = stakeTxBuilder.add(
+        ptStake(umi, {
+          globalConfig,
+          userStake: userStakePDA,
+          baseMint: baseMint,
+          userBaseMintAta: userBase,
+          user: umi.identity,
+          vault: vaultStakingPDA,
+          associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
+          quantity: smallDeposit,
+        })
+      );
+      await stakeTxBuilder.sendAndConfirm(umi);
+    };
+
+    // Perform multiple small deposits with delays and rate changes
+    const newRates = [25 * 10 ** baseMintDecimals, 30 * 10 ** baseMintDecimals, 35 * 10 ** baseMintDecimals];
+    for (let i = 0; i < 3; i++) {
+      await new Promise(resolve => setTimeout(resolve, delay));
+      await updateRateAndDeposit(newRates[i]);
+      userStakeAcc = await safeFetchUserStake(umi, userStakePDA);
+      finalDepositTimestamp = Number(userStakeAcc.lastClaimTimestamp);
+      console.log(`Deposit ${i + 1} timestamp:`, finalDepositTimestamp);
+
+      if (i < 2) {
+        previousStakeTimestamp = finalDepositTimestamp;
+      }
+    }
+
+    // Final check after deposits
+    userStakeAcc = await safeFetchUserStake(umi, userStakePDA);
+    console.log("Previous stake timestamp:", previousStakeTimestamp);
+    console.log("Final deposit timestamp:", finalDepositTimestamp);
+
+    // Calculate expected staked amount
+    const expectedStakedAmount = BigInt(initialDeposit) + BigInt(smallDeposit) * 3n;
+    assert.equal(userStakeAcc.stakedAmount, expectedStakedAmount, "Staked amount should match total deposits");
+
+    // Verify points calculation
+    const globalConfigAcc = await safeFetchGlobalConfig(umi, globalConfig);
+    const points = calculatePoints(
+      globalConfigAcc,
+      expectedStakedAmount,
+      previousStakeTimestamp,
+      finalDepositTimestamp
+    );
+
+    console.log("Calculated points:", points);
+    console.log("User stake points history:", userStakeAcc.pointsHistory);
+
+    // Check if the points in history match the calculated points
+    if (userStakeAcc.pointsHistory.length > 0) {
+      const lastPointsEntry = userStakeAcc.pointsHistory[userStakeAcc.pointsHistory.length - 1];
+      const calculatedLastPointsEntry = points[points.length - 1];
+      const difference = Math.abs(Number(lastPointsEntry.points) - Number(calculatedLastPointsEntry.points));
+      const tolerance = Math.max(1, Math.floor(Number(calculatedLastPointsEntry.points) * 0.01)); // 1% tolerance or at least 1 point
+      assert.ok(
+        difference <= tolerance,
+        `Last points entry (${lastPointsEntry.points}) should be close to calculated points (${calculatedLastPointsEntry.points}). Difference: ${difference}, Tolerance: ${tolerance}`
+      );
+    }
+
+    // Assert that we have multiple phases in the points history
+    assert.ok(
+      userStakeAcc.pointsHistory.length > 1,
+      "There should be multiple phases in the points history"
+    );
+
+    // Assert that the exchange rates in the points history match the ones we set
+    const expectedRates = [20 * 10 ** baseMintDecimals, ...newRates]; // Include initial rate
+    for (let i = 0; i < userStakeAcc.pointsHistory.length; i++) {
+      assert.equal(
+        userStakeAcc.pointsHistory[i].exchangeRate,
+        BigInt(expectedRates[i]),
+        `Exchange rate for phase ${i} should match the set rate`
+      );
+    }
+  });
+
+  it.only("should handle multiple deposits in PT Staking, with a single exchange rate", async () => {
+    const initialDeposit = 1000 * 10 ** baseMintDecimals;
+    const smallDeposit = 1 * 10 ** baseMintDecimals;
+    const delay = 10000; // 10 seconds delay
+
+    let previousStakeTimestamp: number;
+    let finalDepositTimestamp: number;
+
+    // Create userStake acccount
+    let txBuilder = new TransactionBuilder();
+
+    txBuilder = txBuilder.add(
+      initPtStake(umi, {
+        userStake: userStakePDA,
+        user: umi.identity,
+      })
+    );
+
+    await txBuilder.sendAndConfirm(umi);
+
+    // Increase the deposit cap
+    let newDepositCap = testDepositCapAmount * 100;
+    txBuilder = new TransactionBuilder();
+    txBuilder = txBuilder.add(
+      updateGlobalConfig(umi, {
+        globalConfig,
+        owner: umi.identity,
+        newBaselineYieldBps: null,
+        newExchangeRate: null,
+        newDepositCap: newDepositCap,
+      })
+    );
+    await txBuilder.sendAndConfirm(umi);
+
+    // Get initial exchange rate
+    let globalConfigAcc = await safeFetchGlobalConfig(umi, globalConfig);
+    const exchangeRate = globalConfigAcc.exchangeRateHistory[0].exchangeRate;
+
+    // Initial deposit
+    txBuilder = new TransactionBuilder();
+    txBuilder = txBuilder.add(
+      ptStake(umi, {
+        globalConfig,
+        userStake: userStakePDA,
+        baseMint: baseMint,
+        userBaseMintAta: userBase,
+        user: umi.identity,
+        vault: vaultStakingPDA,
+        associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
+        quantity: initialDeposit,
+      })
+    );
+    await txBuilder.sendAndConfirm(umi);
+
+    let userStakeAcc = await safeFetchUserStake(umi, userStakePDA);
+    previousStakeTimestamp = Number(userStakeAcc.lastClaimTimestamp);
+    console.log("Initial stake timestamp:", previousStakeTimestamp);
+
+    // Function to perform a small deposit
+    const performSmallDeposit = async () => {
+      let stakeTxBuilder = new TransactionBuilder();
+      stakeTxBuilder = stakeTxBuilder.add(
+        ptStake(umi, {
+          globalConfig,
+          userStake: userStakePDA,
+          baseMint: baseMint,
+          userBaseMintAta: userBase,
+          user: umi.identity,
+          vault: vaultStakingPDA,
+          associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
+          quantity: smallDeposit,
+        })
+      );
+      await stakeTxBuilder.sendAndConfirm(umi);
+    };
+
+    // Perform multiple small deposits with delays
+    for (let i = 0; i < 3; i++) {
+      await new Promise(resolve => setTimeout(resolve, delay));
+      await performSmallDeposit();
+      userStakeAcc = await safeFetchUserStake(umi, userStakePDA);
+      finalDepositTimestamp = Number(userStakeAcc.lastClaimTimestamp);
+      console.log(`Deposit ${i + 1} timestamp:`, finalDepositTimestamp);
+    }
+
+    // Final check after deposits
+    userStakeAcc = await safeFetchUserStake(umi, userStakePDA);
+    console.log("Previous stake timestamp:", previousStakeTimestamp);
+    console.log("Final deposit timestamp:", finalDepositTimestamp);
+
+    // Calculate expected staked amount
+    const expectedStakedAmount = BigInt(initialDeposit) + BigInt(smallDeposit) * 3n;
+    assert.equal(userStakeAcc.stakedAmount, expectedStakedAmount, "Staked amount should match total deposits");
+
+    // Verify points calculation
+    globalConfigAcc = await safeFetchGlobalConfig(umi, globalConfig);
+    const points = calculatePoints(
+      globalConfigAcc,
+      expectedStakedAmount,
+      previousStakeTimestamp,
+      finalDepositTimestamp
+    );
+
+    console.log("Calculated points:", points);
+    console.log("User stake points history:", userStakeAcc.pointsHistory);
+
+    // Assert that we only have one phase in the points history
+    assert.equal(
+      userStakeAcc.pointsHistory.length,
+      1,
+      "There should be only one phase in the points history"
+    );
+
+    // Check if the points in history match the calculated points
+    const pointsEntry = userStakeAcc.pointsHistory[0];
+    const calculatedPoints = points[0].points;
+    const difference = Math.abs(Number(pointsEntry.points) - Number(calculatedPoints));
+    const tolerance = Math.max(1, Math.floor(Number(calculatedPoints) * 0.01)); // 1% tolerance or at least 1 point
+
+    assert.ok(
+      difference <= tolerance,
+      `Points entry (${pointsEntry.points}) should be close to calculated points (${calculatedPoints}). Difference: ${difference}, Tolerance: ${tolerance}`
+    );
+
+    // Assert that the exchange rate in the points history matches the initial rate
+    assert.equal(
+      pointsEntry.exchangeRate,
+      exchangeRate,
+      "Exchange rate in points history should match the initial rate"
+    );
+  });
+
 });
