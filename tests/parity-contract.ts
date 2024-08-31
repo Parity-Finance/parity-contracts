@@ -38,17 +38,11 @@ describe("parity-contract", () => {
     await txBuilder.sendAndConfirm(env.umi)
   });
 
-  describe("parity-issuance", () => {
-    it.only("runs issuance tests", () => {
-      console.log("Running issuance tests with env:", !!env);
-      issuanceTests.runIssuanceTests(env);
-    });
+  describe("parity-issuance", function () {
+    issuanceTests.runIssuanceTests(() => env);
   });
 
-  describe("Parity-staking", () => {
-    it.only("runs staking tests", () => {
-      console.log("Running staking tests with env:", !!env);
-      parityStakingTests.runParityStakingTests(env);
-    });
+  describe("Parity-staking", function () {
+    parityStakingTests.runParityStakingTests(() => env);
   });
 });
