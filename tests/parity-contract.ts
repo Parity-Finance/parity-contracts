@@ -31,6 +31,10 @@ describe("parity-contract", () => {
       mintFeeBps: 50,
       redeemFeeBps: 50,
       depositCapParityStaking: 2000000000, // 2,000 with 6 decimals
+      // PT Staking
+      baselineYieldBps: 10000,
+      depositCapPtStaking: 200000000000,
+      stakingInitialExchangeRatePtStaking: 1000000,
     };
 
     const txBuilder = await setup(env.umi, setupOptions);

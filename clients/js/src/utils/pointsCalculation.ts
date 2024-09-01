@@ -5,6 +5,15 @@ type CombinedPhase = {
   phase: ExchangeRatePhase | BaseYieldPhase;
 };
 
+/**
+ * Calculates the points earned over time based on the provided global configuration, staked amount, and timestamps.
+ * 
+ * @param globalConfig - The global configuration containing exchange rate and base yield histories.
+ * @param stakedAmount - The amount of tokens staked.
+ * @param stakingTimestamp - The timestamp when the staking started.
+ * @param currentTimestamp - The current timestamp to calculate points up to.
+ * @returns An array of PointsEarnedPhase objects representing the points earned over different phases.
+ */
 export function calculatePoints(
   globalConfig: GlobalConfig,
   stakedAmount: bigint,
@@ -113,4 +122,32 @@ export function calculatePoints(
   }
 
   return pointsHistory;
+}
+
+/**
+ * Combines two points histories into one by summing up the points for matching exchange rates and indices.
+ * 
+ * @param calculatedPoints - The initial points history.
+ * @param additionalPoints - The additional points history to be combined.
+ * @returns A combined array of PointsEarnedPhase objects.
+ */
+export function combinePointsHistories(
+  calculatedPoints: PointsEarnedPhase[],
+  additionalPoints: PointsEarnedPhase[]
+): PointsEarnedPhase[] {
+  const combinedPoints: PointsEarnedPhase[] = [...calculatedPoints];
+
+  additionalPoints.forEach(additionalPoint => {
+    const existingPoint = combinedPoints.find(
+      point => point.exchangeRate === additionalPoint.exchangeRate && point.index === additionalPoint.index
+    );
+
+    if (existingPoint) {
+      existingPoint.points += additionalPoint.points;
+    } else {
+      combinedPoints.push(additionalPoint);
+    }
+  });
+
+  return combinedPoints;
 }

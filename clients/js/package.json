@@ -1,6 +1,6 @@
 {
   "name": "@builderz/parity",
-  "version": "0.1.14",
+  "version": "0.1.15",
   "description": "Parity Stablecoin",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
