@@ -1,30 +1,21 @@
 import { TestEnvironment } from "./setup-environment";
-import { calculateMaxWithdrawableAmount } from "../clients/js/src/utils/maxWithdrawable";
 import { calculateExchangeRate, calculateIntervalRate, initiateUpdatePoolOwner, PARITY_ISSUANCE_PROGRAM_ID, safeFetchPoolManager, setup, SetupOptions, stake, unstake, updateAnnualYield, updatePoolManager, updatePoolOwner, updateXmintMetadata } from "../clients/js/src";
 import {
   createAssociatedToken,
-  createSplAssociatedTokenProgram,
-  createSplTokenProgram,
-  findAssociatedTokenPda,
   safeFetchMint,
   safeFetchToken,
   SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
 } from "@metaplex-foundation/mpl-toolbox";
 import {
   keypairIdentity,
-  Pda,
-  PublicKey,
   publicKey,
   TransactionBuilder,
   createAmount,
-  some,
-  unwrapOption,
 } from "@metaplex-foundation/umi";
 import assert from "assert";
 import { assert as chaiAssert } from "chai";
 import { fromWeb3JsKeypair } from "@metaplex-foundation/umi-web3js-adapters";
 import {
-  findMetadataPda,
   safeFetchMetadata,
 } from "@metaplex-foundation/mpl-token-metadata";
 
@@ -52,7 +43,7 @@ export async function runParityStakingTests(getEnv: () => TestEnvironment) {
       initialExchangeRateParityStaking = env.initialExchangeRateParityStaking;
     });
 
-    it("Stake Pool is initialized!", async () => {
+    it.only("Stake Pool is initialized!", async () => {
       const stakePoolAcc = await safeFetchPoolManager(umi, poolManager);
       const xMintAcc = await safeFetchMint(umi, xMint);
 

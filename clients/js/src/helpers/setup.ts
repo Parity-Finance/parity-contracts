@@ -5,8 +5,10 @@ import {
   SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
 } from '@metaplex-foundation/mpl-toolbox';
 import {
+  findGlobalConfigPda,
   findPoolManagerPda,
   findTokenManagerPda,
+  initializeGlobalConfig,
   initializePoolManager,
   initializeTokenManager,
   PARITY_ISSUANCE_PROGRAM_ID,
@@ -36,6 +38,9 @@ export type SetupOptions = {
   mintFeeBps: number;
   redeemFeeBps: number;
   depositCapParityStaking: number;
+  baselineYieldPtStaking: number;
+  depositCapPtStaking: number;
+  ptStakingInitialExchangeRate: number;
 };
 
 export async function setup(umi: Umi, setupOptions: SetupOptions) {
@@ -48,6 +53,7 @@ export async function setup(umi: Umi, setupOptions: SetupOptions) {
 
   const tokenManager = findTokenManagerPda(umi)[0];
   const poolManager = findPoolManagerPda(umi)[0];
+  const globalConfig = findGlobalConfigPda(umi)[0];
 
   const vaultIssuance = findAssociatedTokenPda(umi, {
     owner: tokenManager,
@@ -55,6 +61,10 @@ export async function setup(umi: Umi, setupOptions: SetupOptions) {
   });
   const vaultStaking = findAssociatedTokenPda(umi, {
     owner: poolManager,
+    mint: baseMint,
+  });
+  const vaultStakingPDA = findAssociatedTokenPda(umi, {
+    owner: globalConfig,
     mint: baseMint,
   });
 
@@ -118,6 +128,18 @@ export async function setup(umi: Umi, setupOptions: SetupOptions) {
         depositCap: setupOptions.depositCapParityStaking,
         owner: umi.identity,
         admin: umi.identity.publicKey,
+      })
+    ).add(
+      initializeGlobalConfig(umi, {
+        globalConfig,
+        baseMint: baseMint,
+        vault: vaultStakingPDA,
+        user: umi.identity,
+        associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
+        admin: umi.identity.publicKey,
+        baselineYieldBps: setupOptions.baselineYieldPtStaking,
+        depositCap: setupOptions.depositCapPtStaking,
+        initialExchangeRate: setupOptions.ptStakingInitialExchangeRate,
       })
     );
 

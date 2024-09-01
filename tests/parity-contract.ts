@@ -1,6 +1,7 @@
 import { setupTestEnvironment, TestEnvironment } from "./setup-environment";
 import * as issuanceTests from "./issuance-tests";
 import * as parityStakingTests from "./parity-staking-test";
+import * as ptStakingTests from "./pt-staking-tests";
 import { setup, SetupOptions } from "../clients/js/src";
 
 describe("parity-contract", () => {
@@ -31,6 +32,9 @@ describe("parity-contract", () => {
       mintFeeBps: 50,
       redeemFeeBps: 50,
       depositCapParityStaking: 2000000000, // 2,000 with 6 decimals
+      depositCapPtStaking: 2000000000,
+      ptStakingInitialExchangeRate: 20 * 10 ** env.baseMintDecimals,
+      baselineYieldPtStaking: 2000,
     };
 
     const txBuilder = await setup(env.umi, setupOptions);
@@ -45,4 +49,9 @@ describe("parity-contract", () => {
   describe("Parity-staking", function () {
     parityStakingTests.runParityStakingTests(() => env);
   });
+  
+  describe("Pt-staking", function () {
+    ptStakingTests.runPtStakingTests(() => env);
+  });
+
 });

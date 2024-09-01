@@ -8,6 +8,7 @@ import {
   findGlobalConfigPda,
   findPoolManagerPda,
   findTokenManagerPda,
+  findUserStakePda,
   PARITY_ISSUANCE_PROGRAM_ID,
   PARITY_STAKING_PROGRAM_ID
 } from "../clients/js/src";
@@ -34,6 +35,7 @@ export type TestEnvironment = {
   xMetadata: Pda;
   userX: PublicKey;
   globalConfig: PublicKey;
+  userStakePDA: Pda,
   vaultStakingPDA: Pda;
   baseMintDecimals: number;
   quoteMintDecimals: number;
@@ -112,6 +114,9 @@ export const setupTestEnvironment = async () => {
     mint: xMint,
   })[0];
   const globalConfig = findGlobalConfigPda(umi)[0];
+  const userStakePDA = findUserStakePda(umi, {
+    user: umi.identity.publicKey,
+  });
   const vaultStakingPDA = findAssociatedTokenPda(umi, {
     owner: globalConfig,
     mint: baseMint[0],
@@ -212,6 +217,7 @@ export const setupTestEnvironment = async () => {
     xMetadata,
     userX,
     globalConfig,
+    userStakePDA,
     vaultStakingPDA,
     xMintDecimals,
     stakeExchangeRateDecimals,
