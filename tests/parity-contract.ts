@@ -31,7 +31,7 @@ describe("parity-contract", () => {
       secondsPerInterval: 28800, // 8 hours
       mintFeeBps: 50,
       redeemFeeBps: 50,
-      baselineYieldBps: 10000,
+      baselineYieldBps: env.baselineYieldBps,
       depositCapParityStaking: 2000000000, // 2,000 with 6 decimals
       stakingInitialExchangeRatePtStaking: 20 * 10 ** env.baseMintDecimals,
     };

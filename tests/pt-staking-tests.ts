@@ -18,7 +18,7 @@ import { fromWeb3JsKeypair } from "@metaplex-foundation/umi-web3js-adapters";
 export async function runPtStakingTests(getEnv: () => TestEnvironment) {
 
     describe("Pt-staking Tests", function () {
-        let umi, globalConfig, userStakePDA, userBase, vaultStakingPDA, baseMint, baseMintDecimals, baselineYield, testDepositCapAmount, initialExchangeRatePtStaking, keypair
+        let umi, globalConfig, userStakePDA, userBase, vaultStakingPDA, baseMint, baseMintDecimals, baselineYieldBps, testDepositCapAmount, initialExchangeRatePtStaking, keypair
 
         before(function () {
             const env = getEnv();
@@ -30,7 +30,7 @@ export async function runPtStakingTests(getEnv: () => TestEnvironment) {
             vaultStakingPDA = env.vaultStakingPDA;
             baseMint = env.baseMint;
             baseMintDecimals = env.baseMintDecimals;
-            baselineYield = env.baselineYield;
+            baselineYieldBps = env.baselineYieldBps;
             testDepositCapAmount = env.testDepositCapAmount;
             initialExchangeRatePtStaking = env.initialExchangeRatePtStaking
             keypair = env.keypair
@@ -38,17 +38,48 @@ export async function runPtStakingTests(getEnv: () => TestEnvironment) {
 
         it.only("Global Config is initialized", async () => {
             const globalConfigAcc = await safeFetchGlobalConfig(umi, globalConfig);
-
-            assert.equal(globalConfigAcc.baseMint, baseMint[0]);
-            assert.equal(globalConfigAcc.baseMintDecimals, baseMintDecimals);
-            assert.equal(globalConfigAcc.baseYieldHistory[0].baseYieldBps, baselineYield);
-            assert.equal(globalConfigAcc.admin, umi.identity.publicKey);
-            assert.equal(globalConfigAcc.depositCap, testDepositCapAmount);
+        
+            assert.equal(
+                globalConfigAcc.baseMint, 
+                baseMint[0], 
+                "Base mint mismatch: expected " + baseMint[0] + ", got " + globalConfigAcc.baseMint
+            );
+            
+            assert.equal(
+                globalConfigAcc.baseMintDecimals, 
+                baseMintDecimals, 
+                "Base mint decimals mismatch: expected " + baseMintDecimals + ", got " + globalConfigAcc.baseMintDecimals
+            );
+            
+            assert.equal(
+                globalConfigAcc.baseYieldHistory[0].baseYieldBps, 
+                baselineYieldBps, 
+                "Base yield mismatch: expected " + baselineYieldBps + ", got " + globalConfigAcc.baseYieldHistory[0].baseYieldBps
+            );
+            
+            assert.equal(
+                globalConfigAcc.admin, 
+                umi.identity.publicKey, 
+                "Admin mismatch: expected " + umi.identity.publicKey + ", got " + globalConfigAcc.admin
+            );
+            
+            assert.equal(
+                globalConfigAcc.depositCap, 
+                testDepositCapAmount, 
+                "Deposit cap mismatch: expected " + testDepositCapAmount + ", got " + globalConfigAcc.depositCap
+            );
+            
             assert.equal(
                 globalConfigAcc.exchangeRateHistory[0].exchangeRate,
-                initialExchangeRatePtStaking
+                initialExchangeRatePtStaking,
+                "Initial exchange rate mismatch: expected " + initialExchangeRatePtStaking + ", got " + globalConfigAcc.exchangeRateHistory[0].exchangeRate
             );
-            assert.equal(globalConfigAcc.stakedSupply, 0);
+            
+            assert.equal(
+                globalConfigAcc.stakedSupply, 
+                0, 
+                "Staked supply mismatch: expected 0, got " + globalConfigAcc.stakedSupply
+            );
         });
 
         it.only("baseMint can be staked in PT Staking", async () => {
@@ -525,6 +556,8 @@ export async function runPtStakingTests(getEnv: () => TestEnvironment) {
 
             await txBuilder.sendAndConfirm(umi);
 
+            let preUserStakeAcc = await safeFetchUserStake(umi, userStakePDA);
+
             // const _globalConfigAcc = await safeFetchGlobalConfig(umi, globalConfig);
             // const _globalUserStake = await safeFetchUserStake(umi, userStakePDA);
             // console.log("Original global points:", _globalConfigAcc.pointsHistory);
@@ -644,6 +677,8 @@ export async function runPtStakingTests(getEnv: () => TestEnvironment) {
             const finalGlobalConfigAcc = await safeFetchGlobalConfig(umi, globalConfig);
             const finalUserStakeAcc = await safeFetchUserStake(umi, userStakePDA);
 
+            console.log("Final global points", finalGlobalConfigAcc.pointsHistory);
+            console.log("Final user stake acc", finalUserStakeAcc.pointsHistory);
             // Compare expected points with actual points
             expectedGlobalPoints.forEach((phase, index) => {
                 const actualPhasePoints = finalGlobalConfigAcc.pointsHistory.find(p => p.index === phase.index).points

@@ -51,6 +51,7 @@ export type TestEnvironment = {
   stakeExchangeRateDecimals: number;
   initialExchangeRateParityStaking: number;
   baselineYield: number;
+  baselineYieldBps: number;
   initialExchangeRatePtStaking: number;
   testDepositCapAmount: number;
 };
@@ -126,6 +127,7 @@ export const setupTestEnvironment = async () => {
   const stakeExchangeRateDecimals = xMintDecimals;
   const initialExchangeRateParityStaking = 1 * 10 ** stakeExchangeRateDecimals;
   const baselineYield = 2000; // For 20%
+  const baselineYieldBps = 2000;
   const initialExchangeRatePtStaking = 20 * 10 ** baseMintDecimals;
   const testDepositCapAmount = 2000 * 10 ** baseMintDecimals;
 
@@ -223,6 +225,7 @@ export const setupTestEnvironment = async () => {
     stakeExchangeRateDecimals,
     initialExchangeRateParityStaking,
     baselineYield,
+    baselineYieldBps,
     initialExchangeRatePtStaking,
     testDepositCapAmount,
   };
