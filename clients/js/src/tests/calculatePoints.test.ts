@@ -1,6 +1,6 @@
 import assert from 'assert';
-import { calculatePoints } from '../utils/pointsCalculation';
-import { GlobalConfig } from '../generated';
+import { calculatePoints, combinePointsHistories } from '../utils/pointsCalculation';
+import { GlobalConfig, PointsEarnedPhase } from '../generated';
 
 function assertWithinTolerance(actual: bigint, expected: bigint, tolerance: bigint, message: string) {
     assert(
@@ -170,5 +170,51 @@ describe('calculatePoints', () => {
             5000n,
             "points[2].points is not within tolerance"
         );
+    });
+
+    it('should combine points histories correctly', () => {
+        const calculatedPoints: PointsEarnedPhase[] = [
+            { exchangeRate: 100n, points: 500n, index: 1 },
+            { exchangeRate: 200n, points: 300n, index: 2 }
+        ];
+
+        const additionalPoints: PointsEarnedPhase[] = [
+            { exchangeRate: 100n, points: 200n, index: 1 },
+            { exchangeRate: 300n, points: 400n, index: 3 }
+        ];
+
+        const expectedCombinedPoints: PointsEarnedPhase[] = [
+            { exchangeRate: 100n, points: 700n, index: 1 },
+            { exchangeRate: 200n, points: 300n, index: 2 },
+            { exchangeRate: 300n, points: 400n, index: 3 }
+        ];
+
+        const result = combinePointsHistories(calculatedPoints, additionalPoints);
+
+        assert.deepStrictEqual(result, expectedCombinedPoints);
+    });
+
+    it('should handle empty additional points', () => {
+        const calculatedPoints: PointsEarnedPhase[] = [
+            { exchangeRate: 100n, points: 500n, index: 1 }
+        ];
+
+        const additionalPoints: PointsEarnedPhase[] = [];
+
+        const result = combinePointsHistories(calculatedPoints, additionalPoints);
+
+        assert.deepStrictEqual(result, calculatedPoints);
+    });
+
+    it('should handle empty calculated points', () => {
+        const calculatedPoints: PointsEarnedPhase[] = [];
+
+        const additionalPoints: PointsEarnedPhase[] = [
+            { exchangeRate: 100n, points: 200n, index: 1 }
+        ];
+
+        const result = combinePointsHistories(calculatedPoints, additionalPoints);
+
+        assert.deepStrictEqual(result, additionalPoints);
     });
 });

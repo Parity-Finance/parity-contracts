@@ -38,9 +38,9 @@ export type SetupOptions = {
   mintFeeBps: number;
   redeemFeeBps: number;
   depositCapParityStaking: number;
-  baselineYieldPtStaking: number;
+  baselineYieldBps: number;
   depositCapPtStaking: number;
-  ptStakingInitialExchangeRate: number;
+  stakingInitialExchangeRatePtStaking: number;
 };
 
 export async function setup(umi: Umi, setupOptions: SetupOptions) {
@@ -63,7 +63,9 @@ export async function setup(umi: Umi, setupOptions: SetupOptions) {
     owner: poolManager,
     mint: baseMint,
   });
-  const vaultStakingPDA = findAssociatedTokenPda(umi, {
+
+
+  const vaultPtStaking = findAssociatedTokenPda(umi, {
     owner: globalConfig,
     mint: baseMint,
   });
@@ -132,14 +134,14 @@ export async function setup(umi: Umi, setupOptions: SetupOptions) {
     ).add(
       initializeGlobalConfig(umi, {
         globalConfig,
-        baseMint: baseMint,
-        vault: vaultStakingPDA,
+        baseMint,
+        vault: vaultPtStaking,
         user: umi.identity,
         associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
         admin: umi.identity.publicKey,
-        baselineYieldBps: setupOptions.baselineYieldPtStaking,
+        baselineYieldBps: setupOptions.baselineYieldBps,
         depositCap: setupOptions.depositCapPtStaking,
-        initialExchangeRate: setupOptions.ptStakingInitialExchangeRate,
+        initialExchangeRate: setupOptions.stakingInitialExchangeRatePtStaking,
       })
     );
 
