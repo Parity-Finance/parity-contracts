@@ -69,7 +69,7 @@ export function updatePoolOwner(
   // Program ID.
   const programId = context.programs.getPublicKey(
     'parityStaking',
-    '9fQsEayPeUdypEAjyE6HGBkPWqrkMnnJG8Sh5NBXwwAM'
+    'AJmk6gK2zALnLxaXYR6CzTYMFRu62adT4dVUKpxNT5Zh'
   );
 
   // Accounts.

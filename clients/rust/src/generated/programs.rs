@@ -8,10 +8,10 @@
 use solana_program::{pubkey, pubkey::Pubkey};
 
 /// `parity_issuance` program ID.
-pub const PARITY_ISSUANCE_ID: Pubkey = pubkey!("2EWh1kTyMUgv46FdwJYJP61LXvrhLp5CqDfy5gDoqggf");
+pub const PARITY_ISSUANCE_ID: Pubkey = pubkey!("7hkMsfmcxQmJERtzpGTGUn9jmREBZkxYRF2rZ9BRWkZU");
 
 /// `parity_staking` program ID.
-pub const PARITY_STAKING_ID: Pubkey = pubkey!("9fQsEayPeUdypEAjyE6HGBkPWqrkMnnJG8Sh5NBXwwAM");
+pub const PARITY_STAKING_ID: Pubkey = pubkey!("AJmk6gK2zALnLxaXYR6CzTYMFRu62adT4dVUKpxNT5Zh");
 
 /// `pt_staking` program ID.
-pub const PT_STAKING_ID: Pubkey = pubkey!("5zWkamSdh3S4hELhV1ezx6gzyCinBVi38StJUdi8cfGa");
+pub const PT_STAKING_ID: Pubkey = pubkey!("6cxnuwSaJgaBsq6szLNGQ3UMibUB7XNv1mpoC91t37yv");

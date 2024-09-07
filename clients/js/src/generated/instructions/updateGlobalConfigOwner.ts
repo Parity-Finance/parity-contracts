@@ -71,7 +71,7 @@ export function updateGlobalConfigOwner(
   // Program ID.
   const programId = context.programs.getPublicKey(
     'ptStaking',
-    '5zWkamSdh3S4hELhV1ezx6gzyCinBVi38StJUdi8cfGa'
+    '6cxnuwSaJgaBsq6szLNGQ3UMibUB7XNv1mpoC91t37yv'
   );
 
   // Accounts.

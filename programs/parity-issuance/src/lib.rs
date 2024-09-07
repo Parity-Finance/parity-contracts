@@ -8,7 +8,7 @@ pub use error::*;
 pub use instructions::*;
 pub use state::*;
 
-declare_id!("2EWh1kTyMUgv46FdwJYJP61LXvrhLp5CqDfy5gDoqggf");
+declare_id!("7hkMsfmcxQmJERtzpGTGUn9jmREBZkxYRF2rZ9BRWkZU");
 
 #[program]
 pub mod parity_issuance {

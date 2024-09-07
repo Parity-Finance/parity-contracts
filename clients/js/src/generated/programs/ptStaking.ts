@@ -18,7 +18,7 @@ import {
 } from '../errors';
 
 export const PT_STAKING_PROGRAM_ID =
-  '5zWkamSdh3S4hELhV1ezx6gzyCinBVi38StJUdi8cfGa' as PublicKey<'5zWkamSdh3S4hELhV1ezx6gzyCinBVi38StJUdi8cfGa'>;
+  '6cxnuwSaJgaBsq6szLNGQ3UMibUB7XNv1mpoC91t37yv' as PublicKey<'6cxnuwSaJgaBsq6szLNGQ3UMibUB7XNv1mpoC91t37yv'>;
 
 export function createPtStakingProgram(): Program {
   return {

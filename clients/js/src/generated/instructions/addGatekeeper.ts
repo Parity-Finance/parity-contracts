@@ -81,7 +81,7 @@ export function addGatekeeper(
   // Program ID.
   const programId = context.programs.getPublicKey(
     'parityIssuance',
-    '2EWh1kTyMUgv46FdwJYJP61LXvrhLp5CqDfy5gDoqggf'
+    '7hkMsfmcxQmJERtzpGTGUn9jmREBZkxYRF2rZ9BRWkZU'
   );
 
   // Accounts.

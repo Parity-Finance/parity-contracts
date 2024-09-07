@@ -18,7 +18,7 @@ import {
 } from '../errors';
 
 export const PARITY_STAKING_PROGRAM_ID =
-  '9fQsEayPeUdypEAjyE6HGBkPWqrkMnnJG8Sh5NBXwwAM' as PublicKey<'9fQsEayPeUdypEAjyE6HGBkPWqrkMnnJG8Sh5NBXwwAM'>;
+  'AJmk6gK2zALnLxaXYR6CzTYMFRu62adT4dVUKpxNT5Zh' as PublicKey<'AJmk6gK2zALnLxaXYR6CzTYMFRu62adT4dVUKpxNT5Zh'>;
 
 export function createParityStakingProgram(): Program {
   return {

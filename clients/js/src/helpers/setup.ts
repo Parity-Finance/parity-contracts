@@ -38,6 +38,7 @@ export type SetupOptions = {
   mintFeeBps: number;
   redeemFeeBps: number;
   depositCapParityStaking: number;
+  depositCapPtStaking: number;
   baselineYieldBps: number;
   stakingInitialExchangeRatePtStaking: number;
 };
@@ -139,7 +140,7 @@ export async function setup(umi: Umi, setupOptions: SetupOptions) {
         associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
         admin: umi.identity.publicKey,
         baselineYieldBps: setupOptions.baselineYieldBps,
-        depositCap: setupOptions.depositCapParityStaking,
+        depositCap: setupOptions.depositCapPtStaking,
         initialExchangeRate: setupOptions.stakingInitialExchangeRatePtStaking,
       })
     );

@@ -12,17 +12,17 @@ module.exports = {
     programs: [
       {
         label: "Parity Issuance",
-        programId: "2EWh1kTyMUgv46FdwJYJP61LXvrhLp5CqDfy5gDoqggf",
+        programId: "7hkMsfmcxQmJERtzpGTGUn9jmREBZkxYRF2rZ9BRWkZU",
         deployPath: getProgram("parity_issuance.so"),
       },
       {
         label: "Parity Staking",
-        programId: "9fQsEayPeUdypEAjyE6HGBkPWqrkMnnJG8Sh5NBXwwAM",
+        programId: "AJmk6gK2zALnLxaXYR6CzTYMFRu62adT4dVUKpxNT5Zh",
         deployPath: getProgram("parity_staking.so"),
       },
       {
         label: "PT Staking",
-        programId: "5zWkamSdh3S4hELhV1ezx6gzyCinBVi38StJUdi8cfGa",
+        programId: "6cxnuwSaJgaBsq6szLNGQ3UMibUB7XNv1mpoC91t37yv",
         deployPath: getProgram("pt_staking.so"),
       },
       // Below are external programs that should be included in the local validator.

@@ -18,7 +18,7 @@ import {
 } from '../errors';
 
 export const PARITY_ISSUANCE_PROGRAM_ID =
-  '2EWh1kTyMUgv46FdwJYJP61LXvrhLp5CqDfy5gDoqggf' as PublicKey<'2EWh1kTyMUgv46FdwJYJP61LXvrhLp5CqDfy5gDoqggf'>;
+  '7hkMsfmcxQmJERtzpGTGUn9jmREBZkxYRF2rZ9BRWkZU' as PublicKey<'7hkMsfmcxQmJERtzpGTGUn9jmREBZkxYRF2rZ9BRWkZU'>;
 
 export function createParityIssuanceProgram(): Program {
   return {

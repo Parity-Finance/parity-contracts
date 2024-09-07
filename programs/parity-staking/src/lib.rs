@@ -10,7 +10,7 @@ pub use instructions::*;
 pub use state::*;
 pub use u64x64_math::*;
 
-declare_id!("9fQsEayPeUdypEAjyE6HGBkPWqrkMnnJG8Sh5NBXwwAM");
+declare_id!("AJmk6gK2zALnLxaXYR6CzTYMFRu62adT4dVUKpxNT5Zh");
 
 #[program]
 pub mod parity_staking {

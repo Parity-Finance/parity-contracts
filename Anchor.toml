@@ -6,9 +6,9 @@ solana_version = "1.18.15"
 seeds = false
 skip-lint = false
 [programs.devnet]
-pt-staking = "5zWkamSdh3S4hELhV1ezx6gzyCinBVi38StJUdi8cfGa"
-parity-issuance = "2EWh1kTyMUgv46FdwJYJP61LXvrhLp5CqDfy5gDoqggf"
-parity-staking = "9fQsEayPeUdypEAjyE6HGBkPWqrkMnnJG8Sh5NBXwwAM"
+pt-staking = "6cxnuwSaJgaBsq6szLNGQ3UMibUB7XNv1mpoC91t37yv"
+parity-issuance = "7hkMsfmcxQmJERtzpGTGUn9jmREBZkxYRF2rZ9BRWkZU"
+parity-staking = "AJmk6gK2zALnLxaXYR6CzTYMFRu62adT4dVUKpxNT5Zh"
 
 [registry]
 url = "https://api.apr.dev"
