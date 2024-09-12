@@ -32,6 +32,7 @@ describe("parity-contract", () => {
       mintFeeBps: 50,
       redeemFeeBps: 50,
       baselineYieldBps: env.baselineYieldBps,
+      depositCapPtStaking: 2000000000, // 2,000 with 6 decimals
       depositCapParityStaking: 2000000000, // 2,000 with 6 decimals
       stakingInitialExchangeRatePtStaking: 20 * 10 ** env.baseMintDecimals,
     };
@@ -48,7 +49,7 @@ describe("parity-contract", () => {
   describe("Parity-staking", function () {
     parityStakingTests.runParityStakingTests(() => env);
   });
-  
+
   describe("Pt-staking", function () {
     ptStakingTests.runPtStakingTests(() => env);
   });
