@@ -64,6 +64,7 @@ pub struct Unstake<'info> {
 pub fn handler(ctx: Context<Unstake>, quantity: u64) -> Result<()> {
     let pool_manager = &mut ctx.accounts.pool_manager;
     let x_mint = &mut ctx.accounts.x_mint;
+    
 
     let current_timestamp = Clock::get()?.unix_timestamp;
     let x_amount = quantity;
@@ -87,8 +88,9 @@ pub fn handler(ctx: Context<Unstake>, quantity: u64) -> Result<()> {
     )?;
 
     // Mint Base into pool
+    let vault_balance = ctx.accounts.vault.amount; // Get the actual vault balance
     let amount_to_mint =
-        pool_manager.calculate_amount_to_mint(initial_x_mint_supply, current_timestamp)?;
+        pool_manager.calculate_amount_to_mint(initial_x_mint_supply, current_timestamp, vault_balance)?;
     msg!("Amount to mint: {}", amount_to_mint);
 
     if amount_to_mint > 0 {

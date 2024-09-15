@@ -75,7 +75,8 @@ pub fn handler(ctx: Context<UpdateAnnualYield>, params: UpdateYieldParams) -> Re
     let bump = pool_manager.bump; // Corrected to be a slice of a slice of a byte slice
     let signer_seeds: &[&[&[u8]]] = &[&[b"pool-manager", &[bump]]];
 
-    let amount_to_mint = pool_manager.calculate_amount_to_mint(x_mint.supply, current_timestamp)?;
+    let vault_balance = ctx.accounts.vault.amount; // Get the actual vault balance
+    let amount_to_mint = pool_manager.calculate_amount_to_mint(x_mint.supply, current_timestamp, vault_balance)?;
 
     msg!("Amount to mint: {}", amount_to_mint);
 

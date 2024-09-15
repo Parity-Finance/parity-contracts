@@ -647,6 +647,7 @@ export async function runIssuanceTests(getEnv: () => TestEnvironment) {
       initializeWithdrawFunds(umi, {
         tokenManager,
         mint: env.baseMint,
+        vault: env.vaultIssuance,
         quantity,
         admin: umi.identity,
       })
@@ -685,6 +686,7 @@ export async function runIssuanceTests(getEnv: () => TestEnvironment) {
         tokenManager,
         quantity,
         mint: env.baseMint,
+        vault: env.vaultIssuance,
         admin: umi.identity,
       })
     );
@@ -712,6 +714,7 @@ export async function runIssuanceTests(getEnv: () => TestEnvironment) {
         quantity,
         mint: env.baseMint,
         admin: umi.identity,
+        vault: env.vaultIssuance,
       })
     );
 

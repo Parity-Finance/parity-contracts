@@ -32,6 +32,7 @@ import {
 export type InitializeWithdrawFundsInstructionAccounts = {
   tokenManager: PublicKey | Pda;
   mint: PublicKey | Pda;
+  vault: PublicKey | Pda;
   admin: Signer;
 };
 
@@ -95,8 +96,13 @@ export function initializeWithdrawFunds(
       value: input.tokenManager ?? null,
     },
     mint: { index: 1, isWritable: false as boolean, value: input.mint ?? null },
-    admin: {
+    vault: {
       index: 2,
+      isWritable: true as boolean,
+      value: input.vault ?? null,
+    },
+    admin: {
+      index: 3,
       isWritable: true as boolean,
       value: input.admin ?? null,
     },

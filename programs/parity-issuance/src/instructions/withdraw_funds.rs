@@ -74,7 +74,9 @@ pub fn handler(ctx: Context<WithdrawFunds>) -> Result<()> {
     let mut withdraw_amount = pending_withdrawal_amount;
 
     // Calculate max withdrawable amount
-    let max_withdrawable_amount = token_manager.calculate_max_withdrawable_amount(mint.supply)?;
+    let vault_amount = ctx.accounts.vault.amount; // Get the actual vault amount
+    let max_withdrawable_amount =
+        token_manager.calculate_max_withdrawable_amount(mint.supply, vault_amount)?;
 
     if pending_withdrawal_amount > max_withdrawable_amount {
         msg!("Pending withdrawal amount: {}", pending_withdrawal_amount);

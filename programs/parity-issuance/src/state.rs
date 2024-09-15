@@ -156,7 +156,11 @@ impl TokenManager {
         Ok(())
     }
 
-    pub fn calculate_max_withdrawable_amount(&self, mint_supply: u64) -> Result<u64> {
+    pub fn calculate_max_withdrawable_amount(
+        &self,
+        mint_supply: u64,
+        vault_amount: u64,
+    ) -> Result<u64> {
         let required_collateral = (mint_supply as u128)
             .checked_mul(self.exchange_rate as u128)
             .ok_or(ParityIssuanceError::CalculationOverflow)?
@@ -173,9 +177,7 @@ impl TokenManager {
             .checked_div(10u128.pow(self.mint_decimals.into()))
             .ok_or(ParityIssuanceError::CalculationOverflow)?;
 
-        Ok(self
-            .total_collateral
-            .saturating_sub(min_required_collateral as u64))
+        Ok(vault_amount.saturating_sub(min_required_collateral as u64))
     }
 }
 
@@ -261,15 +263,16 @@ mod tests {
         let mut token_manager = default_token_manager();
         token_manager.emergency_fund_basis_points = 500; // 5%
         token_manager.total_collateral = 10000000000;
+        let vault_amount = token_manager.total_collateral;
 
         // Test case where mint supply is 1000000
         let result = token_manager
-            .calculate_max_withdrawable_amount(10000000000)
+            .calculate_max_withdrawable_amount(10000000000, vault_amount)
             .unwrap();
         assert_eq!(result, 9500000000); // 5% of 1000000 is 50000, so max withdrawable is 1000000 - 50000
 
         // Test case where mint supply is 0
-        let result = token_manager.calculate_max_withdrawable_amount(0).unwrap();
+        let result = token_manager.calculate_max_withdrawable_amount(0,vault_amount).unwrap();
         assert_eq!(result, 10000000000); // No collateral required, so all collateral is withdrawable
     }
 

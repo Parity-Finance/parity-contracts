@@ -113,6 +113,7 @@ impl PoolManager {
         &mut self,
         x_mint_supply: u64,
         current_timestamp: i64,
+        vault_balance: u64,
     ) -> Result<u64> {
         // Normalize the x_mint_supply to the base_mint decimals
         let base_decimals = 10u64.pow(self.base_mint_decimals.into());
@@ -133,15 +134,17 @@ impl PoolManager {
             .checked_div(base_decimals as u128)
             .ok_or(ParityStakingError::CalculationOverflow)?;
 
-        let base_balance = self.base_balance as u128;
+        // let base_balance = self.base_balance as u128;
+        let vault_balance = vault_balance as u128;
 
         msg!("X Supply Value: {}", x_supply_value);
-        msg!("Base Balance: {}", base_balance);
+        // msg!("Base Balance: {}", base_balance);
+        msg!("Vault Balance: {}", vault_balance);
 
         // Calculate the amount to mint
-        let amount_to_mint = if x_supply_value > base_balance {
+        let amount_to_mint = if x_supply_value > vault_balance {
             x_supply_value
-                .checked_sub(base_balance)
+                .checked_sub(vault_balance)
                 .ok_or(ParityStakingError::CalculationOverflow)? as u64
         } else {
             0
@@ -294,12 +297,13 @@ mod tests {
 
         // Set up the conditions
         pool_manager.base_balance = 1000_000_000; // 500 base tokens
+        let vault_balance = pool_manager.base_balance;
         let x_mint_supply = 1000_000_000; // 1,000 xMint tokens
         let current_timestamp = 31_536_000; // One year in seconds
 
         // Calculate the amount to mint for one year
         let amount_to_mint = pool_manager
-            .calculate_amount_to_mint(x_mint_supply, current_timestamp)
+            .calculate_amount_to_mint(x_mint_supply, current_timestamp, vault_balance)
             .unwrap();
 
         // Verify the result for one year
@@ -308,7 +312,7 @@ mod tests {
         // Calculate the amount to mint for half a year
         let half_year_timestamp = current_timestamp / 2; // Half a year in seconds
         let amount_to_mint_half_year = pool_manager
-            .calculate_amount_to_mint(x_mint_supply, half_year_timestamp)
+            .calculate_amount_to_mint(x_mint_supply, half_year_timestamp, vault_balance)
             .unwrap();
 
         // Verify the result for half a year
