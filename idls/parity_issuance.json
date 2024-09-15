@@ -970,6 +970,11 @@
       "code": 6016,
       "name": "WithdrawalExpired",
       "msg": "Withdrawal expired"
+    },
+    {
+      "code": 6017,
+      "name": "PendingWithdrawalExists",
+      "msg": "Pending Withdrawal Exists"
     }
   ],
   "metadata": {

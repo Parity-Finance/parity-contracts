@@ -36,4 +36,6 @@ pub enum ParityIssuanceError {
     WithdrawalNotReady,
     #[msg("Withdrawal expired")]
     WithdrawalExpired,
+    #[msg("Pending Withdrawal Exists")]
+    PendingWithdrawalExists,
 }

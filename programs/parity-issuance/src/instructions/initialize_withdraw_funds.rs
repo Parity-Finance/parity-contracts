@@ -30,6 +30,11 @@ pub fn handler(ctx: Context<InitializeWithdrawFunds>, quantity: u64) -> Result<(
     let mint = &mut ctx.accounts.mint;
     let actual_vault_balance = ctx.accounts.vault.amount;
 
+      // Check if there is an existing pending withdrawal
+      if token_manager.pending_withdrawal_amount > 0 {
+        return err!(ParityIssuanceError::PendingWithdrawalExists);
+    }
+
     let quote_amount = quantity;
 
     if quote_amount > actual_vault_balance {

@@ -754,6 +754,29 @@ export async function runIssuanceTests(getEnv: () => TestEnvironment) {
     //   "Expected withdrawal to fail because of timelock"
     // );
 
+    // Now attempt to initiate a second withdrawal
+    //which should fail because a pending withrawal already exists
+    txBuilder = new TransactionBuilder();
+    txBuilder = txBuilder.add(
+      initializeWithdrawFunds(umi, {
+        tokenManager,
+        quantity,
+        mint: env.baseMint,
+        admin: umi.identity,
+        vault: env.vaultIssuance,
+      })
+    );
+
+    await assert.rejects(
+      async () => {
+        await txBuilder.sendAndConfirm(umi);
+      },
+      (err) => {
+        return (err as Error).message.includes("Pending Withdrawal Exists.");
+      },
+     "Expected withdrawal to fail because a pending withdrawal already exists"
+    );
+
 
     // Test for wrong mint address
     txBuilder = new TransactionBuilder();

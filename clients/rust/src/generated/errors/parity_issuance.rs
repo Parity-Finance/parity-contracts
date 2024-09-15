@@ -61,6 +61,9 @@ pub enum ParityIssuanceError {
     /// 6016 (0x1780) - Withdrawal expired
     #[error("Withdrawal expired")]
     WithdrawalExpired,
+    /// 6017 (0x1781) - Pending Withdrawal Exists
+    #[error("Pending Withdrawal Exists")]
+    PendingWithdrawalExists,
 }
 
 impl solana_program::program_error::PrintProgramError for ParityIssuanceError {

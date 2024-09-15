@@ -253,6 +253,19 @@ export class SiWithdrawalExpiredError extends ProgramError {
 codeToErrorMap.set(0x1780, SiWithdrawalExpiredError);
 nameToErrorMap.set('WithdrawalExpired', SiWithdrawalExpiredError);
 
+/** PendingWithdrawalExists: Pending Withdrawal Exists */
+export class SiPendingWithdrawalExistsError extends ProgramError {
+  override readonly name: string = 'PendingWithdrawalExists';
+
+  readonly code: number = 0x1781; // 6017
+
+  constructor(program: Program, cause?: Error) {
+    super('Pending Withdrawal Exists', program, cause);
+  }
+}
+codeToErrorMap.set(0x1781, SiPendingWithdrawalExistsError);
+nameToErrorMap.set('PendingWithdrawalExists', SiPendingWithdrawalExistsError);
+
 /**
  * Attempts to resolve a custom program error from the provided error code.
  * @category Errors
