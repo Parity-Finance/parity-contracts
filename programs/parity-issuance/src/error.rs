@@ -4,6 +4,8 @@ use anchor_lang::prelude::*;
 pub enum ParityIssuanceError {
     #[msg("Invalid quote mint address")]
     InvalidQuoteMintAddress,
+    #[msg("Invalid mint address")]
+    InvalidMintAddress,
     #[msg("Mint and redemptions paused")]
     MintAndRedemptionsPaused,
     #[msg("Address not found in allowed list")]

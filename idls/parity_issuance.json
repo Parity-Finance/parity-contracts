@@ -893,76 +893,81 @@
     },
     {
       "code": 6001,
+      "name": "InvalidMintAddress",
+      "msg": "Invalid mint address"
+    },
+    {
+      "code": 6002,
       "name": "MintAndRedemptionsPaused",
       "msg": "Mint and redemptions paused"
     },
     {
-      "code": 6002,
+      "code": 6003,
       "name": "AddressNotFoundInAllowedList",
       "msg": "Address not found in allowed list"
     },
     {
-      "code": 6003,
+      "code": 6004,
       "name": "MissingAllowedListProof",
       "msg": "Missing allowed list proof"
     },
     {
-      "code": 6004,
+      "code": 6005,
       "name": "TokenManagerStatusUnchanged",
       "msg": "Token manager status unchanged"
     },
     {
-      "code": 6005,
+      "code": 6006,
       "name": "ExcessiveDeposit",
       "msg": "Excessive Deposit, collateral shouldn't exceed 100%"
     },
     {
-      "code": 6006,
+      "code": 6007,
       "name": "ExcessiveWithdrawal",
       "msg": "Excessive Withdrawal, collateral shouldn't be less than collateral threshold"
     },
     {
-      "code": 6007,
+      "code": 6008,
       "name": "CalculationOverflow",
       "msg": "Calculation overflow"
     },
     {
-      "code": 6008,
+      "code": 6009,
       "name": "SlotLimitExceeded",
       "msg": "Slot limit exceeded"
     },
     {
-      "code": 6009,
+      "code": 6010,
       "name": "InvalidAdmin",
       "msg": "Invalid admin"
     },
     {
-      "code": 6010,
+      "code": 6011,
       "name": "InvalidOwner",
       "msg": "Invalid owner"
     },
     {
-      "code": 6011,
+      "code": 6012,
       "name": "InvalidMinter",
       "msg": "Invalid minter"
     },
     {
-      "code": 6012,
+      "code": 6013,
       "name": "InvalidToggleActiveAuthority",
       "msg": "Invalid toggle active authority"
     },
     {
-      "code": 6013,
+      "code": 6014,
       "name": "NoPendingWithdrawal",
       "msg": "No pending withdrawal"
     },
     {
-      "code": 6014,
+      "code": 6015,
       "name": "WithdrawalNotReady",
       "msg": "Withdrawal not ready"
     },
     {
-      "code": 6015,
+      "code": 6016,
       "name": "WithdrawalExpired",
       "msg": "Withdrawal expired"
     }

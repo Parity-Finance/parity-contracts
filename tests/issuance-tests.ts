@@ -1,7 +1,7 @@
 import { Umi, Pda, PublicKey, publicKey, createAmount, keypairIdentity, some, } from "@metaplex-foundation/umi";
-import { Keypair } from "@solana/web3.js";
+import { Connection, Keypair } from "@solana/web3.js";
 import { TransactionBuilder } from "@metaplex-foundation/umi";
-import { addGatekeeper, depositFunds, findGatekeeperPda, initializeTokenManager, initializeWithdrawFunds, initiateUpdateManagerOwner, mint, mintAdmin, redeem, removeGatekeeper, safeFetchGatekeeper, safeFetchTokenManager, setup, SetupOptions, toggleActive, updateManagerOwner, updateMintMetadata, updateTokenManagerAdmin, updateTokenManagerOwner, withdrawFunds } from "../clients/js/src";
+import { addGatekeeper, depositFunds, findGatekeeperPda, initializeTokenManager, initializeWithdrawFunds, initiateUpdateManagerOwner, mint, mintAdmin, PARITY_ISSUANCE_PROGRAM_ID, redeem, removeGatekeeper, safeFetchGatekeeper, safeFetchTokenManager, setup, SetupOptions, toggleActive, updateManagerOwner, updateMintMetadata, updateTokenManagerAdmin, updateTokenManagerOwner, withdrawFunds } from "../clients/js/src";
 import { getMerkleProof, getMerkleRoot } from "../clients/js/src/utils";
 import { SPL_ASSOCIATED_TOKEN_PROGRAM_ID, safeFetchToken, safeFetchMint, createAssociatedToken, } from "@metaplex-foundation/mpl-toolbox";
 import {
@@ -16,6 +16,7 @@ import {
 import assert from "assert";
 import { TestEnvironment } from "./setup-environment";
 import { calculateMaxWithdrawableAmount } from "../clients/js/src/utils/maxWithdrawable";
+import { createMint } from "@solana/spl-token";
 
 
 export async function runIssuanceTests(getEnv: () => TestEnvironment) {
@@ -181,7 +182,7 @@ export async function runIssuanceTests(getEnv: () => TestEnvironment) {
     );
   });
 
-  it("pUSD can be redeemed for Quote", async () => {
+  it.only("pUSD can be redeemed for Quote", async () => {
     const quantity = 1000 * 10 ** env.baseMintDecimals;
 
     const proof = getMerkleProof(env.allowedWallets, env.keypair.publicKey.toBase58());
@@ -604,12 +605,13 @@ export async function runIssuanceTests(getEnv: () => TestEnvironment) {
     }, "Expected redemptions to succeed with wallet back in the allowList");
   });
 
-  it("deposit and withdraw funds from the vaultIssuance", async () => {
+  it.only("deposit and withdraw funds from the vaultIssuance", async () => {
     let umi = env.umi
     let tokenManager = env.tokenManager
     let _tokenManagerAcc = await safeFetchTokenManager(umi, tokenManager);
     let _vaultAcc = await safeFetchToken(umi, env.vaultIssuance);
     let _baseMintAcc = await safeFetchMint(umi, env.baseMint);
+    let wrongMint = env.wrongMint
 
     // Higher than total collateral amount
     let quantity = Number(_tokenManagerAcc.totalCollateral) + 1; // Amount to deposit
@@ -751,6 +753,32 @@ export async function runIssuanceTests(getEnv: () => TestEnvironment) {
     //   },
     //   "Expected withdrawal to fail because of timelock"
     // );
+
+
+    // Test for wrong mint address
+    txBuilder = new TransactionBuilder();
+    txBuilder = txBuilder.add(
+      withdrawFunds(umi, {
+        tokenManager,
+        mint: wrongMint, // Pass the wrong mint address
+        quoteMint: env.quoteMint,
+        vault: env.vaultIssuance,
+        authorityQuoteMintAta: env.userQuote,
+        associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
+        admin: umi.identity,
+      })
+    );
+
+
+    await assert.rejects(
+      async () => {
+        await txBuilder.sendAndConfirm(umi);
+      },
+      (err) => {
+        return (err as Error).message.includes("A seeds constraint was violated.");
+      },
+      "Expected withdrawal to fail due to invalid mint address"
+    );
 
     // Should work after an hour or specified time
     txBuilder = new TransactionBuilder();

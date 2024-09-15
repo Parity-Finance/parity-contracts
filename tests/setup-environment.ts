@@ -54,6 +54,7 @@ export type TestEnvironment = {
   baselineYieldBps: number;
   initialExchangeRatePtStaking: number;
   testDepositCapAmount: number;
+  wrongMint: PublicKey
 };
 
 export const setupTestEnvironment = async () => {
@@ -86,6 +87,7 @@ export const setupTestEnvironment = async () => {
 
   // Quote Mint Issuance
   let quoteMint: PublicKey;
+  let wrongMint: PublicKey;
   let userQuote: PublicKey;
   let vaultIssuance: Pda;
 
@@ -146,6 +148,14 @@ export const setupTestEnvironment = async () => {
       quoteMintDecimals
     );
 
+    const wrongMintWeb3js =  await createMint(
+      connection,
+      keypair,
+      keypair.publicKey,
+      keypair.publicKey,
+      quoteMintDecimals
+    );
+
     console.log("Created USDC: ", quoteMintWeb3js.toBase58());
 
     const userUsdcInfo = await getOrCreateAssociatedTokenAccount(
@@ -178,6 +188,7 @@ export const setupTestEnvironment = async () => {
 
     userQuote = fromWeb3JsPublicKey(userUsdcInfo.address);
     quoteMint = fromWeb3JsPublicKey(quoteMintWeb3js);
+    wrongMint = fromWeb3JsPublicKey(wrongMintWeb3js);
 
     vaultIssuance = findAssociatedTokenPda(umi, {
       owner: tokenManager[0],
@@ -228,6 +239,7 @@ export const setupTestEnvironment = async () => {
     baselineYieldBps,
     initialExchangeRatePtStaking,
     testDepositCapAmount,
+    wrongMint
   };
 
   // Log everything being exported

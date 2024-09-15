@@ -10,7 +10,12 @@ use crate::{ParityIssuanceError, TokenManager};
 pub struct WithdrawFunds<'info> {
     #[account(mut, seeds = [b"token-manager"], bump)]
     pub token_manager: Account<'info, TokenManager>,
-    #[account(mut, seeds = [b"mint"], bump)]
+    #[account(mut,
+         seeds = [b"mint"],
+         bump,
+         address = token_manager.mint @ ParityIssuanceError::InvalidMintAddress,
+         mint::authority = token_manager,
+        )]
     pub mint: Account<'info, Mint>,
     //  Quote Mint
     #[account(
