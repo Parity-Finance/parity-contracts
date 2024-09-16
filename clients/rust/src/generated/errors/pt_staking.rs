@@ -37,6 +37,9 @@ pub enum PtStakingError {
     /// 6008 (0x1778) - Not Initialized
     #[error("Not Initialized")]
     NotInitialized,
+    /// 6009 (0x1779) - Invalid Mint Address
+    #[error("Invalid Mint Address")]
+    InvalidMintAddress,
 }
 
 impl solana_program::program_error::PrintProgramError for PtStakingError {

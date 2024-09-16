@@ -20,4 +20,6 @@ pub enum PtStakingError {
     AlreadyInitialized,
     #[msg("Not Initialized")]
     NotInitialized,
+    #[msg("Invalid Mint Address")]
+    InvalidMintAddress,
 }

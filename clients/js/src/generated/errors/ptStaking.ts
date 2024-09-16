@@ -132,6 +132,19 @@ export class PsNotInitializedError extends ProgramError {
 codeToErrorMap.set(0x1778, PsNotInitializedError);
 nameToErrorMap.set('NotInitialized', PsNotInitializedError);
 
+/** InvalidMintAddress: Invalid Mint Address */
+export class PsInvalidMintAddressError extends ProgramError {
+  override readonly name: string = 'InvalidMintAddress';
+
+  readonly code: number = 0x1779; // 6009
+
+  constructor(program: Program, cause?: Error) {
+    super('Invalid Mint Address', program, cause);
+  }
+}
+codeToErrorMap.set(0x1779, PsInvalidMintAddressError);
+nameToErrorMap.set('InvalidMintAddress', PsInvalidMintAddressError);
+
 /**
  * Attempts to resolve a custom program error from the provided error code.
  * @category Errors
