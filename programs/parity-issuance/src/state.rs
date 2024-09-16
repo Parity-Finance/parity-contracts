@@ -93,9 +93,8 @@ impl TokenManager {
             if quantity > self.limit_per_slot {
                 return err!(ParityIssuanceError::SlotLimitExceeded);
             }
-            // If the slot has changed, reset the current slot and mint volume
+            // If the slot has changed, reset the current slot 
             self.current_slot = current_slot;
-            self.current_slot_volume = quantity;
         }
 
         Ok(())

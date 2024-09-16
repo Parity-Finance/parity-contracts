@@ -125,10 +125,17 @@ pub fn handler(ctx: Context<MintTokens>, quantity: u64, proof: Vec<[u8; 32]>) ->
         .total_collateral
         .checked_add(quote_amount)
         .ok_or(ParityIssuanceError::CalculationOverflow)?;
-    token_manager.current_slot_volume = token_manager
-        .current_slot_volume
-        .checked_add(mint_amount)
-        .ok_or(ParityIssuanceError::CalculationOverflow)?;
+
+    // Update current_slot_volume
+    if token_manager.current_slot == current_slot {
+        token_manager.current_slot_volume = token_manager
+            .current_slot_volume
+            .checked_add(mint_amount)
+            .ok_or(ParityIssuanceError::CalculationOverflow)?;
+    } else {
+        // If it's a new slot, reset the current_slot_volume to the mint_amount
+        token_manager.current_slot_volume = mint_amount;
+    }
 
     Ok(())
 }
