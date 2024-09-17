@@ -42,6 +42,17 @@ impl UpdateGlobalConfig<'_> {
             if new_deposit_cap == 0 {
                 return err!(PtStakingError::InvalidParam); // Ensure deposit cap is non-zero
             }
+
+            // Implement bounds check for deposit cap
+            if new_deposit_cap > 1_000_000_000_000 {
+                return err!(PtStakingError::InvalidParam); // Ensure deposit cap is within reasonable bounds
+            }
+
+            // Check that the new deposit cap is not less than the previous
+            if new_deposit_cap < global_config.deposit_cap {
+                return err!(PtStakingError::DepositCapTooLow);
+            }
+
             global_config.deposit_cap = new_deposit_cap;
         }
 

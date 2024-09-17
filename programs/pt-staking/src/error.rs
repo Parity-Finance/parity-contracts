@@ -14,6 +14,8 @@ pub enum PtStakingError {
     InvalidQuantity,
     #[msg("Deposit cap exceeded")]
     DepositCapExceeded,
+    #[msg("Deposit cap less than the previous")]
+    DepositCapTooLow,
     #[msg("No exchange rate avaliable")]
     NoExchangeRateAvailable,
     #[msg("Insufficient staked amount")]

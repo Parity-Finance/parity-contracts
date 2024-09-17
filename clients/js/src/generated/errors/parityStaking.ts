@@ -93,43 +93,56 @@ export class SsDepositCapExceededError extends ProgramError {
 codeToErrorMap.set(0x1775, SsDepositCapExceededError);
 nameToErrorMap.set('DepositCapExceeded', SsDepositCapExceededError);
 
+/** DepositCapTooLow: Deposit cap less than the previous */
+export class SsDepositCapTooLowError extends ProgramError {
+  override readonly name: string = 'DepositCapTooLow';
+
+  readonly code: number = 0x1776; // 6006
+
+  constructor(program: Program, cause?: Error) {
+    super('Deposit cap less than the previous', program, cause);
+  }
+}
+codeToErrorMap.set(0x1776, SsDepositCapTooLowError);
+nameToErrorMap.set('DepositCapTooLow', SsDepositCapTooLowError);
+
 /** InvalidQuantity: Invalid Quantity */
 export class SsInvalidQuantityError extends ProgramError {
   override readonly name: string = 'InvalidQuantity';
 
-  readonly code: number = 0x1776; // 6006
+  readonly code: number = 0x1777; // 6007
 
   constructor(program: Program, cause?: Error) {
     super('Invalid Quantity', program, cause);
   }
 }
-codeToErrorMap.set(0x1776, SsInvalidQuantityError);
+codeToErrorMap.set(0x1777, SsInvalidQuantityError);
 nameToErrorMap.set('InvalidQuantity', SsInvalidQuantityError);
 
 /** OwnerAlreadySet: Owner Already Set */
 export class SsOwnerAlreadySetError extends ProgramError {
   override readonly name: string = 'OwnerAlreadySet';
 
-  readonly code: number = 0x1777; // 6007
+  readonly code: number = 0x1778; // 6008
 
   constructor(program: Program, cause?: Error) {
     super('Owner Already Set', program, cause);
   }
 }
-codeToErrorMap.set(0x1777, SsOwnerAlreadySetError);
+codeToErrorMap.set(0x1778, SsOwnerAlreadySetError);
 nameToErrorMap.set('OwnerAlreadySet', SsOwnerAlreadySetError);
 
 /** InvalidParam: An Invalid Parameter was passed */
 export class SsInvalidParamError extends ProgramError {
   override readonly name: string = 'InvalidParam';
 
-  readonly code: number = 0x1778; // 6008
+  readonly code: number = 0x1779; // 6009
 
   constructor(program: Program, cause?: Error) {
     super('An Invalid Parameter was passed', program, cause);
   }
 }
-codeToErrorMap.set(0x1778, SsInvalidParamError);
+codeToErrorMap.set(0x1779, SsInvalidParamError);
 nameToErrorMap.set('InvalidParam', SsInvalidParamError);
 
 /**

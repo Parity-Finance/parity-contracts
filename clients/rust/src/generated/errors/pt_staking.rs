@@ -28,25 +28,28 @@ pub enum PtStakingError {
     /// 6005 (0x1775) - Deposit cap exceeded
     #[error("Deposit cap exceeded")]
     DepositCapExceeded,
-    /// 6006 (0x1776) - No exchange rate avaliable
+    /// 6006 (0x1776) - Deposit cap less than the previous
+    #[error("Deposit cap less than the previous")]
+    DepositCapTooLow,
+    /// 6007 (0x1777) - No exchange rate avaliable
     #[error("No exchange rate avaliable")]
     NoExchangeRateAvailable,
-    /// 6007 (0x1777) - Insufficient staked amount
+    /// 6008 (0x1778) - Insufficient staked amount
     #[error("Insufficient staked amount")]
     InsufficientStakedAmount,
-    /// 6008 (0x1778) - Already Initialized
+    /// 6009 (0x1779) - Already Initialized
     #[error("Already Initialized")]
     AlreadyInitialized,
-    /// 6009 (0x1779) - Not Initialized
+    /// 6010 (0x177A) - Not Initialized
     #[error("Not Initialized")]
     NotInitialized,
-    /// 6010 (0x177A) - Invalid Mint Address
+    /// 6011 (0x177B) - Invalid Mint Address
     #[error("Invalid Mint Address")]
     InvalidMintAddress,
-    /// 6011 (0x177B) - Owner Already Set
+    /// 6012 (0x177C) - Owner Already Set
     #[error("Owner Already Set")]
     OwnerAlreadySet,
-    /// 6012 (0x177C) - An Invalid Parameter was passed
+    /// 6013 (0x177D) - An Invalid Parameter was passed
     #[error("An Invalid Parameter was passed")]
     InvalidParam,
 }

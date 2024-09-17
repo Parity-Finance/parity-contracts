@@ -516,36 +516,41 @@
     },
     {
       "code": 6006,
+      "name": "DepositCapTooLow",
+      "msg": "Deposit cap less than the previous"
+    },
+    {
+      "code": 6007,
       "name": "NoExchangeRateAvailable",
       "msg": "No exchange rate avaliable"
     },
     {
-      "code": 6007,
+      "code": 6008,
       "name": "InsufficientStakedAmount",
       "msg": "Insufficient staked amount"
     },
     {
-      "code": 6008,
+      "code": 6009,
       "name": "AlreadyInitialized",
       "msg": "Already Initialized"
     },
     {
-      "code": 6009,
+      "code": 6010,
       "name": "NotInitialized",
       "msg": "Not Initialized"
     },
     {
-      "code": 6010,
+      "code": 6011,
       "name": "InvalidMintAddress",
       "msg": "Invalid Mint Address"
     },
     {
-      "code": 6011,
+      "code": 6012,
       "name": "OwnerAlreadySet",
       "msg": "Owner Already Set"
     },
     {
-      "code": 6012,
+      "code": 6013,
       "name": "InvalidParam",
       "msg": "An Invalid Parameter was passed"
     }

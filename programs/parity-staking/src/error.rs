@@ -14,6 +14,8 @@ pub enum ParityStakingError {
     InvalidYieldRate,
     #[msg("Deposit cap exceeded")]
     DepositCapExceeded,
+    #[msg("Deposit cap less than the previous")]
+    DepositCapTooLow,
     #[msg("Invalid Quantity")]
     InvalidQuantity,
     #[msg("Owner Already Set")]

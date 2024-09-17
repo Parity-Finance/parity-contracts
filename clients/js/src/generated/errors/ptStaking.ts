@@ -93,95 +93,108 @@ export class PsDepositCapExceededError extends ProgramError {
 codeToErrorMap.set(0x1775, PsDepositCapExceededError);
 nameToErrorMap.set('DepositCapExceeded', PsDepositCapExceededError);
 
+/** DepositCapTooLow: Deposit cap less than the previous */
+export class PsDepositCapTooLowError extends ProgramError {
+  override readonly name: string = 'DepositCapTooLow';
+
+  readonly code: number = 0x1776; // 6006
+
+  constructor(program: Program, cause?: Error) {
+    super('Deposit cap less than the previous', program, cause);
+  }
+}
+codeToErrorMap.set(0x1776, PsDepositCapTooLowError);
+nameToErrorMap.set('DepositCapTooLow', PsDepositCapTooLowError);
+
 /** NoExchangeRateAvailable: No exchange rate avaliable */
 export class PsNoExchangeRateAvailableError extends ProgramError {
   override readonly name: string = 'NoExchangeRateAvailable';
 
-  readonly code: number = 0x1776; // 6006
+  readonly code: number = 0x1777; // 6007
 
   constructor(program: Program, cause?: Error) {
     super('No exchange rate avaliable', program, cause);
   }
 }
-codeToErrorMap.set(0x1776, PsNoExchangeRateAvailableError);
+codeToErrorMap.set(0x1777, PsNoExchangeRateAvailableError);
 nameToErrorMap.set('NoExchangeRateAvailable', PsNoExchangeRateAvailableError);
 
 /** InsufficientStakedAmount: Insufficient staked amount */
 export class PsInsufficientStakedAmountError extends ProgramError {
   override readonly name: string = 'InsufficientStakedAmount';
 
-  readonly code: number = 0x1777; // 6007
+  readonly code: number = 0x1778; // 6008
 
   constructor(program: Program, cause?: Error) {
     super('Insufficient staked amount', program, cause);
   }
 }
-codeToErrorMap.set(0x1777, PsInsufficientStakedAmountError);
+codeToErrorMap.set(0x1778, PsInsufficientStakedAmountError);
 nameToErrorMap.set('InsufficientStakedAmount', PsInsufficientStakedAmountError);
 
 /** AlreadyInitialized: Already Initialized */
 export class PsAlreadyInitializedError extends ProgramError {
   override readonly name: string = 'AlreadyInitialized';
 
-  readonly code: number = 0x1778; // 6008
+  readonly code: number = 0x1779; // 6009
 
   constructor(program: Program, cause?: Error) {
     super('Already Initialized', program, cause);
   }
 }
-codeToErrorMap.set(0x1778, PsAlreadyInitializedError);
+codeToErrorMap.set(0x1779, PsAlreadyInitializedError);
 nameToErrorMap.set('AlreadyInitialized', PsAlreadyInitializedError);
 
 /** NotInitialized: Not Initialized */
 export class PsNotInitializedError extends ProgramError {
   override readonly name: string = 'NotInitialized';
 
-  readonly code: number = 0x1779; // 6009
+  readonly code: number = 0x177a; // 6010
 
   constructor(program: Program, cause?: Error) {
     super('Not Initialized', program, cause);
   }
 }
-codeToErrorMap.set(0x1779, PsNotInitializedError);
+codeToErrorMap.set(0x177a, PsNotInitializedError);
 nameToErrorMap.set('NotInitialized', PsNotInitializedError);
 
 /** InvalidMintAddress: Invalid Mint Address */
 export class PsInvalidMintAddressError extends ProgramError {
   override readonly name: string = 'InvalidMintAddress';
 
-  readonly code: number = 0x177a; // 6010
+  readonly code: number = 0x177b; // 6011
 
   constructor(program: Program, cause?: Error) {
     super('Invalid Mint Address', program, cause);
   }
 }
-codeToErrorMap.set(0x177a, PsInvalidMintAddressError);
+codeToErrorMap.set(0x177b, PsInvalidMintAddressError);
 nameToErrorMap.set('InvalidMintAddress', PsInvalidMintAddressError);
 
 /** OwnerAlreadySet: Owner Already Set */
 export class PsOwnerAlreadySetError extends ProgramError {
   override readonly name: string = 'OwnerAlreadySet';
 
-  readonly code: number = 0x177b; // 6011
+  readonly code: number = 0x177c; // 6012
 
   constructor(program: Program, cause?: Error) {
     super('Owner Already Set', program, cause);
   }
 }
-codeToErrorMap.set(0x177b, PsOwnerAlreadySetError);
+codeToErrorMap.set(0x177c, PsOwnerAlreadySetError);
 nameToErrorMap.set('OwnerAlreadySet', PsOwnerAlreadySetError);
 
 /** InvalidParam: An Invalid Parameter was passed */
 export class PsInvalidParamError extends ProgramError {
   override readonly name: string = 'InvalidParam';
 
-  readonly code: number = 0x177c; // 6012
+  readonly code: number = 0x177d; // 6013
 
   constructor(program: Program, cause?: Error) {
     super('An Invalid Parameter was passed', program, cause);
   }
 }
-codeToErrorMap.set(0x177c, PsInvalidParamError);
+codeToErrorMap.set(0x177d, PsInvalidParamError);
 nameToErrorMap.set('InvalidParam', PsInvalidParamError);
 
 /**

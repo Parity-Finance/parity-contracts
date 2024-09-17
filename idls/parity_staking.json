@@ -563,16 +563,21 @@
     },
     {
       "code": 6006,
+      "name": "DepositCapTooLow",
+      "msg": "Deposit cap less than the previous"
+    },
+    {
+      "code": 6007,
       "name": "InvalidQuantity",
       "msg": "Invalid Quantity"
     },
     {
-      "code": 6007,
+      "code": 6008,
       "name": "OwnerAlreadySet",
       "msg": "Owner Already Set"
     },
     {
-      "code": 6008,
+      "code": 6009,
       "name": "InvalidParam",
       "msg": "An Invalid Parameter was passed"
     }
