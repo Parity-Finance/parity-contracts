@@ -54,9 +54,13 @@ pub struct UpdateAnnualYield<'info> {
 }
 
 pub fn handler(ctx: Context<UpdateAnnualYield>, params: UpdateYieldParams) -> Result<()> {
-    // What check to make?
+    
+    if params.interval_apr_rate == 0 {
+        return err!(ParityStakingError::InvalidParam); // Ensure interval APR rate is non-zero
+    }
+
     // if params.interval_apr_rate > 20000 {
-    //     return err!(ParityStakingError::InvalidYieldRate);
+    //     return err!(ParityStakingError::InvalidParam); // Ensure interval APR rate is within a reasonable upper limit
     // }
 
     let pool_manager = &mut ctx.accounts.pool_manager;

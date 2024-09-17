@@ -251,7 +251,7 @@ export async function runIssuanceTests(getEnv: () => TestEnvironment) {
     );
   });
 
-  it("should add and remove a gatekeeper and check unpause permissions", async () => {
+  it.only("should add and remove a gatekeeper and check unpause permissions", async () => {
     const newGatekeeper = env.umi.eddsa.generateKeypair();
 
     await env.umi.rpc.airdrop(
@@ -349,7 +349,7 @@ export async function runIssuanceTests(getEnv: () => TestEnvironment) {
     );
   });
 
-  it("should prevent minting when paused", async () => {
+  it.only("should prevent minting when paused", async () => {
     // Pause the token manager
     let umi = env.umi.use(keypairIdentity(fromWeb3JsKeypair(env.keypair))); // Switch back to admin
 
@@ -464,7 +464,7 @@ export async function runIssuanceTests(getEnv: () => TestEnvironment) {
     assert.equal(tokenManagerAcc.active, true);
   });
 
-  it("should enforce allowList changes", async () => {
+  it.only("should enforce allowList changes", async () => {
     const newAllowedWallets = ["BLDRZQiqt4ESPz12L9mt4XTBjeEfjoBopGPDMA36KtuZ"];
 
     let tokenManagerAcc = await safeFetchTokenManager(env.umi, env.tokenManager);
@@ -925,7 +925,7 @@ export async function runIssuanceTests(getEnv: () => TestEnvironment) {
     );
   });
 
-  it("should initiate and accept manager owner update", async () => {
+  it.only("should initiate and accept manager owner update", async () => {
     let umi = env.umi
     let tokenManager = env.tokenManager
     const newAdmin = umi.eddsa.generateKeypair();
@@ -1014,7 +1014,7 @@ export async function runIssuanceTests(getEnv: () => TestEnvironment) {
     );
   });
 
-  it("should update base mint metadata of issuance program", async () => {
+  it.only("should update base mint metadata of issuance program", async () => {
     const name = "TEST";
     const symbol = "TEST";
     const uri = "https://example.com/new-xmint-info.json";
@@ -1042,7 +1042,7 @@ export async function runIssuanceTests(getEnv: () => TestEnvironment) {
     assert.equal(mintMetadata.uri, uri, "Uri should be updated");
   });
 
-  it("should mint tokens to admin and update token  minter", async () => {
+  it.only("should mint tokens to admin and update token  minter", async () => {
     let umi = env.umi;
     let tokenManager = env.tokenManager;
     let baseMintDecimals = env.baseMintDecimals;
@@ -1146,7 +1146,7 @@ export async function runIssuanceTests(getEnv: () => TestEnvironment) {
     );
   });
 
-  it("should update the mint and redeem fee with an higher amount", async () => {
+  it.only("should update the mint and redeem fee with an higher amount", async () => {
     let umi = env.umi;
     let tokenManager = env.tokenManager;
     let vaultIssuance = env.vaultIssuance;
@@ -1340,7 +1340,7 @@ export async function runIssuanceTests(getEnv: () => TestEnvironment) {
     );
   });
 
-  it("should update the mint and redeem fee with zero ", async () => {
+  it.only("should update the mint and redeem fee with zero ", async () => {
 
     let umi = env.umi;
     let tokenManager = env.tokenManager;

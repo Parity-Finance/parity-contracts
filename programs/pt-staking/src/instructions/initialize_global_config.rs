@@ -1,5 +1,6 @@
 use crate::{
-    BaseYieldPhase, ExchangeRatePhase, GlobalConfig, PointsEarnedPhase, PtStakingError, INITIAL_GLOBAL_CONFIG_SIZE
+    BaseYieldPhase, ExchangeRatePhase, GlobalConfig, PointsEarnedPhase, PtStakingError,
+    INITIAL_GLOBAL_CONFIG_SIZE,
 };
 use anchor_lang::prelude::*;
 use anchor_spl::{
@@ -54,6 +55,26 @@ impl InitializeGlobalConfig<'_> {
     ) -> Result<()> {
         let global_config = &mut ctx.accounts.global_config;
         let bump = ctx.bumps.global_config;
+
+        // Validate admin public key
+        if params.admin == Pubkey::default() {
+            return err!(PtStakingError::InvalidParam); // Ensure admin is not the default public key
+        }
+
+        // Validate baseline yield basis points
+        if params.baseline_yield_bps > 10_000 {
+            return err!(PtStakingError::InvalidParam); // Ensure baseline yield is within valid range
+        }
+
+        // Validate deposit cap
+        if params.deposit_cap == 0 {
+            return err!(PtStakingError::InvalidParam); // Ensure deposit cap is non-zero
+        }
+
+        // Validate initial exchange rate
+        if params.initial_exchange_rate == 0 {
+            return err!(PtStakingError::InvalidParam); // Ensure initial exchange rate is non-zero
+        }
 
         // Authorities
         global_config.owner = ctx.accounts.user.key();

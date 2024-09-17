@@ -9,7 +9,7 @@ use anchor_spl::{
     token::{Mint, Token, TokenAccount},
 };
 
-use crate::{PoolManager, POOL_MANAGER_LENGTH};
+use crate::{ParityStakingError, PoolManager, POOL_MANAGER_LENGTH};
 
 #[derive(AnchorSerialize, AnchorDeserialize, Debug, Clone)]
 pub struct InitializePoolManagerParams {
@@ -23,6 +23,65 @@ pub struct InitializePoolManagerParams {
     pub admin: Pubkey,
     pub deposit_cap: u64,
 }
+
+impl InitializePoolManagerParams {
+    pub fn validate(&self) -> Result<()> {
+        // Validate name
+        if self.name.is_empty() {
+            return err!(ParityStakingError::InvalidParam); // Ensure name is not empty
+        }
+
+        // Validate symbol
+        if self.symbol.is_empty() {
+            return err!(ParityStakingError::InvalidParam); // Ensure symbol is not empty
+        }
+
+        // Validate URI
+        if self.uri.is_empty() {
+            return err!(ParityStakingError::InvalidParam); // Ensure URI is not empty
+        }
+
+        // Validate decimals
+        if self.decimals > 18 {
+            return err!(ParityStakingError::InvalidParam); // Ensure decimals are within valid range
+        }
+
+        // Validate initial exchange rate
+        if self.initial_exchange_rate == 0 {
+            return err!(ParityStakingError::InvalidParam); // Ensure initial exchange rate is non-zero
+        }
+
+        // Validate deposit cap
+        if self.deposit_cap == 0 {
+            return err!(ParityStakingError::InvalidParam); // Ensure deposit cap is non-zero
+        }
+        // Implement bounds check for deposit cap
+        if self.deposit_cap > 1_000_000_000_000 { 
+            return err!(ParityStakingError::InvalidParam); // Ensure deposit cap is within reasonable bounds
+        }
+
+        // Validate interval APR rate
+        if self.interval_apr_rate == 0 {
+            return err!(ParityStakingError::InvalidParam); // Ensure interval APR rate is non-zero
+        }
+        // Implement bounds check for interval APR rate
+        // if self.interval_apr_rate > 1_000_000_000_000 {
+        //     return err!(ParityStakingError::InvalidParam); // Ensure interval APR rate is within reasonable bounds
+        // }
+
+        // Validate seconds per interval
+        if self.seconds_per_interval <= 0 {
+            return err!(ParityStakingError::InvalidParam); // Ensure seconds per interval is positive
+        }
+        // Implement bounds check for seconds per interval
+        if self.seconds_per_interval > 60 * 60 * 24 {
+            return err!(ParityStakingError::InvalidParam); // Ensure seconds per interval is within reasonable bounds
+        }
+
+        Ok(())
+    }
+}
+
 
 #[derive(Accounts)]
 #[instruction(params: InitializePoolManagerParams)]
@@ -76,6 +135,9 @@ pub fn handler(
     ctx: Context<InitializePoolManager>,
     params: InitializePoolManagerParams,
 ) -> Result<()> {
+    // Validate the parameters
+    params.validate()?;
+    
     let pool_manager = &mut ctx.accounts.pool_manager;
 
     let bump = ctx.bumps.pool_manager;
@@ -135,3 +197,12 @@ pub fn handler(
 
     Ok(())
 }
+
+
+
+
+
+
+
+
+

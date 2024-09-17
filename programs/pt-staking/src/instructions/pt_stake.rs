@@ -62,6 +62,11 @@ impl PtStake<'_> {
         let current_timestamp: i64 = Clock::get()?.unix_timestamp;
         let total_vault_amount = ctx.accounts.vault.amount;
 
+        // Check if the quantity to stake is greater than zero
+        if quantity == 0 {
+            return err!(PtStakingError::InvalidQuantity);
+        }
+
         // Check if deposit exceeds the deposit cap or limit
         global_config.check_excessive_deposit(quantity, total_vault_amount)?;
 

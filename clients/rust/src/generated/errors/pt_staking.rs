@@ -22,24 +22,33 @@ pub enum PtStakingError {
     /// 6003 (0x1773) - Invalid yield rate
     #[error("Invalid yield rate")]
     InvalidYieldRate,
-    /// 6004 (0x1774) - Deposit cap exceeded
+    /// 6004 (0x1774) - Invalid Quantity
+    #[error("Invalid Quantity")]
+    InvalidQuantity,
+    /// 6005 (0x1775) - Deposit cap exceeded
     #[error("Deposit cap exceeded")]
     DepositCapExceeded,
-    /// 6005 (0x1775) - No exchange rate avaliable
+    /// 6006 (0x1776) - No exchange rate avaliable
     #[error("No exchange rate avaliable")]
     NoExchangeRateAvailable,
-    /// 6006 (0x1776) - Insufficient staked amount
+    /// 6007 (0x1777) - Insufficient staked amount
     #[error("Insufficient staked amount")]
     InsufficientStakedAmount,
-    /// 6007 (0x1777) - Already Initialized
+    /// 6008 (0x1778) - Already Initialized
     #[error("Already Initialized")]
     AlreadyInitialized,
-    /// 6008 (0x1778) - Not Initialized
+    /// 6009 (0x1779) - Not Initialized
     #[error("Not Initialized")]
     NotInitialized,
-    /// 6009 (0x1779) - Invalid Mint Address
+    /// 6010 (0x177A) - Invalid Mint Address
     #[error("Invalid Mint Address")]
     InvalidMintAddress,
+    /// 6011 (0x177B) - Owner Already Set
+    #[error("Owner Already Set")]
+    OwnerAlreadySet,
+    /// 6012 (0x177C) - An Invalid Parameter was passed
+    #[error("An Invalid Parameter was passed")]
+    InvalidParam,
 }
 
 impl solana_program::program_error::PrintProgramError for PtStakingError {

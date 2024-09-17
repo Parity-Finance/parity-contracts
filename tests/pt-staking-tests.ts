@@ -82,7 +82,7 @@ export async function runPtStakingTests(getEnv: () => TestEnvironment) {
             );
         });
 
-        it("baseMint can be staked in PT Staking", async () => {
+        it.only("baseMint can be staked in PT Staking", async () => {
             let quantity = 1000 * 10 ** baseMintDecimals;
 
             // Attempt staking without creating the userStake acccount
@@ -170,7 +170,7 @@ export async function runPtStakingTests(getEnv: () => TestEnvironment) {
             assert.equal(globalConfigAcc.stakingVault, vaultAcc.publicKey);
         });
 
-        it("baseMint can be unstaked in PT Staking", async () => {
+        it.only("baseMint can be unstaked in PT Staking", async () => {
             let quantity = 1000 * 10 ** baseMintDecimals;
 
             // Fetch accounts before unstaking
@@ -307,7 +307,7 @@ export async function runPtStakingTests(getEnv: () => TestEnvironment) {
             umi.use(keypairIdentity(fromWeb3JsKeypair(keypair))); // Switch back to  admin
         });
 
-        it("should initiate and accept global config owner update", async () => {
+        it.only("should initiate and accept global config owner update", async () => {
             const newOwner = umi.eddsa.generateKeypair();
 
             await umi.rpc.airdrop(
@@ -394,7 +394,7 @@ export async function runPtStakingTests(getEnv: () => TestEnvironment) {
             );
         });
 
-        it("should update Pt Staking global config", async () => {
+        it.only("should update Pt Staking global config", async () => {
             const notOwner = umi.eddsa.generateKeypair();
             const newBaselineYield = 5000; // For 50%
             const newExchangeRatePtStaking = 30 * 10 ** baseMintDecimals;

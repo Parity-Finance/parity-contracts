@@ -49,21 +49,27 @@ pub enum ParityIssuanceError {
     /// 6012 (0x177C) - Invalid minter
     #[error("Invalid minter")]
     InvalidMinter,
-    /// 6013 (0x177D) - Invalid toggle active authority
+    /// 6013 (0x177D) - Invalid Quantity
+    #[error("Invalid Quantity")]
+    InvalidQuantity,
+    /// 6014 (0x177E) - Invalid toggle active authority
     #[error("Invalid toggle active authority")]
     InvalidToggleActiveAuthority,
-    /// 6014 (0x177E) - No pending withdrawal
+    /// 6015 (0x177F) - No pending withdrawal
     #[error("No pending withdrawal")]
     NoPendingWithdrawal,
-    /// 6015 (0x177F) - Withdrawal not ready
+    /// 6016 (0x1780) - Withdrawal not ready
     #[error("Withdrawal not ready")]
     WithdrawalNotReady,
-    /// 6016 (0x1780) - Withdrawal expired
+    /// 6017 (0x1781) - Withdrawal expired
     #[error("Withdrawal expired")]
     WithdrawalExpired,
-    /// 6017 (0x1781) - Pending Withdrawal Exists
+    /// 6018 (0x1782) - Pending Withdrawal Exists
     #[error("Pending Withdrawal Exists")]
     PendingWithdrawalExists,
+    /// 6019 (0x1783) - An Invalid Parameter was passed
+    #[error("An Invalid Parameter was passed")]
+    InvalidParam,
 }
 
 impl solana_program::program_error::PrintProgramError for ParityIssuanceError {

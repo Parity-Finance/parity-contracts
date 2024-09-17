@@ -198,17 +198,30 @@ export class SiInvalidMinterError extends ProgramError {
 codeToErrorMap.set(0x177c, SiInvalidMinterError);
 nameToErrorMap.set('InvalidMinter', SiInvalidMinterError);
 
+/** InvalidQuantity: Invalid Quantity */
+export class SiInvalidQuantityError extends ProgramError {
+  override readonly name: string = 'InvalidQuantity';
+
+  readonly code: number = 0x177d; // 6013
+
+  constructor(program: Program, cause?: Error) {
+    super('Invalid Quantity', program, cause);
+  }
+}
+codeToErrorMap.set(0x177d, SiInvalidQuantityError);
+nameToErrorMap.set('InvalidQuantity', SiInvalidQuantityError);
+
 /** InvalidToggleActiveAuthority: Invalid toggle active authority */
 export class SiInvalidToggleActiveAuthorityError extends ProgramError {
   override readonly name: string = 'InvalidToggleActiveAuthority';
 
-  readonly code: number = 0x177d; // 6013
+  readonly code: number = 0x177e; // 6014
 
   constructor(program: Program, cause?: Error) {
     super('Invalid toggle active authority', program, cause);
   }
 }
-codeToErrorMap.set(0x177d, SiInvalidToggleActiveAuthorityError);
+codeToErrorMap.set(0x177e, SiInvalidToggleActiveAuthorityError);
 nameToErrorMap.set(
   'InvalidToggleActiveAuthority',
   SiInvalidToggleActiveAuthorityError
@@ -218,53 +231,66 @@ nameToErrorMap.set(
 export class SiNoPendingWithdrawalError extends ProgramError {
   override readonly name: string = 'NoPendingWithdrawal';
 
-  readonly code: number = 0x177e; // 6014
+  readonly code: number = 0x177f; // 6015
 
   constructor(program: Program, cause?: Error) {
     super('No pending withdrawal', program, cause);
   }
 }
-codeToErrorMap.set(0x177e, SiNoPendingWithdrawalError);
+codeToErrorMap.set(0x177f, SiNoPendingWithdrawalError);
 nameToErrorMap.set('NoPendingWithdrawal', SiNoPendingWithdrawalError);
 
 /** WithdrawalNotReady: Withdrawal not ready */
 export class SiWithdrawalNotReadyError extends ProgramError {
   override readonly name: string = 'WithdrawalNotReady';
 
-  readonly code: number = 0x177f; // 6015
+  readonly code: number = 0x1780; // 6016
 
   constructor(program: Program, cause?: Error) {
     super('Withdrawal not ready', program, cause);
   }
 }
-codeToErrorMap.set(0x177f, SiWithdrawalNotReadyError);
+codeToErrorMap.set(0x1780, SiWithdrawalNotReadyError);
 nameToErrorMap.set('WithdrawalNotReady', SiWithdrawalNotReadyError);
 
 /** WithdrawalExpired: Withdrawal expired */
 export class SiWithdrawalExpiredError extends ProgramError {
   override readonly name: string = 'WithdrawalExpired';
 
-  readonly code: number = 0x1780; // 6016
+  readonly code: number = 0x1781; // 6017
 
   constructor(program: Program, cause?: Error) {
     super('Withdrawal expired', program, cause);
   }
 }
-codeToErrorMap.set(0x1780, SiWithdrawalExpiredError);
+codeToErrorMap.set(0x1781, SiWithdrawalExpiredError);
 nameToErrorMap.set('WithdrawalExpired', SiWithdrawalExpiredError);
 
 /** PendingWithdrawalExists: Pending Withdrawal Exists */
 export class SiPendingWithdrawalExistsError extends ProgramError {
   override readonly name: string = 'PendingWithdrawalExists';
 
-  readonly code: number = 0x1781; // 6017
+  readonly code: number = 0x1782; // 6018
 
   constructor(program: Program, cause?: Error) {
     super('Pending Withdrawal Exists', program, cause);
   }
 }
-codeToErrorMap.set(0x1781, SiPendingWithdrawalExistsError);
+codeToErrorMap.set(0x1782, SiPendingWithdrawalExistsError);
 nameToErrorMap.set('PendingWithdrawalExists', SiPendingWithdrawalExistsError);
+
+/** InvalidParam: An Invalid Parameter was passed */
+export class SiInvalidParamError extends ProgramError {
+  override readonly name: string = 'InvalidParam';
+
+  readonly code: number = 0x1783; // 6019
+
+  constructor(program: Program, cause?: Error) {
+    super('An Invalid Parameter was passed', program, cause);
+  }
+}
+codeToErrorMap.set(0x1783, SiInvalidParamError);
+nameToErrorMap.set('InvalidParam', SiInvalidParamError);
 
 /**
  * Attempts to resolve a custom program error from the provided error code.

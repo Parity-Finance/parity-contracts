@@ -43,6 +43,12 @@ pub fn handler(ctx: Context<MintAdminTokens>, quantity: u64) -> Result<()> {
 
     let mint_amount = quantity;
 
+    
+     // Check if the quantity to mint is greater than zero
+     if mint_amount == 0 {
+        return err!(ParityIssuanceError::InvalidQuantity);
+    }
+
     mint_to(
         CpiContext::new_with_signer(
             ctx.accounts.token_program.to_account_info(),

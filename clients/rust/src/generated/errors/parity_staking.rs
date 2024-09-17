@@ -28,6 +28,15 @@ pub enum ParityStakingError {
     /// 6005 (0x1775) - Deposit cap exceeded
     #[error("Deposit cap exceeded")]
     DepositCapExceeded,
+    /// 6006 (0x1776) - Invalid Quantity
+    #[error("Invalid Quantity")]
+    InvalidQuantity,
+    /// 6007 (0x1777) - Owner Already Set
+    #[error("Owner Already Set")]
+    OwnerAlreadySet,
+    /// 6008 (0x1778) - An Invalid Parameter was passed
+    #[error("An Invalid Parameter was passed")]
+    InvalidParam,
 }
 
 impl solana_program::program_error::PrintProgramError for ParityStakingError {

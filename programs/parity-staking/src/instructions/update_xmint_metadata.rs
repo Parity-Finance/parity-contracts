@@ -32,6 +32,21 @@ pub fn handler(
 ) -> Result<()> {
     let pool_manager = &ctx.accounts.pool_manager;
 
+    // Check if the name is not empty
+    if name.is_empty() {
+        return err!(ParityStakingError::InvalidParam); // Ensure name is not empty
+    }
+
+    // Check if the symbol is not empty
+    if symbol.is_empty() {
+        return err!(ParityStakingError::InvalidParam); // Ensure symbol is not empty
+    }
+
+    // Check if the URI is not empty
+    if uri.is_empty() {
+        return err!(ParityStakingError::InvalidParam); // Ensure URI is not empty
+    }
+
     let bump = pool_manager.bump;
     let signer_seeds: &[&[&[u8]]] = &[&[b"pool-manager", &[bump]]];
 

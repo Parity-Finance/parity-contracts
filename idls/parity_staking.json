@@ -560,6 +560,21 @@
       "code": 6005,
       "name": "DepositCapExceeded",
       "msg": "Deposit cap exceeded"
+    },
+    {
+      "code": 6006,
+      "name": "InvalidQuantity",
+      "msg": "Invalid Quantity"
+    },
+    {
+      "code": 6007,
+      "name": "OwnerAlreadySet",
+      "msg": "Owner Already Set"
+    },
+    {
+      "code": 6008,
+      "name": "InvalidParam",
+      "msg": "An Invalid Parameter was passed"
     }
   ],
   "metadata": {

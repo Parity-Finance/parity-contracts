@@ -61,6 +61,12 @@ pub fn handler(ctx: Context<MintTokens>, quantity: u64, proof: Vec<[u8; 32]>) ->
         return err!(ParityIssuanceError::MintAndRedemptionsPaused);
     }
 
+     // Check if the quantity to mint is greater than zero
+     if quantity == 0 {
+        return err!(ParityIssuanceError::InvalidQuantity);
+    }
+
+
     // Allow List check
     let leaf: solana_program::keccak::Hash =
         solana_program::keccak::hashv(&[payer.key().to_string().as_bytes()]);

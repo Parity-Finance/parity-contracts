@@ -506,33 +506,48 @@
     },
     {
       "code": 6004,
+      "name": "InvalidQuantity",
+      "msg": "Invalid Quantity"
+    },
+    {
+      "code": 6005,
       "name": "DepositCapExceeded",
       "msg": "Deposit cap exceeded"
     },
     {
-      "code": 6005,
+      "code": 6006,
       "name": "NoExchangeRateAvailable",
       "msg": "No exchange rate avaliable"
     },
     {
-      "code": 6006,
+      "code": 6007,
       "name": "InsufficientStakedAmount",
       "msg": "Insufficient staked amount"
     },
     {
-      "code": 6007,
+      "code": 6008,
       "name": "AlreadyInitialized",
       "msg": "Already Initialized"
     },
     {
-      "code": 6008,
+      "code": 6009,
       "name": "NotInitialized",
       "msg": "Not Initialized"
     },
     {
-      "code": 6009,
+      "code": 6010,
       "name": "InvalidMintAddress",
       "msg": "Invalid Mint Address"
+    },
+    {
+      "code": 6011,
+      "name": "OwnerAlreadySet",
+      "msg": "Owner Already Set"
+    },
+    {
+      "code": 6012,
+      "name": "InvalidParam",
+      "msg": "An Invalid Parameter was passed"
     }
   ],
   "metadata": {

@@ -59,6 +59,11 @@ impl PtUnstake<'_> {
         let user_base_mint_ata = &ctx.accounts.user_base_mint_ata;
         let vault = &ctx.accounts.vault;
 
+         // Check if the quantity to unstake is greater than zero
+         if quantity == 0 {
+            return err!(PtStakingError::InvalidQuantity);
+        }
+
         //Signing
         let bump = global_config.bump; // Corrected to be a slice of a slice of a byte slice
         let signer_seeds: &[&[&[u8]]] = &[&[b"global-config", &[bump]]];

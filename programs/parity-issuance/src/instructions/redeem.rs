@@ -57,6 +57,11 @@ pub fn handler(ctx: Context<RedeemTokens>, quantity: u64, proof: Vec<[u8; 32]>) 
         return err!(ParityIssuanceError::MintAndRedemptionsPaused);
     }
 
+     // Check if the quantity to redeem is greater than zero
+     if quantity == 0 {
+        return err!(ParityIssuanceError::InvalidQuantity);
+    }
+
     // Allow List Check
     let leaf: solana_program::keccak::Hash =
         solana_program::keccak::hashv(&[payer.key().to_string().as_bytes()]);

@@ -50,6 +50,11 @@ pub fn handler(ctx: Context<DepositFunds>, quantity: u64) -> Result<()> {
 
     let quote_amount = quantity;
 
+    // Check if the quantity to deposit is greater than zero
+    if quote_amount == 0 {
+        return err!(ParityIssuanceError::InvalidQuantity);
+    }
+
     // Check if deposit exceeds 100% collateral
     token_manager.check_excessive_deposit(quote_amount, mint.supply)?;
 

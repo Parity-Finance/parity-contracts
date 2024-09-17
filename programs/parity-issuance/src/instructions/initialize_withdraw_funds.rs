@@ -1,6 +1,5 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{Mint, TokenAccount}
-;
+use anchor_spl::token::{Mint, TokenAccount};
 
 use crate::{ParityIssuanceError, TokenManager};
 
@@ -30,18 +29,24 @@ pub fn handler(ctx: Context<InitializeWithdrawFunds>, quantity: u64) -> Result<(
     let mint = &mut ctx.accounts.mint;
     let actual_vault_balance = ctx.accounts.vault.amount;
 
-      // Check if there is an existing pending withdrawal
-      if token_manager.pending_withdrawal_amount > 0 {
+    // Check if there is an existing pending withdrawal
+    if token_manager.pending_withdrawal_amount > 0 {
         return err!(ParityIssuanceError::PendingWithdrawalExists);
     }
 
     let quote_amount = quantity;
 
+    // Check if the quantity to withdraw is greater than zero
+    if quote_amount == 0 {
+        return err!(ParityIssuanceError::InvalidQuantity);
+    }
+
     if quote_amount > actual_vault_balance {
         return err!(ParityIssuanceError::ExcessiveWithdrawal);
     }
 
-    let max_withdrawable_amount = token_manager.calculate_max_withdrawable_amount(mint.supply, actual_vault_balance)?;
+    let max_withdrawable_amount =
+        token_manager.calculate_max_withdrawable_amount(mint.supply, actual_vault_balance)?;
     msg!("Max withdrawable amount: {}", max_withdrawable_amount);
     msg!("Quote amount: {}", quote_amount);
     msg!("Mint supply: {}", mint.supply);

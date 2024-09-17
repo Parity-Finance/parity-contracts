@@ -32,6 +32,21 @@ pub fn handler(
 ) -> Result<()> {
     let token_manager = &ctx.accounts.token_manager;
 
+    // Check if the name is not empty
+    if name.is_empty() {
+        return err!(ParityIssuanceError::InvalidParam);
+    }
+
+    // Check if the symbol is not empty
+    if symbol.is_empty() {
+        return err!(ParityIssuanceError::InvalidParam);
+    }
+
+    // Check if the URI is not empty
+    if uri.is_empty() {
+        return err!(ParityIssuanceError::InvalidParam);
+    }
+
     let bump = token_manager.bump;
     let signer_seeds: &[&[&[u8]]] = &[&[b"token-manager", &[bump]]];
 

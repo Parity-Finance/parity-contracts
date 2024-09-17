@@ -69,6 +69,11 @@ pub fn handler(ctx: Context<Unstake>, quantity: u64) -> Result<()> {
     let current_timestamp = Clock::get()?.unix_timestamp;
     let x_amount = quantity;
 
+     // Check if the quantity to unstake is greater than zero
+     if x_amount == 0 {
+        return err!(ParityStakingError::InvalidQuantity);
+    }
+
     let initial_x_mint_supply = x_mint.supply;
 
     // Burning

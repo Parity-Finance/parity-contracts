@@ -28,6 +28,8 @@ pub enum ParityIssuanceError {
     InvalidOwner,
     #[msg("Invalid minter")]
     InvalidMinter,
+    #[msg("Invalid Quantity")]
+    InvalidQuantity,
     #[msg("Invalid toggle active authority")]
     InvalidToggleActiveAuthority,
     #[msg("No pending withdrawal")]
@@ -38,4 +40,6 @@ pub enum ParityIssuanceError {
     WithdrawalExpired,
     #[msg("Pending Withdrawal Exists")]
     PendingWithdrawalExists,
+    #[msg("An Invalid Parameter was passed")]
+    InvalidParam,
 }

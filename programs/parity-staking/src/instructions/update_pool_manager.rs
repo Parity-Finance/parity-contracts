@@ -24,9 +24,16 @@ pub fn handler(ctx: Context<UpdatePoolManager>, params: UpdatePoolManagerParams)
     let pool_manager = &mut ctx.accounts.pool_manager;
 
     if let Some(new_admin) = params.new_admin {
+        if new_admin == Pubkey::default() {
+            return err!(ParityStakingError::InvalidParam); // Ensure new admin is not the default public key
+        }
         pool_manager.admin = new_admin;
     }
+
     if let Some(new_deposit_cap) = params.new_deposit_cap {
+        if new_deposit_cap == 0 {
+            return err!(ParityStakingError::InvalidParam); // Ensure deposit cap is non-zero
+        }
         pool_manager.deposit_cap = new_deposit_cap;
     }
     Ok(())

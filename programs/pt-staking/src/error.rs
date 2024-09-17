@@ -10,6 +10,8 @@ pub enum PtStakingError {
     InvalidOwner,
     #[msg("Invalid yield rate")]
     InvalidYieldRate,
+    #[msg("Invalid Quantity")]
+    InvalidQuantity,
     #[msg("Deposit cap exceeded")]
     DepositCapExceeded,
     #[msg("No exchange rate avaliable")]
@@ -22,4 +24,8 @@ pub enum PtStakingError {
     NotInitialized,
     #[msg("Invalid Mint Address")]
     InvalidMintAddress,
+    #[msg("Owner Already Set")]
+    OwnerAlreadySet,
+    #[msg("An Invalid Parameter was passed")]
+    InvalidParam,
 }

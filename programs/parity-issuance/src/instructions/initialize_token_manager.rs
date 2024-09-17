@@ -1,4 +1,4 @@
-use crate::{TokenManager, TOKEN_MANAGER_SIZE};
+use crate::{ParityIssuanceError, TokenManager, TOKEN_MANAGER_SIZE};
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
@@ -25,6 +25,61 @@ pub struct InitializeTokenManagerParams {
     pub withdraw_execution_window: i64,
     pub mint_fee_bps: u16,
     pub redeem_fee_bps: u16,
+}
+
+impl InitializeTokenManagerParams {
+    pub fn validate(&self) -> Result<()> {
+        // Validate name and symbol are not empty
+        if self.name.is_empty() {
+            return err!(ParityIssuanceError::InvalidParam);
+        }
+        if self.symbol.is_empty() {
+            return err!(ParityIssuanceError::InvalidParam);
+        }
+
+        // Validate decimals are within a valid range
+        if self.decimals > 18 {
+            return err!(ParityIssuanceError::InvalidParam);
+        }
+
+        // Validate exchange rate is non-zero
+        if self.exchange_rate == 0 {
+            return err!(ParityIssuanceError::InvalidParam);
+        }
+
+        // Validate emergency fund basis points are within bounds
+        if self.emergency_fund_basis_points > 10000 {
+            return err!(ParityIssuanceError::InvalidParam);
+        }
+
+        // Validate admin and minter are valid public keys
+        if self.admin == Pubkey::default() {
+            return err!(ParityIssuanceError::InvalidParam);
+        }
+        if self.minter == Pubkey::default() {
+            return err!(ParityIssuanceError::InvalidParam);
+        }
+
+        // Validate withdraw time lock and execution window are non-negative
+        if self.withdraw_time_lock < 0 {
+            return err!(ParityIssuanceError::InvalidParam);
+        }
+        if self.withdraw_execution_window < 0 {
+            return err!(ParityIssuanceError::InvalidParam);
+        }
+
+        // Validate limit per slot is non-zero
+        if self.limit_per_slot == 0 {
+            return err!(ParityIssuanceError::InvalidParam);
+        }
+
+        // Validate mint and redeem fees are within bounds
+        if self.mint_fee_bps > 10000 || self.redeem_fee_bps > 10000 {
+            return err!(ParityIssuanceError::InvalidParam);
+        }
+
+        Ok(())
+    }
 }
 
 #[derive(Accounts)]
@@ -73,6 +128,9 @@ pub fn handler(
     ctx: Context<InitializeTokenManager>,
     params: InitializeTokenManagerParams,
 ) -> Result<()> {
+    // Validate parameters
+    params.validate()?;
+
     let token_manager = &mut ctx.accounts.token_manager;
 
     let bump = ctx.bumps.token_manager; // Corrected to be a slice of a slice of a byte slice

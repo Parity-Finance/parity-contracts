@@ -953,28 +953,38 @@
     },
     {
       "code": 6013,
+      "name": "InvalidQuantity",
+      "msg": "Invalid Quantity"
+    },
+    {
+      "code": 6014,
       "name": "InvalidToggleActiveAuthority",
       "msg": "Invalid toggle active authority"
     },
     {
-      "code": 6014,
+      "code": 6015,
       "name": "NoPendingWithdrawal",
       "msg": "No pending withdrawal"
     },
     {
-      "code": 6015,
+      "code": 6016,
       "name": "WithdrawalNotReady",
       "msg": "Withdrawal not ready"
     },
     {
-      "code": 6016,
+      "code": 6017,
       "name": "WithdrawalExpired",
       "msg": "Withdrawal expired"
     },
     {
-      "code": 6017,
+      "code": 6018,
       "name": "PendingWithdrawalExists",
       "msg": "Pending Withdrawal Exists"
+    },
+    {
+      "code": 6019,
+      "name": "InvalidParam",
+      "msg": "An Invalid Parameter was passed"
     }
   ],
   "metadata": {
