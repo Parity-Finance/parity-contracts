@@ -39,6 +39,7 @@ pub struct TokenManager {
     )]
     pub minter: Pubkey,
     pub merkle_root: [u8; 32],
+    pub is_whitelist_enabled: bool,
     #[cfg_attr(
         feature = "serde",
         serde(with = "serde_with::As::<serde_with::DisplayFromStr>")
@@ -67,7 +68,7 @@ pub struct TokenManager {
 }
 
 impl TokenManager {
-    pub const LEN: usize = 314;
+    pub const LEN: usize = 315;
 
     /// Prefix values used to generate a PDA for this account.
     ///

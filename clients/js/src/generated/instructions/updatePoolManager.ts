@@ -35,6 +35,7 @@ import {
 // Accounts.
 export type UpdatePoolManagerInstructionAccounts = {
   poolManager: PublicKey | Pda;
+  vault: PublicKey | Pda;
   owner: Signer;
 };
 
@@ -99,8 +100,13 @@ export function updatePoolManager(
       isWritable: true as boolean,
       value: input.poolManager ?? null,
     },
-    owner: {
+    vault: {
       index: 1,
+      isWritable: true as boolean,
+      value: input.vault ?? null,
+    },
+    owner: {
+      index: 2,
       isWritable: true as boolean,
       value: input.owner ?? null,
     },

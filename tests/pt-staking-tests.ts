@@ -38,46 +38,46 @@ export async function runPtStakingTests(getEnv: () => TestEnvironment) {
 
         it.only("Global Config is initialized", async () => {
             const globalConfigAcc = await safeFetchGlobalConfig(umi, globalConfig);
-        
+
             assert.equal(
-                globalConfigAcc.baseMint, 
-                baseMint[0], 
+                globalConfigAcc.baseMint,
+                baseMint[0],
                 "Base mint mismatch: expected " + baseMint[0] + ", got " + globalConfigAcc.baseMint
             );
-            
+
             assert.equal(
-                globalConfigAcc.baseMintDecimals, 
-                baseMintDecimals, 
+                globalConfigAcc.baseMintDecimals,
+                baseMintDecimals,
                 "Base mint decimals mismatch: expected " + baseMintDecimals + ", got " + globalConfigAcc.baseMintDecimals
             );
-            
+
             assert.equal(
-                globalConfigAcc.baseYieldHistory[0].baseYieldBps, 
-                baselineYieldBps, 
+                globalConfigAcc.baseYieldHistory[0].baseYieldBps,
+                baselineYieldBps,
                 "Base yield mismatch: expected " + baselineYieldBps + ", got " + globalConfigAcc.baseYieldHistory[0].baseYieldBps
             );
-            
+
             assert.equal(
-                globalConfigAcc.admin, 
-                umi.identity.publicKey, 
+                globalConfigAcc.admin,
+                umi.identity.publicKey,
                 "Admin mismatch: expected " + umi.identity.publicKey + ", got " + globalConfigAcc.admin
             );
-            
+
             assert.equal(
-                globalConfigAcc.depositCap, 
-                testDepositCapAmount, 
+                globalConfigAcc.depositCap,
+                testDepositCapAmount,
                 "Deposit cap mismatch: expected " + testDepositCapAmount + ", got " + globalConfigAcc.depositCap
             );
-            
+
             assert.equal(
                 globalConfigAcc.exchangeRateHistory[0].exchangeRate,
                 initialExchangeRatePtStaking,
                 "Initial exchange rate mismatch: expected " + initialExchangeRatePtStaking + ", got " + globalConfigAcc.exchangeRateHistory[0].exchangeRate
             );
-            
+
             assert.equal(
-                globalConfigAcc.stakedSupply, 
-                0, 
+                globalConfigAcc.stakedSupply,
+                0,
                 "Staked supply mismatch: expected 0, got " + globalConfigAcc.stakedSupply
             );
         });
@@ -419,6 +419,7 @@ export async function runPtStakingTests(getEnv: () => TestEnvironment) {
                     newBaselineYieldBps: newBaselineYield,
                     newExchangeRate: newExchangeRatePtStaking,
                     newDepositCap: newDespositCap,
+                    vault: vaultStakingPDA,
                 })
             );
 
@@ -443,6 +444,7 @@ export async function runPtStakingTests(getEnv: () => TestEnvironment) {
                     newBaselineYieldBps: newBaselineYield,
                     newExchangeRate: newExchangeRatePtStaking,
                     newDepositCap: newDespositCap,
+                    vault: vaultStakingPDA,
                 })
             );
 
@@ -534,6 +536,7 @@ export async function runPtStakingTests(getEnv: () => TestEnvironment) {
                     newBaselineYieldBps: null,
                     newExchangeRate: null,
                     newDepositCap: newDepositCap,
+                    vault: vaultStakingPDA,
                 })
             );
 
@@ -588,6 +591,7 @@ export async function runPtStakingTests(getEnv: () => TestEnvironment) {
                         newBaselineYieldBps: newBaselineYieldBps,
                         newExchangeRate: newExchangeRate,
                         newDepositCap: null,
+                        vault: vaultStakingPDA,
                     })
                 );
                 await updateConfigTxBuilder.sendAndConfirm(umi);
@@ -743,6 +747,7 @@ export async function runPtStakingTests(getEnv: () => TestEnvironment) {
                     newBaselineYieldBps: null,
                     newExchangeRate: null,
                     newDepositCap: newDepositCap,
+                    vault: vaultStakingPDA,
                 })
             );
             await txBuilder.sendAndConfirm(umi);
@@ -778,6 +783,7 @@ export async function runPtStakingTests(getEnv: () => TestEnvironment) {
                         newBaselineYieldBps: null,
                         newExchangeRate: newRate,
                         newDepositCap: null,
+                        vault: vaultStakingPDA,
                     })
                 );
                 await updateTxBuilder.sendAndConfirm(umi);
@@ -893,6 +899,7 @@ export async function runPtStakingTests(getEnv: () => TestEnvironment) {
                     newBaselineYieldBps: null,
                     newExchangeRate: null,
                     newDepositCap: newDepositCap,
+                    vault: vaultStakingPDA,
                 })
             );
             await txBuilder.sendAndConfirm(umi);

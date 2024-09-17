@@ -41,10 +41,6 @@ pub fn handler(ctx: Context<InitializeWithdrawFunds>, quantity: u64) -> Result<(
         return err!(ParityIssuanceError::InvalidQuantity);
     }
 
-    // if quote_amount > actual_vault_balance {
-    //     return err!(ParityIssuanceError::ExcessiveWithdrawal);
-    // }
-
     let max_withdrawable_amount =
         token_manager.calculate_max_withdrawable_amount(mint.supply, actual_vault_balance)?;
     msg!("Max withdrawable amount: {}", max_withdrawable_amount);

@@ -656,6 +656,10 @@
             }
           },
           {
+            "name": "isWhitelistEnabled",
+            "type": "bool"
+          },
+          {
             "name": "mint",
             "type": "publicKey"
           },
@@ -879,6 +883,12 @@
             "name": "newRedeemFeeBps",
             "type": {
               "option": "u16"
+            }
+          },
+          {
+            "name": "newExchangeRate",
+            "type": {
+              "option": "u64"
             }
           }
         ]

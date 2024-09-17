@@ -1,4 +1,5 @@
 use anchor_lang::prelude::*;
+use anchor_spl::token::TokenAccount;
 
 use crate::{error::ParityStakingError, PoolManager};
 
@@ -16,6 +17,12 @@ pub struct UpdatePoolManager<'info> {
         bump = pool_manager.bump
     )]
     pub pool_manager: Account<'info, PoolManager>,
+    #[account(
+        mut,
+        associated_token::mint = pool_manager.base_mint,
+        associated_token::authority = pool_manager,
+    )]
+    pub vault: Account<'info, TokenAccount>,
     #[account(mut, address = pool_manager.owner @ ParityStakingError::InvalidOwner)]
     pub owner: Signer<'info>,
 }
@@ -35,14 +42,10 @@ pub fn handler(ctx: Context<UpdatePoolManager>, params: UpdatePoolManagerParams)
             return err!(ParityStakingError::InvalidParam); // Ensure deposit cap is non-zero
         }
 
-         // Implement bounds check for deposit cap
-         if new_deposit_cap > 1_000_000_000_000 { 
-            return err!(ParityStakingError::InvalidParam); // Ensure deposit cap is within reasonable bounds
-        }
-
-         // Check that the new deposit cap is not less than the previous
-         if new_deposit_cap < pool_manager.deposit_cap {
-            return err!(ParityStakingError::DepositCapTooLow); 
+        // Check that the new deposit cap is not less than the previous
+        let vault_amount = ctx.accounts.vault.amount;
+        if new_deposit_cap < vault_amount {
+            return err!(ParityStakingError::DepositCapTooLow);
         }
 
         pool_manager.deposit_cap = new_deposit_cap;

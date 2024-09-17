@@ -34,6 +34,7 @@ import {
 // Accounts.
 export type UpdateGlobalConfigInstructionAccounts = {
   globalConfig: PublicKey | Pda;
+  vault: PublicKey | Pda;
   owner: Signer;
   systemProgram?: PublicKey | Pda;
 };
@@ -103,13 +104,18 @@ export function updateGlobalConfig(
       isWritable: true as boolean,
       value: input.globalConfig ?? null,
     },
-    owner: {
+    vault: {
       index: 1,
+      isWritable: true as boolean,
+      value: input.vault ?? null,
+    },
+    owner: {
+      index: 2,
       isWritable: true as boolean,
       value: input.owner ?? null,
     },
     systemProgram: {
-      index: 2,
+      index: 3,
       isWritable: false as boolean,
       value: input.systemProgram ?? null,
     },

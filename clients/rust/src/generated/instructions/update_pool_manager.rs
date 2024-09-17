@@ -15,6 +15,8 @@ use solana_program::pubkey::Pubkey;
 pub struct UpdatePoolManager {
     pub pool_manager: solana_program::pubkey::Pubkey,
 
+    pub vault: solana_program::pubkey::Pubkey,
+
     pub owner: solana_program::pubkey::Pubkey,
 }
 
@@ -31,10 +33,13 @@ impl UpdatePoolManager {
         args: UpdatePoolManagerInstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(2 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(3 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.pool_manager,
             false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new(
+            self.vault, false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.owner, true,
@@ -82,10 +87,12 @@ pub struct UpdatePoolManagerInstructionArgs {
 /// ### Accounts:
 ///
 ///   0. `[writable]` pool_manager
-///   1. `[writable, signer]` owner
+///   1. `[writable]` vault
+///   2. `[writable, signer]` owner
 #[derive(Default)]
 pub struct UpdatePoolManagerBuilder {
     pool_manager: Option<solana_program::pubkey::Pubkey>,
+    vault: Option<solana_program::pubkey::Pubkey>,
     owner: Option<solana_program::pubkey::Pubkey>,
     new_admin: Option<Pubkey>,
     new_deposit_cap: Option<u64>,
@@ -99,6 +106,11 @@ impl UpdatePoolManagerBuilder {
     #[inline(always)]
     pub fn pool_manager(&mut self, pool_manager: solana_program::pubkey::Pubkey) -> &mut Self {
         self.pool_manager = Some(pool_manager);
+        self
+    }
+    #[inline(always)]
+    pub fn vault(&mut self, vault: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.vault = Some(vault);
         self
     }
     #[inline(always)]
@@ -140,6 +152,7 @@ impl UpdatePoolManagerBuilder {
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
         let accounts = UpdatePoolManager {
             pool_manager: self.pool_manager.expect("pool_manager is not set"),
+            vault: self.vault.expect("vault is not set"),
             owner: self.owner.expect("owner is not set"),
         };
         let args = UpdatePoolManagerInstructionArgs {
@@ -155,6 +168,8 @@ impl UpdatePoolManagerBuilder {
 pub struct UpdatePoolManagerCpiAccounts<'a, 'b> {
     pub pool_manager: &'b solana_program::account_info::AccountInfo<'a>,
 
+    pub vault: &'b solana_program::account_info::AccountInfo<'a>,
+
     pub owner: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
@@ -164,6 +179,8 @@ pub struct UpdatePoolManagerCpi<'a, 'b> {
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub pool_manager: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub vault: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub owner: &'b solana_program::account_info::AccountInfo<'a>,
     /// The arguments for the instruction.
@@ -179,6 +196,7 @@ impl<'a, 'b> UpdatePoolManagerCpi<'a, 'b> {
         Self {
             __program: program,
             pool_manager: accounts.pool_manager,
+            vault: accounts.vault,
             owner: accounts.owner,
             __args: args,
         }
@@ -216,9 +234,13 @@ impl<'a, 'b> UpdatePoolManagerCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(2 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(3 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.pool_manager.key,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new(
+            *self.vault.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
@@ -243,9 +265,10 @@ impl<'a, 'b> UpdatePoolManagerCpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(2 + 1 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(3 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.pool_manager.clone());
+        account_infos.push(self.vault.clone());
         account_infos.push(self.owner.clone());
         remaining_accounts
             .iter()
@@ -264,7 +287,8 @@ impl<'a, 'b> UpdatePoolManagerCpi<'a, 'b> {
 /// ### Accounts:
 ///
 ///   0. `[writable]` pool_manager
-///   1. `[writable, signer]` owner
+///   1. `[writable]` vault
+///   2. `[writable, signer]` owner
 pub struct UpdatePoolManagerCpiBuilder<'a, 'b> {
     instruction: Box<UpdatePoolManagerCpiBuilderInstruction<'a, 'b>>,
 }
@@ -274,6 +298,7 @@ impl<'a, 'b> UpdatePoolManagerCpiBuilder<'a, 'b> {
         let instruction = Box::new(UpdatePoolManagerCpiBuilderInstruction {
             __program: program,
             pool_manager: None,
+            vault: None,
             owner: None,
             new_admin: None,
             new_deposit_cap: None,
@@ -287,6 +312,11 @@ impl<'a, 'b> UpdatePoolManagerCpiBuilder<'a, 'b> {
         pool_manager: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.pool_manager = Some(pool_manager);
+        self
+    }
+    #[inline(always)]
+    pub fn vault(&mut self, vault: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
+        self.instruction.vault = Some(vault);
         self
     }
     #[inline(always)]
@@ -359,6 +389,8 @@ impl<'a, 'b> UpdatePoolManagerCpiBuilder<'a, 'b> {
                 .pool_manager
                 .expect("pool_manager is not set"),
 
+            vault: self.instruction.vault.expect("vault is not set"),
+
             owner: self.instruction.owner.expect("owner is not set"),
             __args: args,
         };
@@ -372,6 +404,7 @@ impl<'a, 'b> UpdatePoolManagerCpiBuilder<'a, 'b> {
 struct UpdatePoolManagerCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     pool_manager: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    vault: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     owner: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     new_admin: Option<Pubkey>,
     new_deposit_cap: Option<u64>,

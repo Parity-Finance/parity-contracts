@@ -25,6 +25,7 @@ import {
   publicKey as publicKeySerializer,
   struct,
   u16,
+  u64,
   u8,
 } from '@metaplex-foundation/umi/serializers';
 import {
@@ -49,6 +50,7 @@ export type UpdateTokenManagerOwnerInstructionData = {
   newWithdrawExecutionWindow: Option<bigint>;
   newMintFeeBps: Option<number>;
   newRedeemFeeBps: Option<number>;
+  newExchangeRate: Option<bigint>;
 };
 
 export type UpdateTokenManagerOwnerInstructionDataArgs = {
@@ -59,6 +61,7 @@ export type UpdateTokenManagerOwnerInstructionDataArgs = {
   newWithdrawExecutionWindow: OptionOrNullable<number | bigint>;
   newMintFeeBps: OptionOrNullable<number>;
   newRedeemFeeBps: OptionOrNullable<number>;
+  newExchangeRate: OptionOrNullable<number | bigint>;
 };
 
 export function getUpdateTokenManagerOwnerInstructionDataSerializer(): Serializer<
@@ -80,6 +83,7 @@ export function getUpdateTokenManagerOwnerInstructionDataSerializer(): Serialize
         ['newWithdrawExecutionWindow', option(i64())],
         ['newMintFeeBps', option(u16())],
         ['newRedeemFeeBps', option(u16())],
+        ['newExchangeRate', option(u64())],
       ],
       { description: 'UpdateTokenManagerOwnerInstructionData' }
     ),

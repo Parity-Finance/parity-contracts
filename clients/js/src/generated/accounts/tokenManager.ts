@@ -44,6 +44,7 @@ export type TokenManagerAccountData = {
   admin: PublicKey;
   minter: PublicKey;
   merkleRoot: Uint8Array;
+  isWhitelistEnabled: boolean;
   mint: PublicKey;
   mintDecimals: number;
   quoteMint: PublicKey;
@@ -70,6 +71,7 @@ export type TokenManagerAccountDataArgs = {
   admin: PublicKey;
   minter: PublicKey;
   merkleRoot: Uint8Array;
+  isWhitelistEnabled: boolean;
   mint: PublicKey;
   mintDecimals: number;
   quoteMint: PublicKey;
@@ -107,6 +109,7 @@ export function getTokenManagerAccountDataSerializer(): Serializer<
         ['admin', publicKeySerializer()],
         ['minter', publicKeySerializer()],
         ['merkleRoot', bytes({ size: 32 })],
+        ['isWhitelistEnabled', bool()],
         ['mint', publicKeySerializer()],
         ['mintDecimals', u8()],
         ['quoteMint', publicKeySerializer()],
@@ -208,6 +211,7 @@ export function getTokenManagerGpaBuilder(
       admin: PublicKey;
       minter: PublicKey;
       merkleRoot: Uint8Array;
+      isWhitelistEnabled: boolean;
       mint: PublicKey;
       mintDecimals: number;
       quoteMint: PublicKey;
@@ -233,23 +237,24 @@ export function getTokenManagerGpaBuilder(
       admin: [73, publicKeySerializer()],
       minter: [105, publicKeySerializer()],
       merkleRoot: [137, bytes({ size: 32 })],
-      mint: [169, publicKeySerializer()],
-      mintDecimals: [201, u8()],
-      quoteMint: [202, publicKeySerializer()],
-      quoteMintDecimals: [234, u8()],
-      exchangeRate: [235, u64()],
-      limitPerSlot: [243, u64()],
-      currentSlot: [251, u64()],
-      currentSlotVolume: [259, u64()],
-      active: [267, bool()],
-      emergencyFundBasisPoints: [268, u16()],
-      pendingWithdrawalAmount: [270, u64()],
-      withdrawalInitiationTime: [278, i64()],
-      withdrawTimeLock: [286, i64()],
-      withdrawExecutionWindow: [294, i64()],
-      totalCollateral: [302, u64()],
-      mintFeeBps: [310, u16()],
-      redeemFeeBps: [312, u16()],
+      isWhitelistEnabled: [169, bool()],
+      mint: [170, publicKeySerializer()],
+      mintDecimals: [202, u8()],
+      quoteMint: [203, publicKeySerializer()],
+      quoteMintDecimals: [235, u8()],
+      exchangeRate: [236, u64()],
+      limitPerSlot: [244, u64()],
+      currentSlot: [252, u64()],
+      currentSlotVolume: [260, u64()],
+      active: [268, bool()],
+      emergencyFundBasisPoints: [269, u16()],
+      pendingWithdrawalAmount: [271, u64()],
+      withdrawalInitiationTime: [279, i64()],
+      withdrawTimeLock: [287, i64()],
+      withdrawExecutionWindow: [295, i64()],
+      totalCollateral: [303, u64()],
+      mintFeeBps: [311, u16()],
+      redeemFeeBps: [313, u16()],
     })
     .deserializeUsing<TokenManager>((account) =>
       deserializeTokenManager(account)
@@ -258,7 +263,7 @@ export function getTokenManagerGpaBuilder(
 }
 
 export function getTokenManagerSize(): number {
-  return 314;
+  return 315;
 }
 
 export function findTokenManagerPda(

@@ -59,7 +59,7 @@ export async function runParityStakingTests(getEnv: () => TestEnvironment) {
       assert.equal(xMintAcc.supply, 0n);
     });
 
-    it.only("baseMint can be staked for xMint", async () => {
+    it("baseMint can be staked for xMint", async () => {
       let quantity = 1000 * 10 ** baseMintDecimals;
 
       let txBuilder = new TransactionBuilder();
@@ -166,7 +166,7 @@ export async function runParityStakingTests(getEnv: () => TestEnvironment) {
       );
     });
 
-    it.only("baseMint can be unstaked by redeeming xMint", async () => {
+    it("baseMint can be unstaked by redeeming xMint", async () => {
       // const quantity = 10000 * 10 ** baseMintDecimals;
       let txBuilder = new TransactionBuilder();
 
@@ -244,7 +244,7 @@ export async function runParityStakingTests(getEnv: () => TestEnvironment) {
       );
     });
 
-    it.only("should update the annual yield rate of the stake pool", async function () {
+    it("should update the annual yield rate of the stake pool", async function () {
       const annualYieldRate = 2500; // in Basis points
       const intervalSeconds = 60 * 60 * 8; // 8 hour interval
 
@@ -281,7 +281,7 @@ export async function runParityStakingTests(getEnv: () => TestEnvironment) {
       );
     });
 
-    it.only("should initiate and accept pool owner update", async () => {
+    it("should initiate and accept pool owner update", async () => {
       const newAdmin = umi.eddsa.generateKeypair();
 
       await umi.rpc.airdrop(
@@ -368,7 +368,7 @@ export async function runParityStakingTests(getEnv: () => TestEnvironment) {
       );
     });
 
-    it.only("should update deposit cap parity staking", async () => {
+    it("should update deposit cap parity staking", async () => {
       const notOwner = umi.eddsa.generateKeypair();
       const newDespositCap = testDepositCapAmount;
 
@@ -390,6 +390,7 @@ export async function runParityStakingTests(getEnv: () => TestEnvironment) {
           owner: umi.identity,
           newAdmin: null,
           newDepositCap: newDespositCap,
+          vault: vaultStaking,
         })
       );
 
@@ -414,6 +415,7 @@ export async function runParityStakingTests(getEnv: () => TestEnvironment) {
           owner: umi.identity,
           newAdmin: null,
           newDepositCap: newDespositCap,
+          vault: vaultStaking,
         })
       );
 
@@ -488,7 +490,7 @@ export async function runParityStakingTests(getEnv: () => TestEnvironment) {
       );
     });
 
-    it.only("should accept pool manager update", async () => {
+    it("should accept pool manager update", async () => {
       const newOwner = umi.eddsa.generateKeypair();
       const newAdmin = umi.eddsa.generateKeypair();
 
@@ -519,6 +521,7 @@ export async function runParityStakingTests(getEnv: () => TestEnvironment) {
           owner: umi.identity,
           newAdmin: newAdmin.publicKey,
           newDepositCap: null,
+          vault: vaultStaking,
         })
       );
 
@@ -543,6 +546,7 @@ export async function runParityStakingTests(getEnv: () => TestEnvironment) {
           owner: umi.identity,
           newAdmin: newAdmin.publicKey,
           newDepositCap: null,
+          vault: vaultStaking,
         })
       );
 
@@ -567,6 +571,7 @@ export async function runParityStakingTests(getEnv: () => TestEnvironment) {
           owner: umi.identity,
           newAdmin: fromWeb3JsKeypair(keypair).publicKey,
           newDepositCap: null,
+          vault: vaultStaking,
         })
       );
 
@@ -582,7 +587,7 @@ export async function runParityStakingTests(getEnv: () => TestEnvironment) {
       );
     });
 
-    it.only("should update xMint metadata of stake program", async () => {
+    it("should update xMint metadata of stake program", async () => {
       const name = "TEST";
       const symbol = "TEST";
       const uri = "https://example.com/new-xmint-info.json";

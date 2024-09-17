@@ -2,6 +2,7 @@ use anchor_lang::{
     prelude::*,
     system_program::{transfer, Transfer},
 };
+use anchor_spl::token::TokenAccount;
 
 use crate::{
     BaseYieldPhase, ExchangeRatePhase, GlobalConfig, PtStakingError, BASE_YIELD_PHASE_SIZE,
@@ -23,7 +24,12 @@ pub struct UpdateGlobalConfig<'info> {
         bump,
     )]
     pub global_config: Account<'info, GlobalConfig>,
-
+    #[account(
+        mut,
+        associated_token::mint = global_config.base_mint,
+        associated_token::authority = global_config,
+    )]
+    pub vault: Account<'info, TokenAccount>,
     #[account(mut, address = global_config.owner @ PtStakingError::InvalidOwner)]
     pub owner: Signer<'info>,
     pub system_program: Program<'info, System>,
@@ -43,13 +49,9 @@ impl UpdateGlobalConfig<'_> {
                 return err!(PtStakingError::InvalidParam); // Ensure deposit cap is non-zero
             }
 
-            // Implement bounds check for deposit cap
-            if new_deposit_cap > 1_000_000_000_000 {
-                return err!(PtStakingError::InvalidParam); // Ensure deposit cap is within reasonable bounds
-            }
-
             // Check that the new deposit cap is not less than the previous
-            if new_deposit_cap < global_config.deposit_cap {
+            let vault_amount = ctx.accounts.vault.amount;
+            if new_deposit_cap < vault_amount {
                 return err!(PtStakingError::DepositCapTooLow);
             }
 

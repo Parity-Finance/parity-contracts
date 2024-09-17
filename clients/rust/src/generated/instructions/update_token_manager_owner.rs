@@ -80,6 +80,7 @@ pub struct UpdateTokenManagerOwnerInstructionArgs {
     pub new_withdraw_execution_window: Option<i64>,
     pub new_mint_fee_bps: Option<u16>,
     pub new_redeem_fee_bps: Option<u16>,
+    pub new_exchange_rate: Option<u64>,
 }
 
 /// Instruction builder for `UpdateTokenManagerOwner`.
@@ -99,6 +100,7 @@ pub struct UpdateTokenManagerOwnerBuilder {
     new_withdraw_execution_window: Option<i64>,
     new_mint_fee_bps: Option<u16>,
     new_redeem_fee_bps: Option<u16>,
+    new_exchange_rate: Option<u64>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
@@ -161,6 +163,12 @@ impl UpdateTokenManagerOwnerBuilder {
         self.new_redeem_fee_bps = Some(new_redeem_fee_bps);
         self
     }
+    /// `[optional argument]`
+    #[inline(always)]
+    pub fn new_exchange_rate(&mut self, new_exchange_rate: u64) -> &mut Self {
+        self.new_exchange_rate = Some(new_exchange_rate);
+        self
+    }
     /// Add an aditional account to the instruction.
     #[inline(always)]
     pub fn add_remaining_account(
@@ -193,6 +201,7 @@ impl UpdateTokenManagerOwnerBuilder {
             new_withdraw_execution_window: self.new_withdraw_execution_window.clone(),
             new_mint_fee_bps: self.new_mint_fee_bps.clone(),
             new_redeem_fee_bps: self.new_redeem_fee_bps.clone(),
+            new_exchange_rate: self.new_exchange_rate.clone(),
         };
 
         accounts.instruction_with_remaining_accounts(args, &self.__remaining_accounts)
@@ -330,6 +339,7 @@ impl<'a, 'b> UpdateTokenManagerOwnerCpiBuilder<'a, 'b> {
             new_withdraw_execution_window: None,
             new_mint_fee_bps: None,
             new_redeem_fee_bps: None,
+            new_exchange_rate: None,
             __remaining_accounts: Vec::new(),
         });
         Self { instruction }
@@ -392,6 +402,12 @@ impl<'a, 'b> UpdateTokenManagerOwnerCpiBuilder<'a, 'b> {
         self.instruction.new_redeem_fee_bps = Some(new_redeem_fee_bps);
         self
     }
+    /// `[optional argument]`
+    #[inline(always)]
+    pub fn new_exchange_rate(&mut self, new_exchange_rate: u64) -> &mut Self {
+        self.instruction.new_exchange_rate = Some(new_exchange_rate);
+        self
+    }
     /// Add an additional account to the instruction.
     #[inline(always)]
     pub fn add_remaining_account(
@@ -441,6 +457,7 @@ impl<'a, 'b> UpdateTokenManagerOwnerCpiBuilder<'a, 'b> {
             new_withdraw_execution_window: self.instruction.new_withdraw_execution_window.clone(),
             new_mint_fee_bps: self.instruction.new_mint_fee_bps.clone(),
             new_redeem_fee_bps: self.instruction.new_redeem_fee_bps.clone(),
+            new_exchange_rate: self.instruction.new_exchange_rate.clone(),
         };
         let instruction = UpdateTokenManagerOwnerCpi {
             __program: self.instruction.__program,
@@ -471,6 +488,7 @@ struct UpdateTokenManagerOwnerCpiBuilderInstruction<'a, 'b> {
     new_withdraw_execution_window: Option<i64>,
     new_mint_fee_bps: Option<u16>,
     new_redeem_fee_bps: Option<u16>,
+    new_exchange_rate: Option<u64>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(
         &'b solana_program::account_info::AccountInfo<'a>,
