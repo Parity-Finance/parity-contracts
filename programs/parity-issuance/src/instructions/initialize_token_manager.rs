@@ -174,6 +174,7 @@ pub fn handler(
     token_manager.admin = params.admin;
     token_manager.minter = params.minter;
     token_manager.merkle_root = params.merkle_root;
+    token_manager.is_whitelist_enabled = true;
 
     // Token
     token_manager.mint = ctx.accounts.mint.key();

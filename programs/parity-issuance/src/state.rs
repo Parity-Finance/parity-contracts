@@ -2,17 +2,18 @@ use anchor_lang::prelude::*;
 
 use crate::ParityIssuanceError;
 
-pub const TOKEN_MANAGER_SIZE: usize = 8 + (32 * 7) + (8 * 9) + (2 * 3) + (1 * 4);
+pub const TOKEN_MANAGER_SIZE: usize = 8 + (32 * 7) + (8 * 9) + (2 * 3) + (1 * 5);
 
 #[account]
 pub struct TokenManager {
     pub bump: u8, // 1
     // Authorities
-    pub owner: Pubkey,         // 32
-    pub pending_owner: Pubkey, // 32
-    pub admin: Pubkey,         // 32
-    pub minter: Pubkey,        // 32
-    pub merkle_root: [u8; 32], // 32
+    pub owner: Pubkey,              // 32
+    pub pending_owner: Pubkey,      // 32
+    pub admin: Pubkey,              // 32
+    pub minter: Pubkey,             // 32
+    pub merkle_root: [u8; 32],      // 32
+    pub is_whitelist_enabled: bool, // 1
 
     // Tokens
     pub mint: Pubkey,            // 32
@@ -93,7 +94,7 @@ impl TokenManager {
             if quantity > self.limit_per_slot {
                 return err!(ParityIssuanceError::SlotLimitExceeded);
             }
-            // If the slot has changed, reset the current slot 
+            // If the slot has changed, reset the current slot
             self.current_slot = current_slot;
         }
 
@@ -101,30 +102,25 @@ impl TokenManager {
     }
 
     pub fn verify_merkle_proof(&self, proof: Vec<[u8; 32]>, leaf: &[u8; 32]) -> Result<()> {
-        let empty_merkle_root = [0u8; 32];
-
-        // If the Merkle root is empty, allow all
-        if self.merkle_root == empty_merkle_root {
+        // If whitelisting is not enabled, allow all
+        if !self.is_whitelist_enabled {
+            return Ok(());
+        }
+        // Allow List Check
+        let mut computed_hash = *leaf;
+        for proof_element in proof.iter() {
+            // Compute the hash based on the proof elements
+            if computed_hash <= *proof_element {
+                computed_hash = solana_program::keccak::hashv(&[&computed_hash, proof_element]).0
+            } else {
+                computed_hash = solana_program::keccak::hashv(&[proof_element, &computed_hash]).0;
+            }
+        }
+        // Check if the computed hash matches the stored Merkle root
+        if computed_hash == self.merkle_root {
             Ok(())
         } else {
-            // Allow List Check
-            let mut computed_hash = *leaf;
-            for proof_element in proof.iter() {
-                // Compute the hash based on the proof elements
-                if computed_hash <= *proof_element {
-                    computed_hash =
-                        solana_program::keccak::hashv(&[&computed_hash, proof_element]).0
-                } else {
-                    computed_hash =
-                        solana_program::keccak::hashv(&[proof_element, &computed_hash]).0;
-                }
-            }
-            // Check if the computed hash matches the stored Merkle root
-            if computed_hash == self.merkle_root {
-                Ok(())
-            } else {
-                return err!(ParityIssuanceError::AddressNotFoundInAllowedList);
-            }
+            return err!(ParityIssuanceError::AddressNotFoundInAllowedList);
         }
     }
 
@@ -192,6 +188,7 @@ mod tests {
             admin: Pubkey::default(),
             minter: Pubkey::default(),
             merkle_root: [0u8; 32],
+            is_whitelist_enabled: true,
             mint: Pubkey::default(),
             mint_decimals: 6,
             quote_mint: Pubkey::default(),
@@ -271,7 +268,9 @@ mod tests {
         assert_eq!(result, 9500000000); // 5% of 1000000 is 50000, so max withdrawable is 1000000 - 50000
 
         // Test case where mint supply is 0
-        let result = token_manager.calculate_max_withdrawable_amount(0,vault_amount).unwrap();
+        let result = token_manager
+            .calculate_max_withdrawable_amount(0, vault_amount)
+            .unwrap();
         assert_eq!(result, 10000000000); // No collateral required, so all collateral is withdrawable
     }
 
