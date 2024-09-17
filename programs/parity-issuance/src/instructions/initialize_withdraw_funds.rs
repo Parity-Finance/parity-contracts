@@ -31,7 +31,16 @@ pub fn handler(ctx: Context<InitializeWithdrawFunds>, quantity: u64) -> Result<(
 
     // Check if there is an existing pending withdrawal
     if token_manager.pending_withdrawal_amount > 0 {
-        return err!(ParityIssuanceError::PendingWithdrawalExists);
+        let current_time = Clock::get()?.unix_timestamp;
+        let withdraw_window_end = token_manager
+            .withdrawal_initiation_time
+            .checked_add(token_manager.withdraw_time_lock)
+            .ok_or(ParityIssuanceError::CalculationOverflow)?
+            .checked_add(token_manager.withdraw_execution_window)
+            .ok_or(ParityIssuanceError::CalculationOverflow)?;
+        if current_time <= withdraw_window_end {
+            return err!(ParityIssuanceError::PendingWithdrawalExists);
+        }
     }
 
     let quote_amount = quantity;
