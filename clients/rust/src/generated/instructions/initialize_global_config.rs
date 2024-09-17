@@ -16,8 +16,6 @@ pub struct InitializeGlobalConfig {
     /// SPL Token Mint of the underlying token to be deposited for staking
     pub base_mint: solana_program::pubkey::Pubkey,
 
-    pub pool_manager: solana_program::pubkey::Pubkey,
-
     pub global_config: solana_program::pubkey::Pubkey,
 
     pub vault: solana_program::pubkey::Pubkey,
@@ -44,13 +42,9 @@ impl InitializeGlobalConfig {
         args: InitializeGlobalConfigInstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(8 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(7 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.base_mint,
-            false,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new(
-            self.pool_manager,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
@@ -120,17 +114,15 @@ pub struct InitializeGlobalConfigInstructionArgs {
 /// ### Accounts:
 ///
 ///   0. `[]` base_mint
-///   1. `[writable]` pool_manager
-///   2. `[writable]` global_config
-///   3. `[writable]` vault
-///   4. `[writable, signer]` user
-///   5. `[optional]` system_program (default to `11111111111111111111111111111111`)
-///   6. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
-///   7. `[]` associated_token_program
+///   1. `[writable]` global_config
+///   2. `[writable]` vault
+///   3. `[writable, signer]` user
+///   4. `[optional]` system_program (default to `11111111111111111111111111111111`)
+///   5. `[optional]` token_program (default to `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`)
+///   6. `[]` associated_token_program
 #[derive(Default)]
 pub struct InitializeGlobalConfigBuilder {
     base_mint: Option<solana_program::pubkey::Pubkey>,
-    pool_manager: Option<solana_program::pubkey::Pubkey>,
     global_config: Option<solana_program::pubkey::Pubkey>,
     vault: Option<solana_program::pubkey::Pubkey>,
     user: Option<solana_program::pubkey::Pubkey>,
@@ -152,11 +144,6 @@ impl InitializeGlobalConfigBuilder {
     #[inline(always)]
     pub fn base_mint(&mut self, base_mint: solana_program::pubkey::Pubkey) -> &mut Self {
         self.base_mint = Some(base_mint);
-        self
-    }
-    #[inline(always)]
-    pub fn pool_manager(&mut self, pool_manager: solana_program::pubkey::Pubkey) -> &mut Self {
-        self.pool_manager = Some(pool_manager);
         self
     }
     #[inline(always)]
@@ -236,7 +223,6 @@ impl InitializeGlobalConfigBuilder {
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
         let accounts = InitializeGlobalConfig {
             base_mint: self.base_mint.expect("base_mint is not set"),
-            pool_manager: self.pool_manager.expect("pool_manager is not set"),
             global_config: self.global_config.expect("global_config is not set"),
             vault: self.vault.expect("vault is not set"),
             user: self.user.expect("user is not set"),
@@ -272,8 +258,6 @@ pub struct InitializeGlobalConfigCpiAccounts<'a, 'b> {
     /// SPL Token Mint of the underlying token to be deposited for staking
     pub base_mint: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub pool_manager: &'b solana_program::account_info::AccountInfo<'a>,
-
     pub global_config: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub vault: &'b solana_program::account_info::AccountInfo<'a>,
@@ -293,8 +277,6 @@ pub struct InitializeGlobalConfigCpi<'a, 'b> {
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
     /// SPL Token Mint of the underlying token to be deposited for staking
     pub base_mint: &'b solana_program::account_info::AccountInfo<'a>,
-
-    pub pool_manager: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub global_config: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -320,7 +302,6 @@ impl<'a, 'b> InitializeGlobalConfigCpi<'a, 'b> {
         Self {
             __program: program,
             base_mint: accounts.base_mint,
-            pool_manager: accounts.pool_manager,
             global_config: accounts.global_config,
             vault: accounts.vault,
             user: accounts.user,
@@ -363,13 +344,9 @@ impl<'a, 'b> InitializeGlobalConfigCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(8 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(7 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.base_mint.key,
-            false,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.pool_manager.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
@@ -414,10 +391,9 @@ impl<'a, 'b> InitializeGlobalConfigCpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(8 + 1 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(7 + 1 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.base_mint.clone());
-        account_infos.push(self.pool_manager.clone());
         account_infos.push(self.global_config.clone());
         account_infos.push(self.vault.clone());
         account_infos.push(self.user.clone());
@@ -441,13 +417,12 @@ impl<'a, 'b> InitializeGlobalConfigCpi<'a, 'b> {
 /// ### Accounts:
 ///
 ///   0. `[]` base_mint
-///   1. `[writable]` pool_manager
-///   2. `[writable]` global_config
-///   3. `[writable]` vault
-///   4. `[writable, signer]` user
-///   5. `[]` system_program
-///   6. `[]` token_program
-///   7. `[]` associated_token_program
+///   1. `[writable]` global_config
+///   2. `[writable]` vault
+///   3. `[writable, signer]` user
+///   4. `[]` system_program
+///   5. `[]` token_program
+///   6. `[]` associated_token_program
 pub struct InitializeGlobalConfigCpiBuilder<'a, 'b> {
     instruction: Box<InitializeGlobalConfigCpiBuilderInstruction<'a, 'b>>,
 }
@@ -457,7 +432,6 @@ impl<'a, 'b> InitializeGlobalConfigCpiBuilder<'a, 'b> {
         let instruction = Box::new(InitializeGlobalConfigCpiBuilderInstruction {
             __program: program,
             base_mint: None,
-            pool_manager: None,
             global_config: None,
             vault: None,
             user: None,
@@ -479,14 +453,6 @@ impl<'a, 'b> InitializeGlobalConfigCpiBuilder<'a, 'b> {
         base_mint: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.base_mint = Some(base_mint);
-        self
-    }
-    #[inline(always)]
-    pub fn pool_manager(
-        &mut self,
-        pool_manager: &'b solana_program::account_info::AccountInfo<'a>,
-    ) -> &mut Self {
-        self.instruction.pool_manager = Some(pool_manager);
         self
     }
     #[inline(always)]
@@ -615,11 +581,6 @@ impl<'a, 'b> InitializeGlobalConfigCpiBuilder<'a, 'b> {
 
             base_mint: self.instruction.base_mint.expect("base_mint is not set"),
 
-            pool_manager: self
-                .instruction
-                .pool_manager
-                .expect("pool_manager is not set"),
-
             global_config: self
                 .instruction
                 .global_config
@@ -655,7 +616,6 @@ impl<'a, 'b> InitializeGlobalConfigCpiBuilder<'a, 'b> {
 struct InitializeGlobalConfigCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     base_mint: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    pool_manager: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     global_config: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     vault: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     user: Option<&'b solana_program::account_info::AccountInfo<'a>>,

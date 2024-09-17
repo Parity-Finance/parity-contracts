@@ -135,7 +135,6 @@ export async function setup(umi: Umi, setupOptions: SetupOptions) {
       initializeGlobalConfig(umi, {
         globalConfig,
         baseMint,
-        poolManager,
         vault: vaultPtStaking,
         user: umi.identity,
         associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,

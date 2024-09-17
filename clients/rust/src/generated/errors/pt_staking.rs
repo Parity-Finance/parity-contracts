@@ -43,13 +43,7 @@ pub enum PtStakingError {
     /// 6010 (0x177A) - Not Initialized
     #[error("Not Initialized")]
     NotInitialized,
-    /// 6011 (0x177B) - Invalid Mint Address
-    #[error("Invalid Mint Address")]
-    InvalidMintAddress,
-    /// 6012 (0x177C) - Owner Already Set
-    #[error("Owner Already Set")]
-    OwnerAlreadySet,
-    /// 6013 (0x177D) - An Invalid Parameter was passed
+    /// 6011 (0x177B) - An Invalid Parameter was passed
     #[error("An Invalid Parameter was passed")]
     InvalidParam,
 }

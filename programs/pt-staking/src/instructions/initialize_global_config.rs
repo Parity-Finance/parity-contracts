@@ -8,8 +8,6 @@ use anchor_spl::{
     token::{Mint, Token, TokenAccount},
 };
 
-use parity_staking::PoolManager;
-
 #[derive(AnchorSerialize, AnchorDeserialize, Debug, Clone)]
 pub struct InitializeGlobalConfigParams {
     pub admin: Pubkey,
@@ -21,10 +19,7 @@ pub struct InitializeGlobalConfigParams {
 #[derive(Accounts)]
 pub struct InitializeGlobalConfig<'info> {
     /// SPL Token Mint of the underlying token to be deposited for staking
-    #[account(address = pool_manager.base_mint @ PtStakingError::InvalidMintAddress)]
     pub base_mint: Account<'info, Mint>,
-    #[account(mut)]
-    pub pool_manager: Account<'info, PoolManager>,
     #[account(
         init,
         seeds = [b"global-config"],

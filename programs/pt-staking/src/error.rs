@@ -24,10 +24,6 @@ pub enum PtStakingError {
     AlreadyInitialized,
     #[msg("Not Initialized")]
     NotInitialized,
-    #[msg("Invalid Mint Address")]
-    InvalidMintAddress,
-    #[msg("Owner Already Set")]
-    OwnerAlreadySet,
     #[msg("An Invalid Parameter was passed")]
     InvalidParam,
 }

@@ -14,11 +14,6 @@
           ]
         },
         {
-          "name": "poolManager",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
           "name": "globalConfig",
           "isMut": true,
           "isSigner": false
@@ -546,16 +541,6 @@
     },
     {
       "code": 6011,
-      "name": "InvalidMintAddress",
-      "msg": "Invalid Mint Address"
-    },
-    {
-      "code": 6012,
-      "name": "OwnerAlreadySet",
-      "msg": "Owner Already Set"
-    },
-    {
-      "code": 6013,
       "name": "InvalidParam",
       "msg": "An Invalid Parameter was passed"
     }
