@@ -11,6 +11,7 @@ pub struct UpdateTokenManagerOwnerParams {
     pub new_withdraw_execution_window: Option<i64>,
     pub new_mint_fee_bps: Option<u16>,
     pub new_redeem_fee_bps: Option<u16>,
+    pub new_exchange_rate: Option<u64>,
 }
 
 #[derive(Accounts)]
@@ -78,6 +79,13 @@ pub fn handler(
             return err!(ParityIssuanceError::InvalidParam);
         }
         token_manager.redeem_fee_bps = redeem_fee_bps;
+    }
+
+    if let Some(new_exchange_rate) = params.new_exchange_rate {
+        if new_exchange_rate == 0 {
+            return err!(ParityIssuanceError::InvalidParam); // Ensure exchange rate is greater than zero
+        }
+        token_manager.exchange_rate = new_exchange_rate;
     }
 
     Ok(())
