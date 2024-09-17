@@ -16,6 +16,6 @@ pub struct RemoveGatekeeper<'info> {
         bump
     )]
     pub gatekeeper: Account<'info, Gatekeeper>,
-    #[account(address = token_manager.owner @ ParityIssuanceError::InvalidAdmin)]
+    #[account(address = token_manager.admin @ ParityIssuanceError::InvalidAdmin)]
     pub admin: Signer<'info>,
 }

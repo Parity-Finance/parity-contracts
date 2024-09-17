@@ -16,7 +16,7 @@ pub struct UpdateTokenManagerAdmin<'info> {
         bump = token_manager.bump
     )]
     pub token_manager: Account<'info, TokenManager>,
-    #[account(address = token_manager.owner @ ParityIssuanceError::InvalidAdmin)]
+    #[account(address = token_manager.admin @ ParityIssuanceError::InvalidAdmin)]
     pub admin: Signer<'info>,
 }
 
