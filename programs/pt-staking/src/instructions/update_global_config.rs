@@ -62,13 +62,6 @@ impl UpdateGlobalConfig<'_> {
 
         // Update the baseline yield if provided
         let new_base_yield_phase = if let Some(new_yield) = params.new_baseline_yield_bps {
-            if new_yield == 0 {
-                return err!(PtStakingError::InvalidParam); // Ensure baseline yield is not zero
-            }
-            if new_yield > 10_000 {
-                return err!(PtStakingError::InvalidParam); // Ensure baseline yield is within valid range
-            }
-
             // Close the current base yield phase by setting the end_date
             if let Some(last_phase) = global_config.base_yield_history.last_mut() {
                 last_phase.end_date = Some(current_timestamp);
@@ -89,10 +82,6 @@ impl UpdateGlobalConfig<'_> {
 
         // Update the exchange rate if provided
         let new_exchange_rate_phase = if let Some(new_rate) = params.new_exchange_rate {
-            if new_rate == 0 {
-                return err!(PtStakingError::InvalidParam); // Ensure exchange rate is non-zero
-            }
-
             // Close the current phase by setting the end_date
             if let Some(last_phase) = global_config.exchange_rate_history.last_mut() {
                 last_phase.end_date = Some(current_timestamp);

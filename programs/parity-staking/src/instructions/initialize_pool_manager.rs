@@ -55,19 +55,11 @@ impl InitializePoolManagerParams {
         if self.deposit_cap == 0 {
             return err!(ParityStakingError::InvalidParam); // Ensure deposit cap is non-zero
         }
-        // Implement bounds check for deposit cap
-        if self.deposit_cap > 1_000_000_000_000 { 
-            return err!(ParityStakingError::InvalidParam); // Ensure deposit cap is within reasonable bounds
-        }
 
         // Validate interval APR rate
         if self.interval_apr_rate == 0 {
             return err!(ParityStakingError::InvalidParam); // Ensure interval APR rate is non-zero
         }
-        // Implement bounds check for interval APR rate
-        // if self.interval_apr_rate > 1_000_000_000_000 {
-        //     return err!(ParityStakingError::InvalidParam); // Ensure interval APR rate is within reasonable bounds
-        // }
 
         // Validate seconds per interval
         if self.seconds_per_interval <= 0 {
@@ -81,7 +73,6 @@ impl InitializePoolManagerParams {
         Ok(())
     }
 }
-
 
 #[derive(Accounts)]
 #[instruction(params: InitializePoolManagerParams)]
@@ -137,7 +128,7 @@ pub fn handler(
 ) -> Result<()> {
     // Validate the parameters
     params.validate()?;
-    
+
     let pool_manager = &mut ctx.accounts.pool_manager;
 
     let bump = ctx.bumps.pool_manager;
@@ -197,12 +188,3 @@ pub fn handler(
 
     Ok(())
 }
-
-
-
-
-
-
-
-
-

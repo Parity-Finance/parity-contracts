@@ -27,7 +27,7 @@ pub struct InitializeWithdrawFunds<'info> {
 pub fn handler(ctx: Context<InitializeWithdrawFunds>, quantity: u64) -> Result<()> {
     let token_manager = &mut ctx.accounts.token_manager;
     let mint = &mut ctx.accounts.mint;
-    let actual_vault_balance = ctx.accounts.vault.amount;
+    let vault_balance = ctx.accounts.vault.amount;
 
     // Check if there is an existing pending withdrawal
     if token_manager.pending_withdrawal_amount > 0 {
@@ -42,7 +42,7 @@ pub fn handler(ctx: Context<InitializeWithdrawFunds>, quantity: u64) -> Result<(
     }
 
     let max_withdrawable_amount =
-        token_manager.calculate_max_withdrawable_amount(mint.supply, actual_vault_balance)?;
+        token_manager.calculate_max_withdrawable_amount(mint.supply, vault_balance)?;
     msg!("Max withdrawable amount: {}", max_withdrawable_amount);
     msg!("Quote amount: {}", quote_amount);
     msg!("Mint supply: {}", mint.supply);

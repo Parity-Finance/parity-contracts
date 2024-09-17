@@ -47,16 +47,16 @@ impl InitializeTokenManagerParams {
             return err!(ParityIssuanceError::InvalidParam);
         }
 
-        // Validate emergency fund basis points are within bounds
-        if self.emergency_fund_basis_points > 10000 {
-            return err!(ParityIssuanceError::InvalidParam);
-        }
-
         // Validate admin and minter are valid public keys
         if self.admin == Pubkey::default() {
             return err!(ParityIssuanceError::InvalidParam);
         }
         if self.minter == Pubkey::default() {
+            return err!(ParityIssuanceError::InvalidParam);
+        }
+
+        // Validate emergency fund basis points are within bounds
+        if self.emergency_fund_basis_points > 10000 {
             return err!(ParityIssuanceError::InvalidParam);
         }
 

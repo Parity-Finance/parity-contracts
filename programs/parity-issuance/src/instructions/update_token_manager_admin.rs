@@ -39,10 +39,7 @@ pub fn handler(
         if new_limit_per_slot == 0 {
             return err!(ParityIssuanceError::InvalidParam);
         }
-        // Example bounds check: Ensure the limit per slot is within a reasonable range
-        if new_limit_per_slot > 1_000_000_000_000 {
-            return err!(ParityIssuanceError::InvalidParam);
-        }
+
         token_manager.limit_per_slot = new_limit_per_slot;
     }
 

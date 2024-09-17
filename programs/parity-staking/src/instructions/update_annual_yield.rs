@@ -54,14 +54,9 @@ pub struct UpdateAnnualYield<'info> {
 }
 
 pub fn handler(ctx: Context<UpdateAnnualYield>, params: UpdateYieldParams) -> Result<()> {
-    
     if params.interval_apr_rate == 0 {
         return err!(ParityStakingError::InvalidParam); // Ensure interval APR rate is non-zero
     }
-
-    // if params.interval_apr_rate > 20000 {
-    //     return err!(ParityStakingError::InvalidParam); // Ensure interval APR rate is within a reasonable upper limit
-    // }
 
     let pool_manager = &mut ctx.accounts.pool_manager;
     let x_mint = &mut ctx.accounts.x_mint;
@@ -80,7 +75,8 @@ pub fn handler(ctx: Context<UpdateAnnualYield>, params: UpdateYieldParams) -> Re
     let signer_seeds: &[&[&[u8]]] = &[&[b"pool-manager", &[bump]]];
 
     let vault_balance = ctx.accounts.vault.amount; // Get the actual vault balance
-    let amount_to_mint = pool_manager.calculate_amount_to_mint(x_mint.supply, current_timestamp, vault_balance)?;
+    let amount_to_mint =
+        pool_manager.calculate_amount_to_mint(x_mint.supply, current_timestamp, vault_balance)?;
 
     msg!("Amount to mint: {}", amount_to_mint);
 

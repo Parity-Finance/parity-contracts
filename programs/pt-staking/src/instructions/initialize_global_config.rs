@@ -62,18 +62,13 @@ impl InitializeGlobalConfig<'_> {
         }
 
         // Validate baseline yield basis points
-        if params.baseline_yield_bps > 10_000 {
+        if params.baseline_yield_bps == 0 {
             return err!(PtStakingError::InvalidParam); // Ensure baseline yield is within valid range
         }
 
         // Validate deposit cap
         if params.deposit_cap == 0 {
             return err!(PtStakingError::InvalidParam); // Ensure deposit cap is non-zero
-        }
-
-        // Validate initial exchange rate
-        if params.initial_exchange_rate == 0 {
-            return err!(PtStakingError::InvalidParam); // Ensure initial exchange rate is non-zero
         }
 
         // Authorities
