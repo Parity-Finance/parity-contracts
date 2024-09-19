@@ -19,6 +19,7 @@ import {
 import {
   Serializer,
   array,
+  bool,
   bytes,
   mapSerializer,
   option,
@@ -43,11 +44,13 @@ export type UpdateTokenManagerAdminInstructionData = {
   discriminator: Array<number>;
   newMerkleRoot: Option<Uint8Array>;
   newLimitPerSlot: Option<bigint>;
+  isWhitelistEnabled: Option<boolean>;
 };
 
 export type UpdateTokenManagerAdminInstructionDataArgs = {
   newMerkleRoot: OptionOrNullable<Uint8Array>;
   newLimitPerSlot: OptionOrNullable<number | bigint>;
+  isWhitelistEnabled: OptionOrNullable<boolean>;
 };
 
 export function getUpdateTokenManagerAdminInstructionDataSerializer(): Serializer<
@@ -64,6 +67,7 @@ export function getUpdateTokenManagerAdminInstructionDataSerializer(): Serialize
         ['discriminator', array(u8(), { size: 8 })],
         ['newMerkleRoot', option(bytes({ size: 32 }))],
         ['newLimitPerSlot', option(u64())],
+        ['isWhitelistEnabled', option(bool())],
       ],
       { description: 'UpdateTokenManagerAdminInstructionData' }
     ),

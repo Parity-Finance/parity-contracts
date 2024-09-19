@@ -6,6 +6,7 @@ use crate::{ParityIssuanceError, TokenManager};
 pub struct UpdateTokenManagerAdminParams {
     pub new_merkle_root: Option<[u8; 32]>,
     pub new_limit_per_slot: Option<u64>,
+    pub is_whitelist_enabled: Option<bool>,
 }
 
 #[derive(Accounts)]
@@ -42,6 +43,11 @@ pub fn handler(
 
         token_manager.limit_per_slot = new_limit_per_slot;
     }
+
+    if let Some(whitelist_enabled) = params.is_whitelist_enabled {
+        token_manager.is_whitelist_enabled = whitelist_enabled; 
+    }
+
 
     Ok(())
 }

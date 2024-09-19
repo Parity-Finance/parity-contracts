@@ -834,6 +834,12 @@
             "type": {
               "option": "u64"
             }
+          },
+          {
+            "name": "isWhitelistEnabled",
+            "type": {
+              "option": "bool"
+            }
           }
         ]
       }

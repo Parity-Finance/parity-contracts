@@ -478,6 +478,7 @@ export async function runIssuanceTests(getEnv: () => TestEnvironment) {
         tokenManager: env.tokenManager,
         newMerkleRoot: some(newMerkleRoot),
         newLimitPerSlot: null,
+        isWhitelistEnabled: null,
         admin: env.umi.identity,
       })
     );
@@ -554,6 +555,7 @@ export async function runIssuanceTests(getEnv: () => TestEnvironment) {
         // Params
         newMerkleRoot: some(originalMerkleRoot),
         newLimitPerSlot: null,
+        isWhitelistEnabled: null,
       })
     );
     await txBuilder.sendAndConfirm(env.umi);

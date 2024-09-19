@@ -74,6 +74,7 @@ impl UpdateTokenManagerAdminInstructionData {
 pub struct UpdateTokenManagerAdminInstructionArgs {
     pub new_merkle_root: Option<[u8; 32]>,
     pub new_limit_per_slot: Option<u64>,
+    pub is_whitelist_enabled: Option<bool>,
 }
 
 /// Instruction builder for `UpdateTokenManagerAdmin`.
@@ -88,6 +89,7 @@ pub struct UpdateTokenManagerAdminBuilder {
     admin: Option<solana_program::pubkey::Pubkey>,
     new_merkle_root: Option<[u8; 32]>,
     new_limit_per_slot: Option<u64>,
+    is_whitelist_enabled: Option<bool>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
@@ -117,6 +119,12 @@ impl UpdateTokenManagerAdminBuilder {
         self.new_limit_per_slot = Some(new_limit_per_slot);
         self
     }
+    /// `[optional argument]`
+    #[inline(always)]
+    pub fn is_whitelist_enabled(&mut self, is_whitelist_enabled: bool) -> &mut Self {
+        self.is_whitelist_enabled = Some(is_whitelist_enabled);
+        self
+    }
     /// Add an aditional account to the instruction.
     #[inline(always)]
     pub fn add_remaining_account(
@@ -144,6 +152,7 @@ impl UpdateTokenManagerAdminBuilder {
         let args = UpdateTokenManagerAdminInstructionArgs {
             new_merkle_root: self.new_merkle_root.clone(),
             new_limit_per_slot: self.new_limit_per_slot.clone(),
+            is_whitelist_enabled: self.is_whitelist_enabled.clone(),
         };
 
         accounts.instruction_with_remaining_accounts(args, &self.__remaining_accounts)
@@ -276,6 +285,7 @@ impl<'a, 'b> UpdateTokenManagerAdminCpiBuilder<'a, 'b> {
             admin: None,
             new_merkle_root: None,
             new_limit_per_slot: None,
+            is_whitelist_enabled: None,
             __remaining_accounts: Vec::new(),
         });
         Self { instruction }
@@ -303,6 +313,12 @@ impl<'a, 'b> UpdateTokenManagerAdminCpiBuilder<'a, 'b> {
     #[inline(always)]
     pub fn new_limit_per_slot(&mut self, new_limit_per_slot: u64) -> &mut Self {
         self.instruction.new_limit_per_slot = Some(new_limit_per_slot);
+        self
+    }
+    /// `[optional argument]`
+    #[inline(always)]
+    pub fn is_whitelist_enabled(&mut self, is_whitelist_enabled: bool) -> &mut Self {
+        self.instruction.is_whitelist_enabled = Some(is_whitelist_enabled);
         self
     }
     /// Add an additional account to the instruction.
@@ -349,6 +365,7 @@ impl<'a, 'b> UpdateTokenManagerAdminCpiBuilder<'a, 'b> {
         let args = UpdateTokenManagerAdminInstructionArgs {
             new_merkle_root: self.instruction.new_merkle_root.clone(),
             new_limit_per_slot: self.instruction.new_limit_per_slot.clone(),
+            is_whitelist_enabled: self.instruction.is_whitelist_enabled.clone(),
         };
         let instruction = UpdateTokenManagerAdminCpi {
             __program: self.instruction.__program,
@@ -374,6 +391,7 @@ struct UpdateTokenManagerAdminCpiBuilderInstruction<'a, 'b> {
     admin: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     new_merkle_root: Option<[u8; 32]>,
     new_limit_per_slot: Option<u64>,
+    is_whitelist_enabled: Option<bool>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(
         &'b solana_program::account_info::AccountInfo<'a>,
