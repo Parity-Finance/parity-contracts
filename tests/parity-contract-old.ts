@@ -398,7 +398,6 @@
 //         txBuilder = txBuilder.add(
 //             initializeGlobalConfig(umi, {
 //                 globalConfig,
-//                 poolManager,
 //                 baseMint: userQuote,
 //                 vault: vaultStakingPDA,
 //                 user: umi.identity,
@@ -426,7 +425,6 @@
 //         txBuilder = txBuilder.add(
 //             initializeGlobalConfig(umi, {
 //                 globalConfig,
-//                 poolManager,
 //                 baseMint: baseMint,
 //                 vault: vaultStakingPDA,
 //                 user: umi.identity,
@@ -834,6 +832,7 @@
 //                 tokenManager,
 //                 newMerkleRoot: some(newMerkleRoot),
 //                 newLimitPerSlot: null,
+                
 //                 admin: umi.identity,
 //             })
 //         );
@@ -1796,7 +1795,7 @@
 //     });
 
 //     // START: Stake Program
-//     it("baseMint can be staked for xMint", async () => {
+//     it.only("baseMint can be staked for xMint", async () => {
 //         let quantity = 1000 * 10 ** baseMintDecimals;
 
 //         let txBuilder = new TransactionBuilder();
@@ -1903,7 +1902,7 @@
 //         );
 //     });
 
-//     it("baseMint can be unstaked by redeeming xMint", async () => {
+//     it.only("baseMint can be unstaked by redeeming xMint", async () => {
 //         // const quantity = 10000 * 10 ** baseMintDecimals;
 //         let txBuilder = new TransactionBuilder();
 

@@ -6,6 +6,7 @@ pub mod update_annual_yield;
 pub mod update_pool_manager;
 pub mod update_pool_owner;
 pub mod update_xmint_metadata;
+pub mod withdraw_excess_parity;
 
 pub use initialize_pool_manager::*;
 pub use initiate_update_pool_owner::*;
@@ -15,3 +16,4 @@ pub use update_annual_yield::*;
 pub use update_pool_manager::*;
 pub use update_pool_owner::*;
 pub use update_xmint_metadata::*;
+pub use withdraw_excess_parity::*;

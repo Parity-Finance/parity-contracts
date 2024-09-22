@@ -1,10 +1,11 @@
 import { TestEnvironment } from "./setup-environment";
-import { calculateExchangeRate, calculateIntervalRate, initiateUpdatePoolOwner, PARITY_ISSUANCE_PROGRAM_ID, safeFetchPoolManager, setup, SetupOptions, stake, unstake, updateAnnualYield, updatePoolManager, updatePoolOwner, updateXmintMetadata } from "../clients/js/src";
+import { calculateExchangeRate, calculateIntervalRate, initiateUpdatePoolOwner, PARITY_ISSUANCE_PROGRAM_ID, safeFetchPoolManager, setup, SetupOptions, stake, unstake, updateAnnualYield, updatePoolManager, updatePoolOwner, updateXmintMetadata, withdrawExcessParity } from "../clients/js/src";
 import {
   createAssociatedToken,
   safeFetchMint,
   safeFetchToken,
   SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
+  transferTokens,
 } from "@metaplex-foundation/mpl-toolbox";
 import {
   keypairIdentity,
@@ -18,6 +19,7 @@ import { fromWeb3JsKeypair } from "@metaplex-foundation/umi-web3js-adapters";
 import {
   safeFetchMetadata,
 } from "@metaplex-foundation/mpl-token-metadata";
+import { transfer } from "@solana/spl-token";
 
 
 export async function runParityStakingTests(getEnv: () => TestEnvironment) {
@@ -64,7 +66,9 @@ export async function runParityStakingTests(getEnv: () => TestEnvironment) {
 
       let txBuilder = new TransactionBuilder();
 
+
       const userXAtaAcc = await safeFetchToken(umi, userX);
+
 
       if (!userXAtaAcc) {
         txBuilder = txBuilder.add(
@@ -244,7 +248,7 @@ export async function runParityStakingTests(getEnv: () => TestEnvironment) {
       );
     });
 
-    it.only("should update the annual yield rate of the stake pool", async function () {
+    it("should update the annual yield rate of the stake pool", async function () {
       const annualYieldRate = 2500; // in Basis points
       const intervalSeconds = 60 * 60 * 8; // 8 hour interval
 
@@ -281,7 +285,7 @@ export async function runParityStakingTests(getEnv: () => TestEnvironment) {
       );
     });
 
-    it.only("should initiate and accept pool owner update", async () => {
+    it("should initiate and accept pool owner update", async () => {
       const newAdmin = umi.eddsa.generateKeypair();
 
       await umi.rpc.airdrop(
@@ -368,7 +372,7 @@ export async function runParityStakingTests(getEnv: () => TestEnvironment) {
       );
     });
 
-    it.only("should update deposit cap parity staking", async () => {
+    it("should update deposit cap parity staking", async () => {
       const notOwner = umi.eddsa.generateKeypair();
       const newDespositCap = testDepositCapAmount;
 
@@ -490,7 +494,7 @@ export async function runParityStakingTests(getEnv: () => TestEnvironment) {
       );
     });
 
-    it.only("should accept pool manager update", async () => {
+    it("should accept pool manager update", async () => {
       const newOwner = umi.eddsa.generateKeypair();
       const newAdmin = umi.eddsa.generateKeypair();
 
@@ -587,7 +591,7 @@ export async function runParityStakingTests(getEnv: () => TestEnvironment) {
       );
     });
 
-    it.only("should update xMint metadata of stake program", async () => {
+    it("should update xMint metadata of stake program", async () => {
       const name = "TEST";
       const symbol = "TEST";
       const uri = "https://example.com/new-xmint-info.json";
@@ -611,5 +615,67 @@ export async function runParityStakingTests(getEnv: () => TestEnvironment) {
       assert.equal(xMintMetadata.symbol, symbol, "Symbol should be updated");
       assert.equal(xMintMetadata.uri, uri, "Uri should be updated");
     });
+
+    it.only("should allow admin to withdraw excess tokens", async () => {
+      // Stake tokens
+      const stakeAmount = 1000 * 10 ** baseMintDecimals;
+
+      let txBuilder = new TransactionBuilder();
+      txBuilder = txBuilder.add(
+        stake(umi, {
+          poolManager,
+          baseMint,
+          xMint,
+          payerBaseMintAta: userBase,
+          payerXMintAta: userX,
+          vault: vaultStaking,
+          associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
+          quantity: stakeAmount,
+        })
+      );
+
+      await txBuilder.sendAndConfirm(umi);
+
+      const userBaseAtaAccBeforeTransfer = await safeFetchToken(umi, userBase);
+      // Deposit extra tokens into the vault account
+      const extraTokens = 500 * 10 ** baseMintDecimals;
+
+      // Transfer transaction to deposit extra tokens into the vault
+      const res = await transferTokens(umi, {
+        source: userBase,
+        destination: vaultStaking,
+        amount: extraTokens
+      }).sendAndConfirm(umi);
+
+      const userBaseAtaAccAfterTransfer = await safeFetchToken(umi, userBase);
+
+      // Withdraw excess tokens
+      let withdrawTxBuilder = new TransactionBuilder();
+      withdrawTxBuilder = withdrawTxBuilder.add(
+        withdrawExcessParity(umi, {
+          poolManager,
+          adminBaseMintAta: userBase,
+          baseMint,
+          admin: umi.identity,
+          vault: vaultStaking,
+          associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
+        })
+      );
+
+      await withdrawTxBuilder.sendAndConfirm(umi);
+
+      // Assertions
+      const updatedVaultAcc = await safeFetchToken(umi, vaultStaking);
+      const updatedPoolManagerAcc = await safeFetchPoolManager(umi, poolManager);
+
+      // Calculate expected vault amount after withdrawal
+      const expectedVaultAmount = stakeAmount;
+
+      // Assert that the vault amount is now equal to the expected amount
+      assert.equal(updatedVaultAcc.amount, expectedVaultAmount, "Vault amount should be updated correctly");
+      assert.equal(updatedPoolManagerAcc.baseBalance, expectedVaultAmount, "Base balance should be updated correctly");
+      assert.equal(userBaseAtaAccBeforeTransfer.amount, Number(userBaseAtaAccAfterTransfer.amount) + extraTokens, "User Base balance should be updated correctly")
+    });
+
   });
 }

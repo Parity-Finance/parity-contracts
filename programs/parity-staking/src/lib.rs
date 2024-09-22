@@ -64,4 +64,9 @@ pub mod parity_staking {
     ) -> Result<()> {
         initiate_update_pool_owner::handler(ctx, new_owner)
     }
+
+    pub fn withdraw_excess_parity(ctx: Context<WithdrawExcessParity>) -> Result<()> {
+        withdraw_excess_parity::handler(ctx)
+    }
+
 }

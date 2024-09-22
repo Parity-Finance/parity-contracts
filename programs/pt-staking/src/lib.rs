@@ -50,4 +50,9 @@ pub mod pt_staking {
     pub fn update_global_config_owner(ctx: Context<UpdateGlobalConfigOwner>) -> Result<()> {
         UpdateGlobalConfigOwner::handler(ctx)
     }
+
+    pub fn withdraw_excess_pt(ctx: Context<WithdrawExcessPT>) -> Result<()> {
+        withdraw_excess_pt::handler(ctx)
+    }
+
 }

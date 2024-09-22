@@ -46,9 +46,9 @@ describe("parity-contract", () => {
     issuanceTests.runIssuanceTests(() => env);
   });
 
-  // describe("Parity-staking", function () {
-  //   parityStakingTests.runParityStakingTests(() => env);
-  // });
+  describe("Parity-staking", function () {
+    parityStakingTests.runParityStakingTests(() => env);
+  });
 
   describe("Pt-staking", function () {
     ptStakingTests.runPtStakingTests(() => env);

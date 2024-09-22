@@ -34,6 +34,8 @@ pub(crate) mod r#update_pool_owner;
 pub(crate) mod r#update_token_manager_admin;
 pub(crate) mod r#update_token_manager_owner;
 pub(crate) mod r#update_xmint_metadata;
+pub(crate) mod r#withdraw_excess_parity;
+pub(crate) mod r#withdraw_excess_pt;
 pub(crate) mod r#withdraw_funds;
 
 pub use self::r#add_gatekeeper::*;
@@ -65,4 +67,6 @@ pub use self::r#update_pool_owner::*;
 pub use self::r#update_token_manager_admin::*;
 pub use self::r#update_token_manager_owner::*;
 pub use self::r#update_xmint_metadata::*;
+pub use self::r#withdraw_excess_parity::*;
+pub use self::r#withdraw_excess_pt::*;
 pub use self::r#withdraw_funds::*;

@@ -1,4 +1,4 @@
-import { calculatePoints, initiateUpdateGlobalConfigOwner, initPtStake, ptStake, ptUnstake, safeFetchGlobalConfig, safeFetchUserStake, updateGlobalConfig, updateGlobalConfigOwner } from "../clients/js/src";
+import { calculatePoints, initiateUpdateGlobalConfigOwner, initPtStake, ptStake, ptUnstake, safeFetchGlobalConfig, safeFetchUserStake, updateGlobalConfig, updateGlobalConfigOwner, withdrawExcessPt } from "../clients/js/src";
 import { TestEnvironment } from "./setup-environment";
 import assert from "assert";
 import {
@@ -12,6 +12,7 @@ import {
 import {
     safeFetchToken,
     SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
+    transferTokens
 } from "@metaplex-foundation/mpl-toolbox";
 import { fromWeb3JsKeypair } from "@metaplex-foundation/umi-web3js-adapters";
 
@@ -307,7 +308,7 @@ export async function runPtStakingTests(getEnv: () => TestEnvironment) {
             umi.use(keypairIdentity(fromWeb3JsKeypair(keypair))); // Switch back to  admin
         });
 
-        it.only("should initiate and accept global config owner update", async () => {
+        it("should initiate and accept global config owner update", async () => {
             const newOwner = umi.eddsa.generateKeypair();
 
             await umi.rpc.airdrop(
@@ -394,7 +395,7 @@ export async function runPtStakingTests(getEnv: () => TestEnvironment) {
             );
         });
 
-        it.only("should update Pt Staking global config", async () => {
+        it("should update Pt Staking global config", async () => {
             const notOwner = umi.eddsa.generateKeypair();
             const newBaselineYield = 5000; // For 50%
             const newExchangeRatePtStaking = 30 * 10 ** baseMintDecimals;
@@ -1001,6 +1002,67 @@ export async function runPtStakingTests(getEnv: () => TestEnvironment) {
                 exchangeRate,
                 "Exchange rate in points history should match the initial rate"
             );
+        });
+
+        it.only("should allow admin to withdraw excess tokens in PT Staking", async () => {
+            // Stake tokens
+            const stakeAmount = 1000 * 10 ** baseMintDecimals;
+
+            let txBuilder = new TransactionBuilder();
+            txBuilder = txBuilder.add(
+                ptStake(umi, {
+                    globalConfig,
+                    userStake: userStakePDA,
+                    baseMint: baseMint,
+                    userBaseMintAta: userBase,
+                    user: umi.identity,
+                    vault: vaultStakingPDA,
+                    associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
+                    quantity: stakeAmount,
+                })
+            );
+
+            await txBuilder.sendAndConfirm(umi);
+
+            const userBaseAtaAccBeforeTransfer = await safeFetchToken(umi, userBase);
+            // Deposit extra tokens into the vault account
+            const extraTokens = 500 * 10 ** baseMintDecimals;
+
+            // Transfer transaction to deposit extra tokens into the vault
+            const res = await transferTokens(umi, {
+                source: userBase,
+                destination: vaultStakingPDA,
+                amount: extraTokens
+            }).sendAndConfirm(umi);
+
+            const userBaseAtaAccAfterTransfer = await safeFetchToken(umi, userBase);
+
+            // Withdraw excess tokens
+            let withdrawTxBuilder = new TransactionBuilder();
+            withdrawTxBuilder = withdrawTxBuilder.add(
+                withdrawExcessPt(umi, {
+                    globalConfig,
+                    adminBaseMintAta: userBase,
+                    baseMint,
+                    admin: umi.identity,
+                    vault: vaultStakingPDA,
+                    associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
+                })
+            );
+
+            await withdrawTxBuilder.sendAndConfirm(umi);
+
+            // Assertions
+            const updatedVaultAcc = await safeFetchToken(umi, vaultStakingPDA);
+            const updatedGlobalConfigAcc = await safeFetchGlobalConfig(umi, globalConfig);
+
+            // Calculate expected vault amount after withdrawal
+            const expectedVaultAmount = stakeAmount; 
+
+            // Assert that the vault amount is now equal to the expected amount
+            assert.equal(updatedVaultAcc.amount, expectedVaultAmount, "Vault amount should be updated correctly");
+            assert.equal(updatedGlobalConfigAcc.stakedSupply, expectedVaultAmount, "Staked supply should be updated correctly");
+            assert.equal(userBaseAtaAccBeforeTransfer.amount, Number(userBaseAtaAccAfterTransfer.amount) + extraTokens, "User Base balance should be updated correctly");
         });
 
     })

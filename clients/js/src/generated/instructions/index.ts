@@ -35,4 +35,6 @@ export * from './updatePoolOwner';
 export * from './updateTokenManagerAdmin';
 export * from './updateTokenManagerOwner';
 export * from './updateXmintMetadata';
+export * from './withdrawExcessParity';
+export * from './withdrawExcessPt';
 export * from './withdrawFunds';
