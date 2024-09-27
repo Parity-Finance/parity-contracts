@@ -629,6 +629,11 @@
     },
     {
       "code": 6009,
+      "name": "MaxIntervalAprRateExceeded",
+      "msg": "MaxIntervalAprRateExceeded"
+    },
+    {
+      "code": 6010,
       "name": "InvalidParam",
       "msg": "An Invalid Parameter was passed"
     }

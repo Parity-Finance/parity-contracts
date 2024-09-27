@@ -1,4 +1,4 @@
-use crate::{error::ParityStakingError, PoolManager};
+use crate::{error::ParityStakingError, PoolManager, MAX_INTERVAL_APR_RATE};
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
@@ -56,6 +56,11 @@ pub struct UpdateAnnualYield<'info> {
 pub fn handler(ctx: Context<UpdateAnnualYield>, params: UpdateYieldParams) -> Result<()> {
     if params.interval_apr_rate == 0 {
         return err!(ParityStakingError::InvalidParam); // Ensure interval APR rate is non-zero
+    }
+
+     
+     if params.interval_apr_rate > MAX_INTERVAL_APR_RATE {
+        return err!(ParityStakingError::MaxIntervalAprRateExceeded); // Ensure interval APR rate does not exceed the maximum limit
     }
 
     let pool_manager = &mut ctx.accounts.pool_manager;

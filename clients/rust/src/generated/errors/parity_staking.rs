@@ -37,7 +37,10 @@ pub enum ParityStakingError {
     /// 6008 (0x1778) - Owner Already Set
     #[error("Owner Already Set")]
     OwnerAlreadySet,
-    /// 6009 (0x1779) - An Invalid Parameter was passed
+    /// 6009 (0x1779) - MaxIntervalAprRateExceeded
+    #[error("MaxIntervalAprRateExceeded")]
+    MaxIntervalAprRateExceeded,
+    /// 6010 (0x177A) - An Invalid Parameter was passed
     #[error("An Invalid Parameter was passed")]
     InvalidParam,
 }

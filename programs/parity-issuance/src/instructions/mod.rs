@@ -13,6 +13,7 @@ pub mod update_mint_metadata;
 pub mod update_token_manager_admin;
 pub mod update_token_manager_owner;
 pub mod withdraw_funds;
+pub mod withdraw_excess_issuance;
 
 pub use add_gatekeeper::*;
 pub use deposit_funds::*;
@@ -29,3 +30,4 @@ pub use update_mint_metadata::*;
 pub use update_token_manager_admin::*;
 pub use update_token_manager_owner::*;
 pub use withdraw_funds::*;
+pub use withdraw_excess_issuance::*;

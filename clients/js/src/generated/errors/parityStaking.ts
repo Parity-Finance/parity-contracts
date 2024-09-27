@@ -132,17 +132,33 @@ export class SsOwnerAlreadySetError extends ProgramError {
 codeToErrorMap.set(0x1778, SsOwnerAlreadySetError);
 nameToErrorMap.set('OwnerAlreadySet', SsOwnerAlreadySetError);
 
+/** MaxIntervalAprRateExceeded: MaxIntervalAprRateExceeded */
+export class SsMaxIntervalAprRateExceededError extends ProgramError {
+  override readonly name: string = 'MaxIntervalAprRateExceeded';
+
+  readonly code: number = 0x1779; // 6009
+
+  constructor(program: Program, cause?: Error) {
+    super('MaxIntervalAprRateExceeded', program, cause);
+  }
+}
+codeToErrorMap.set(0x1779, SsMaxIntervalAprRateExceededError);
+nameToErrorMap.set(
+  'MaxIntervalAprRateExceeded',
+  SsMaxIntervalAprRateExceededError
+);
+
 /** InvalidParam: An Invalid Parameter was passed */
 export class SsInvalidParamError extends ProgramError {
   override readonly name: string = 'InvalidParam';
 
-  readonly code: number = 0x1779; // 6009
+  readonly code: number = 0x177a; // 6010
 
   constructor(program: Program, cause?: Error) {
     super('An Invalid Parameter was passed', program, cause);
   }
 }
-codeToErrorMap.set(0x1779, SsInvalidParamError);
+codeToErrorMap.set(0x177a, SsInvalidParamError);
 nameToErrorMap.set('InvalidParam', SsInvalidParamError);
 
 /**

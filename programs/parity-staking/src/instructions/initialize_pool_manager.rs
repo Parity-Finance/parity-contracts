@@ -9,7 +9,7 @@ use anchor_spl::{
     token::{Mint, Token, TokenAccount},
 };
 
-use crate::{ParityStakingError, PoolManager, POOL_MANAGER_LENGTH};
+use crate::{ParityStakingError, PoolManager, MAX_INTERVAL_APR_RATE, POOL_MANAGER_LENGTH};
 
 #[derive(AnchorSerialize, AnchorDeserialize, Debug, Clone)]
 pub struct InitializePoolManagerParams {
@@ -59,6 +59,10 @@ impl InitializePoolManagerParams {
         // Validate interval APR rate
         if self.interval_apr_rate == 0 {
             return err!(ParityStakingError::InvalidParam); // Ensure interval APR rate is non-zero
+        }
+
+        if self.interval_apr_rate > MAX_INTERVAL_APR_RATE {
+            return err!(ParityStakingError::MaxIntervalAprRateExceeded); // Ensure interval APR rate does not exceed the maximum limit
         }
 
         // Validate seconds per interval

@@ -616,7 +616,7 @@ export async function runParityStakingTests(getEnv: () => TestEnvironment) {
       assert.equal(xMintMetadata.uri, uri, "Uri should be updated");
     });
 
-    it.only("should allow admin to withdraw excess tokens", async () => {
+    it.only("should allow admin to withdraw excess tokens in Parity Staking", async () => {
       // Stake tokens
       const stakeAmount = 1000 * 10 ** baseMintDecimals;
 

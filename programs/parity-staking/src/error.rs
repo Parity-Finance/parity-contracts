@@ -20,6 +20,8 @@ pub enum ParityStakingError {
     InvalidQuantity,
     #[msg("Owner Already Set")]
     OwnerAlreadySet,
+    #[msg("MaxIntervalAprRateExceeded")]
+    MaxIntervalAprRateExceeded,
     #[msg("An Invalid Parameter was passed")]
     InvalidParam,
 }

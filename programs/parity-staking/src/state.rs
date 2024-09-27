@@ -4,6 +4,8 @@ use crate::{from_decimal, pow, to_decimal, ParityStakingError, PRECISION};
 
 pub const POOL_MANAGER_LENGTH: usize = 8 + 1 + (32 * 5) + 1 + 1 + (8 * 8) + 4;
 
+pub const MAX_INTERVAL_APR_RATE: u64 = 40006660682680;
+
 #[account]
 pub struct PoolManager {
     pub bump: u8, // 1 byte

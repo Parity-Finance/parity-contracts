@@ -1,9 +1,9 @@
 import { Umi, Pda, PublicKey, publicKey, createAmount, keypairIdentity, some, } from "@metaplex-foundation/umi";
 import { Connection, Keypair } from "@solana/web3.js";
 import { TransactionBuilder } from "@metaplex-foundation/umi";
-import { addGatekeeper, depositFunds, findGatekeeperPda, initializeTokenManager, initializeWithdrawFunds, initiateUpdateManagerOwner, mint, mintAdmin, PARITY_ISSUANCE_PROGRAM_ID, redeem, removeGatekeeper, safeFetchGatekeeper, safeFetchTokenManager, setup, SetupOptions, toggleActive, updateManagerOwner, updateMintMetadata, updateTokenManagerAdmin, updateTokenManagerOwner, withdrawFunds } from "../clients/js/src";
+import { addGatekeeper, depositFunds, findGatekeeperPda, initializeTokenManager, initializeWithdrawFunds, initiateUpdateManagerOwner, mint, mintAdmin, PARITY_ISSUANCE_PROGRAM_ID, redeem, removeGatekeeper, safeFetchGatekeeper, safeFetchTokenManager, setup, SetupOptions, toggleActive, updateManagerOwner, updateMintMetadata, updateTokenManagerAdmin, updateTokenManagerOwner, withdrawExcessIssuance, withdrawFunds } from "../clients/js/src";
 import { getMerkleProof, getMerkleRoot } from "../clients/js/src/utils";
-import { SPL_ASSOCIATED_TOKEN_PROGRAM_ID, safeFetchToken, safeFetchMint, createAssociatedToken, } from "@metaplex-foundation/mpl-toolbox";
+import { SPL_ASSOCIATED_TOKEN_PROGRAM_ID, safeFetchToken, safeFetchMint, createAssociatedToken, transferTokens, } from "@metaplex-foundation/mpl-toolbox";
 import {
   fromWeb3JsKeypair,
   fromWeb3JsPublicKey,
@@ -1539,5 +1539,100 @@ export async function runIssuanceTests(getEnv: () => TestEnvironment) {
       _vaultAcc.amount - expectedQuoteAmountAfterFees,
       "Vault amount should be correct"
     );
+  });
+
+  it.only("should allow admin to withdraw excess tokens in Parity Issuance", async () => {
+   
+    const quantity = BigInt(10000 * 10 ** env.baseMintDecimals);
+
+    const proof = getMerkleProof(env.allowedWallets, env.umi.identity.publicKey.toString());
+
+
+    let txBuilder = new TransactionBuilder();
+
+    const userBaseAtaAcc = await safeFetchToken(env.umi, env.userBase);
+
+    if (!userBaseAtaAcc) {
+      txBuilder = txBuilder.add(
+        createAssociatedToken(env.umi, {
+          mint: env.baseMint,
+        })
+      );
+    }
+
+    const _vaultAcc = await safeFetchToken(env.umi, env.vaultIssuance);
+
+    txBuilder = txBuilder.add(
+      mint(env.umi, {
+        tokenManager: env.tokenManager,
+        mint: env.baseMint,
+        quoteMint: env.quoteMint,
+        payerMintAta: env.userBase,
+        payerQuoteMintAta: env.userQuote,
+        vault: env.vaultIssuance,
+        associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
+        quantity,
+        proof,
+      })
+    );
+
+    await txBuilder.sendAndConfirm(env.umi);
+
+
+    const powerDifference = env.quoteMintDecimals - env.baseMintDecimals;
+
+    // Adjust quantity by the power difference before converting to BigInt
+    let adjustedQuantity;
+    if (powerDifference > 0) {
+      adjustedQuantity = quantity * BigInt(10 ** powerDifference);
+    } else if (powerDifference < 0) {
+      adjustedQuantity = quantity / BigInt(10 ** -powerDifference);
+    } else {
+      adjustedQuantity = quantity;
+    }
+
+    // Calculate the expected quote amount
+    const expectedQuoteAmount =
+      (adjustedQuantity * BigInt(env.exchangeRate)) /
+      BigInt(10 ** env.exchangeRateDecimals);
+
+
+    const userQuoteAtaAccBeforeTransfer = await safeFetchToken(env.umi, env.userQuote);
+    // Deposit extra tokens into the vault account
+    const extraTokens = 500 * 10 ** env.baseMintDecimals;
+
+    // Transfer transaction to deposit extra tokens into the vault
+    const res = await transferTokens(env.umi, {
+      source: env.userQuote,
+      destination: env.vaultIssuance,
+      amount: extraTokens
+    }).sendAndConfirm(env.umi);
+
+    const userQuoteAtaAccAfterTransfer = await safeFetchToken(env.umi, env.userQuote);
+
+    // Withdraw excess tokens
+    let withdrawTxBuilder = new TransactionBuilder();
+    withdrawTxBuilder = withdrawTxBuilder.add(
+      withdrawExcessIssuance(env.umi, {
+        tokenManager: env.tokenManager,
+        adminQuoteMintAta: env.userQuote,
+        quoteMint: env.quoteMint,
+        admin: env.umi.identity,
+        vault: env.vaultIssuance,
+        associatedTokenProgram: SPL_ASSOCIATED_TOKEN_PROGRAM_ID,
+      })
+    );
+
+    await withdrawTxBuilder.sendAndConfirm(env.umi);
+
+    // Assertions
+    const updatedVaultAcc = await safeFetchToken(env.umi, env.vaultIssuance);
+    const updatedTokenManagerAcc = await safeFetchTokenManager(env.umi, env.tokenManager);
+   
+
+    // Assert that the vault amount is now equal to the expected amount
+    assert.equal( updatedVaultAcc.amount ,_vaultAcc.amount + expectedQuoteAmount, "Vault amount should be updated correctly");
+    assert.equal(updatedTokenManagerAcc.totalCollateral, _vaultAcc.amount + expectedQuoteAmount, "Base balance should be updated correctly");
+    assert.equal(userQuoteAtaAccBeforeTransfer.amount, Number(userQuoteAtaAccAfterTransfer.amount) + extraTokens, "User Quote balance should be updated correctly")
   });
 }

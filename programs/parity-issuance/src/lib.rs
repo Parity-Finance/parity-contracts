@@ -93,4 +93,8 @@ pub mod parity_issuance {
     pub fn remove_gatekeeper(_ctx: Context<RemoveGatekeeper>) -> Result<()> {
         Ok(())
     }
+
+     pub fn withdraw_excess_issuance(ctx:Context<WithdrawExcessIssuance>) -> Result<()> {
+            withdraw_excess_issuance::handler(ctx)
+     }
 }
