@@ -8,7 +8,7 @@ pub use error::*;
 pub use instructions::*;
 pub use state::*;
 
-declare_id!("7hkMsfmcxQmJERtzpGTGUn9jmREBZkxYRF2rZ9BRWkZU");
+declare_id!("ALukFrRp8cFkWCEZamFVsBiFtxKYPLUUGRxskFh1g5ZX");
 
 #[program]
 pub mod parity_issuance {
@@ -94,7 +94,7 @@ pub mod parity_issuance {
         Ok(())
     }
 
-     pub fn withdraw_excess_issuance(ctx:Context<WithdrawExcessIssuance>) -> Result<()> {
-            withdraw_excess_issuance::handler(ctx)
-     }
+    pub fn withdraw_excess_issuance(ctx: Context<WithdrawExcessIssuance>) -> Result<()> {
+        withdraw_excess_issuance::handler(ctx)
+    }
 }

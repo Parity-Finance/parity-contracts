@@ -117,7 +117,7 @@ export function getGatekeeperGpaBuilder(
 ) {
   const programId = context.programs.getPublicKey(
     'parityIssuance',
-    '7hkMsfmcxQmJERtzpGTGUn9jmREBZkxYRF2rZ9BRWkZU'
+    'ALukFrRp8cFkWCEZamFVsBiFtxKYPLUUGRxskFh1g5ZX'
   );
   return gpaBuilder(context, programId)
     .registerFields<{ discriminator: Array<number>; wallet: PublicKey }>({
@@ -141,7 +141,7 @@ export function findGatekeeperPda(
 ): Pda {
   const programId = context.programs.getPublicKey(
     'parityIssuance',
-    '7hkMsfmcxQmJERtzpGTGUn9jmREBZkxYRF2rZ9BRWkZU'
+    'ALukFrRp8cFkWCEZamFVsBiFtxKYPLUUGRxskFh1g5ZX'
   );
   return context.eddsa.findPda(programId, [
     string({ size: 'variable' }).serialize('gatekeeper'),

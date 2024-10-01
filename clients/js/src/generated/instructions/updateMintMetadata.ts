@@ -94,7 +94,7 @@ export function updateMintMetadata(
   // Program ID.
   const programId = context.programs.getPublicKey(
     'parityIssuance',
-    '7hkMsfmcxQmJERtzpGTGUn9jmREBZkxYRF2rZ9BRWkZU'
+    'ALukFrRp8cFkWCEZamFVsBiFtxKYPLUUGRxskFh1g5ZX'
   );
 
   // Accounts.

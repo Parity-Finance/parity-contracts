@@ -141,7 +141,7 @@ export function getUserStakeGpaBuilder(
 ) {
   const programId = context.programs.getPublicKey(
     'ptStaking',
-    '6cxnuwSaJgaBsq6szLNGQ3UMibUB7XNv1mpoC91t37yv'
+    'AdXJ8Sr46ujd9DSLP5LRyF1BrqxT9azqmQqN2oTyV8cz'
   );
   return gpaBuilder(context, programId)
     .registerFields<{
@@ -172,7 +172,7 @@ export function findUserStakePda(
 ): Pda {
   const programId = context.programs.getPublicKey(
     'ptStaking',
-    '6cxnuwSaJgaBsq6szLNGQ3UMibUB7XNv1mpoC91t37yv'
+    'AdXJ8Sr46ujd9DSLP5LRyF1BrqxT9azqmQqN2oTyV8cz'
   );
   return context.eddsa.findPda(programId, [
     string({ size: 'variable' }).serialize('user-stake'),

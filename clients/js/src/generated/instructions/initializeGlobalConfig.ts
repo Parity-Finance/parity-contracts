@@ -99,7 +99,7 @@ export function initializeGlobalConfig(
   // Program ID.
   const programId = context.programs.getPublicKey(
     'ptStaking',
-    '6cxnuwSaJgaBsq6szLNGQ3UMibUB7XNv1mpoC91t37yv'
+    'AdXJ8Sr46ujd9DSLP5LRyF1BrqxT9azqmQqN2oTyV8cz'
   );
 
   // Accounts.

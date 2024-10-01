@@ -8,7 +8,7 @@ pub use error::*;
 pub use instructions::*;
 pub use state::*;
 
-declare_id!("6cxnuwSaJgaBsq6szLNGQ3UMibUB7XNv1mpoC91t37yv");
+declare_id!("AdXJ8Sr46ujd9DSLP5LRyF1BrqxT9azqmQqN2oTyV8cz");
 
 #[program]
 pub mod pt_staking {
@@ -54,5 +54,4 @@ pub mod pt_staking {
     pub fn withdraw_excess_pt(ctx: Context<WithdrawExcessPT>) -> Result<()> {
         withdraw_excess_pt::handler(ctx)
     }
-
 }

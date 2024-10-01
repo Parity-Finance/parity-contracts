@@ -77,7 +77,7 @@ export function withdrawExcessParity(
   // Program ID.
   const programId = context.programs.getPublicKey(
     'parityStaking',
-    'AJmk6gK2zALnLxaXYR6CzTYMFRu62adT4dVUKpxNT5Zh'
+    'BZzrzzNm14rcF8edGVYY2NHyj9aQURFXubgEdRJoyzvH'
   );
 
   // Accounts.
